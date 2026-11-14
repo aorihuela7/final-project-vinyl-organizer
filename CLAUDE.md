@@ -31,17 +31,17 @@ If time allows, in this order: (a) calibration with "This is the first record in
 
 ## Scope
 
-**In v1:** email and password sign-up; import by Discogs username, in chunks and resumable; demo collection through the same path; shelf templates (Kallax 4×4, Kallax 5×5, low unit 2×4, tower 1×5, crates in a row, custom); editable rows and columns; block compartments by tapping them; capacity per shelf with per-compartment override; traversal by rows or by columns; multiple shelves in order; sort order with up to 3 levels; global slack in %; persisted map; search with neighbors; compartment view and record card; Discogs notices; daily cron; README.
+**In v1:** sign-up and sign-in with Clerk; import by Discogs username, in chunks and resumable; demo collection through the same path; shelf templates (Kallax 4×4, Kallax 5×5, low unit 2×4, tower 1×5, crates in a row, custom); editable rows and columns; block compartments by tapping them; capacity per shelf with per-compartment override; traversal by rows or by columns; multiple shelves in order; sort order with up to 3 levels; global slack in %; persisted map; search with neighbors; compartment view and record card; Discogs notices; daily cron; README.
 
 **Out of v1 (don't build it even if it looks easy):** drag-and-drop editor, multiple rooms, per-compartment dimensions, splitting or merging compartments, thickness by format, temporary locations, minimum-move rearrangement, purchase simulator, sort-order suggestions, guest mode or QR, tracklists, MusicBrainz, any AI model call, Discogs OAuth, writing to Discogs, CSV import, barcode scanning, printable dividers.
 
 ## Stack
 
-Next.js (App Router, TypeScript) on Vercel · Supabase (Postgres + Auth, with `@supabase/ssr`) · Discogs API with the app's personal token, server-side only · Tailwind · Vitest for the algorithm · zod for input validation · Supabase CLI for migrations · GitHub CLI for PRs. No Docker, Redis, or external queues.
+Next.js (App Router, TypeScript) on Vercel · Clerk for auth (`@clerk/nextjs`) · Supabase Postgres, connected to Clerk through Supabase's native third-party auth integration · Discogs API with the app's personal token, server-side only · Tailwind · Vitest for the algorithm · zod for input validation · Supabase CLI for migrations · GitHub CLI for PRs. No Docker, Redis, or external queues.
 
 ## Data model (Postgres on Supabase)
 
-Every table has a `user_id` (references `auth.users`) so RLS policies stay simple.
+Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk user ID (like `user_2abc…`), so RLS policies stay simple. There is no foreign key to `auth.users` and no users table in v1: Clerk owns the user records.
 
 - `collections`: collection source (`discogs` | `demo` | `manual`), `discogs_username`, `last_synced_at`. One per user in v1.
 - `records`: `discogs_release_id`, `discogs_instance_id` (two copies of the same release are two rows), `artist`, `title`, `year`, `label`, `genre` (primary), `styles[]`, `format_name`, `format_qty`, `format_descriptions[]`, `cover_url`, `thumb_url`, `discogs_url`, `synced_at`, `last_seen_job_id`, `origin` (`import` | `added`). Unique on (`user_id`, `discogs_instance_id`).
@@ -66,6 +66,12 @@ Every table has a `user_id` (references `auth.users`) so RLS policies stay simpl
 - **Neighbors:** two before and two after in global order, each with its compartment.
 - **Changing the sort order or the shelf** recomputes the whole layout: ask for confirmation and say how many records change compartment.
 - Every rule above has a Vitest test (ties, articles, suffixes, blocked compartments, column traversal, cascading overflow, calibration, a collection that doesn't fit).
+
+## Auth (Clerk + Supabase)
+
+- Clerk handles sign-up, sign-in, sessions, and email verification. Use its prebuilt components and protect routes with Clerk's middleware. Don't call Supabase Auth APIs (`signUp`, `signInWithPassword`, etc.).
+- Every Supabase client (server and browser) sends Clerk's session token through the supabase-js `accessToken` option, so RLS sees the Clerk user. Don't use the deprecated Clerk "supabase" JWT template.
+- If I point you to a previous assignment that used Clerk + Supabase, reuse its patterns, but follow the current native integration where they differ.
 
 ## Import and freshness
 
@@ -101,10 +107,11 @@ Demo collection source: [DECIDE IN SESSION 2]. Prebuilt shelves: "Living room", 
 - Secrets only in environment variables (`.env.local` locally, Vercel in production), never in the repository. `.env*` is in `.gitignore`.
 - Don't read or edit `.env*` (there's a deny rule). If a new variable is needed, tell me its name and purpose; I'll add it.
 - Environment variable names (already set in `.env.local`):
-  - Public: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the `sb_publishable_…` key).
-  - Server only: `DISCOGS_TOKEN`, `DISCOGS_USER_AGENT`, `CRON_SECRET`.
+  - Public: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the `sb_publishable_…` key), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
+  - Server only: `CLERK_SECRET_KEY`, `DISCOGS_TOKEN`, `DISCOGS_USER_AGENT`, `CRON_SECRET`.
 - Don't use the Supabase secret key or the legacy service role key in v1.
-- RLS enabled on every table, with `user_id = auth.uid()` policies. A test proves one account can't see another's data.
+- RLS enabled on every table, with policies like `(select auth.jwt()->>'sub') = user_id` for the `authenticated` role. Never use `auth.uid()`: it casts the ID to uuid and fails with Clerk IDs. A test proves one account can't see another's data.
+- This Supabase project is new: besides RLS, tables may need explicit grants to be reachable through the Data API. Check the current Supabase docs when writing the first migration.
 - Validate every API route input with zod, including the Discogs username.
 - Free tier everywhere, no payment method. Don't add services without asking.
 - Daily Vercel cron at `/api/cron/keepalive`, protected with `CRON_SECRET`, running a minimal query so Supabase doesn't pause.
