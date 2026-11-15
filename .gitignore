@@ -3,3 +3,7 @@ node_modules/
 .next/
 .vercel/
 .DS_Store
+
+# Local agent settings and screenshots (may contain Discogs covers)
+.claude/settings.local.json
+docs/screenshots/

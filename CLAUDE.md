@@ -21,7 +21,7 @@ Shelfify (native app) already maps Kallax-style shelves and shows neighboring re
 
 A new person, start to finish, without help:
 
-1. Signs up.
+1. Opens the app without signing in (no login wall) and either tries the demo collection right away or types their Discogs username; signing up is asked only to save their work or to run their own import.
 2. Imports their public Discogs collection with their username, or picks the demo collection.
 3. Builds their shelf from a template and picks their sort order.
 4. Sees the map: each compartment with its range ("A – Bea") and how full it is.
@@ -46,7 +46,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 - `collections`: collection source (`discogs` | `demo` | `manual`), `discogs_username`, `last_synced_at`. One per user in v1.
 - `records`: `discogs_release_id`, `discogs_instance_id` (two copies of the same release are two rows), `artist`, `title`, `year`, `label`, `genre` (primary), `styles[]`, `format_name`, `format_qty`, `format_descriptions[]`, `cover_url`, `thumb_url`, `discogs_url`, `synced_at`, `last_seen_job_id`, `origin` (`import` | `added`). Unique on (`user_id`, `discogs_instance_id`).
 - `import_jobs`: `status` (`queued` | `running` | `done` | `error`), `next_page`, `total_pages`, `items_total`, `items_done`, `attempts`, `last_error`, timestamps.
-- `furniture`: `name`, `template`, `rows`, `cols`, `traversal` (`rows` | `columns`), `default_capacity`, `sort_index`.
+- `furniture`: `name`, `template`, `media` (`vinyl` | `cd`), `rows`, `cols`, `traversal` (`rows` | `columns`), `default_capacity`, `sort_index`. Vinyl records flow only through vinyl shelves and CDs only through CD shelves; other formats are imported but not placed.
 - `compartments`: `furniture_id`, `row`, `col`, `status` (`available` | `blocked`), `capacity` (optional, overrides the shelf's). Unique on (`furniture_id`, `row`, `col`).
 - `shelf_settings`: `sort_levels` (max 3), `ignore_articles`, `slack_pct`.
 - `placements`: `record_id` (primary key), `compartment_id`. **This is the physical state of the shelf**: it is stored, not recomputed on every view. Order within a compartment comes from the sort key.
@@ -100,7 +100,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 
 ## Demo
 
-Demo collection source: [DECIDE IN SESSION 2]. Prebuilt shelves: "Living room", Kallax 4×4 with two blocked compartments (turntable); "Studio", tower 1×5. Sort order: genre → artist. Default capacity: [MEASURE] records per cube.
+Demo collection source: the 1,000 most recently added records of the public Discogs collection of user `aorihuelar`, imported through the same path as any username import (10 pages, page cap). Prebuilt shelves: "Living room", Kallax 4×4 with two blocked compartments (turntable); "Studio", tower 1×5. Sort order: genre → artist. Default capacity: 80 records per cube (unmeasured), 70 per crate, 60 CDs per cube; global slack 10%. Without an account, the demo runs entirely in the browser; signing up saves it to the account.
 
 ## Security and free tiers
 
@@ -136,7 +136,11 @@ Demo collection source: [DECIDE IN SESSION 2]. Prebuilt shelves: "Living room", 
 
 (Ale fills this in as the project moves forward.)
 
-- Name:
-- Demo source:
-- Calibration in v1 (first record per compartment / count / none):
-- "Where does this record go?" in v1 (yes / no):
+- Name: Record Organizer (working name, in a single constant).
+- Demo source: the 1,000 most recently added records of Discogs user `aorihuelar`, through the normal import path.
+- Calibration in v1 (first record per compartment / count / none): yes, first record per compartment.
+- "Where does this record go?" in v1 (yes / no): yes.
+- Sign-in: email + password without email verification, plus Google (Clerk).
+- No login wall: the demo works without an account (in the browser); sign-up is asked to save or to run an own import.
+- Formats: shelves hold vinyl or CDs; each media is laid out separately with the same sort settings.
+- Defaults: sort by artist, ignore articles on, slack 10%, 80 records per cube, 70 per crate, 60 CDs per cube.
