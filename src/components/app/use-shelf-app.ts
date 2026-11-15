@@ -396,8 +396,8 @@ export function useShelfApp(startParam: string | null) {
         setData(next);
         setStatus({ kind: "ready" });
         if (!state.config && state.collection.source === "demo") {
+          // A demo import that finished without its shelves (e.g. the tab closed at the end): build them now.
           await afterImport(client);
-          return;
         }
         if (isStale(state.collection.last_synced_at)) {
           const input =
