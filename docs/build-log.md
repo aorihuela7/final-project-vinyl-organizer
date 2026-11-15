@@ -47,7 +47,7 @@ Setup confirmed by Ale before the run:
 | Phase | Status | Evidence |
 | --- | --- | --- |
 | 1 · Discogs spike | Done | `npx tsx --env-file=.env.local scripts/discogs-spike.ts` → exit 0: 1,704 items in 18 pages, limit 60 with token / 25 without, covers load without auth (200 image/jpeg), search returned 1,053 results. Notes in `docs/discogs-notes.md`. |
-| 2 · Skeleton | Todo | |
+| 2 · Skeleton | Done | `npm run build` → exit 0 (Next 16.4.6, Cache Components on). `npm run dev` + `npx playwright test e2e/smoke.spec.ts` → 4 passed (home shows pitch, "Try the demo collection", and the Discogs notice; `/sign-up` renders Clerk's email + password form; desktop and mobile). `curl /api/cron/keepalive` without the secret → 401. |
 | 3 · Schema, RLS, and import | Todo | |
 | 4 · Layout algorithm | Todo | |
 | 5 · Shelf configurator and sort order | Todo | |
@@ -65,6 +65,12 @@ Format: question · what I chose · why · how hard it is to change.
 - **Which format decides the shelf.** Q: how to classify box sets and vinyl+CD editions? · Chose: the first format named Vinyl/Shellac/Flexi-disc → vinyl; the first named CD/CDr → CD; otherwise not placed. · Why: matches what is physically in the sleeve in most cases. · Easy: one function.
 - **Records without a year (210 of 1,704).** Chose: they sort after all known years and show "—". · Easy.
 
+- **Tailwind integration package.** The approved list named `@tailwindcss/postcss`, but `create-next-app` 16.4.6 now scaffolds `@tailwindcss/turbopack` (same Tailwind, loaded by Turbopack instead of PostCSS). · Chose: keep the scaffold default. · Why: it's the supported default for this Next version; no new capability. · Easy: swap the package and the `turbopack.rules` entry in `next.config.ts`.
+- **`@types/node` version.** Vitest 5 needs `@types/node` ≥ 22, so it's `^24` (matches Node 24) instead of the scaffold's `^20`. · Trivial.
+- **Cache Components.** Next 16.4 turns on `cacheComponents` by default. · Chose: keep it; pages are static shells, and session-dependent UI is client-side (Clerk hooks) or in route handlers. · Why: avoids fighting the framework default. · Medium to change.
+- **Clerk Core 3.** `<SignedIn>`/`<SignedOut>` were removed in `@clerk/nextjs` 7; the header uses the `useAuth()` hook in a client component instead of the server `<Show>` (which would make every page dynamic). · Easy.
+- **Header buttons open Clerk in a modal**; the `/sign-in` and `/sign-up` pages also exist for direct links. · Easy.
+
 ## Blocked: needs Ale
 
 ## Ideas for v2
@@ -77,6 +83,7 @@ Format: question · what I chose · why · how hard it is to change.
 
 - 2026-11-14 19:09 · Kickoff. Branch `v1-build` created from `main` (7308bc4). Log created with Ale's answers.
 
-- 2026-11-14 19:20 · Phase 1 Done. Spike ran against `aorihuelar`; notes written.
+- 2026-11-14 19:12 · Phase 1 Done. Spike ran against `aorihuelar`; notes written.
+- 2026-11-14 19:18 · Phase 2 Done. Next.js skeleton, Clerk, landing page, footer notice, keepalive cron, tokens, Vitest, Playwright smoke test, README.
 
 ## Morning summary
