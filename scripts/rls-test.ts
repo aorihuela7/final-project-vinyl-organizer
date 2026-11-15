@@ -130,6 +130,16 @@ async function main() {
   const keepalive = await anon.rpc("keepalive");
   check("Anonymous keepalive RPC works", !keepalive.error && keepalive.data === 1, keepalive.error?.message);
 
+  const badLink = await a.from("records").insert({
+    artist: "x",
+    title: "x",
+    origin: "added",
+    discogs_release_id: 1,
+    discogs_url: "javascript:alert(1)",
+    cover_url: "https://evil.example/pixel.gif",
+  });
+  check("The database rejects non-Discogs links and covers", badLink.error?.code === "23514", badLink.error?.code);
+
   await a.from("furniture").delete().eq("id", furnitureId!);
 
   console.log(failures === 0 ? "\nAll RLS checks passed." : `\n${failures} check(s) failed.`);

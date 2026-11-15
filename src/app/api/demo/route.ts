@@ -3,6 +3,7 @@ import { cacheLife } from "next/cache";
 import { DEMO } from "@/lib/config";
 import { getCollectionPage } from "@/lib/discogs/client";
 import { mapCollectionItem, type RecordInput } from "@/lib/discogs/map";
+import { clientKey, rateLimit } from "@/lib/rate-limit";
 
 /**
  * The demo collection for visitors without an account: the newest 1,000
@@ -23,8 +24,10 @@ async function getDemoRecords(): Promise<{ records: RecordInput[]; fetchedAt: st
   return { records, fetchedAt: new Date().toISOString() };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   await connection();
+  const limit = rateLimit(`demo:${clientKey(null, request)}`, 20, 60_000);
+  if (!limit.ok) return Response.json({ error: "Too many requests. Wait a minute." }, { status: 429 });
   try {
     return Response.json(await getDemoRecords());
   } catch {

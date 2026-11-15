@@ -54,7 +54,7 @@ Setup confirmed by Ale before the run:
 | 6 · Map, compartment view, record card, search | Done | `e2e/demo.spec.ts` (PASS, desktop and mobile): with the demo, searching a known record shows shelf, row, column, "% from the left", two neighbors on each side with covers, the "Data provided by Discogs" link to the release; "Show on the map" highlights the compartment; tapping it shows the spines left to right. Covers load from `i.discogs.com` with `<img loading="lazy">` (checked `naturalWidth > 0`). Screenshots in `docs/screenshots/` (local only). |
 | 7 · If-time features | Done | Both were marked yes. Calibration: `e2e/core-task.spec.ts` (PASS) opens a compartment, picks the last record of the previous one through search, and the count goes up by one; event `calibrate:1` stored. "Where does this record go?": Discogs search through `/api/discogs/search` (debounced 450 ms, 30 per minute per user, 15 per IP without an account), shows compartment, neighbors, and whether it fits, with the list of moves if it doesn't; "Add" saves the record (`origin = added`), its placement, and an `insert` event (`insert:1` in the DB check); after a reload the search finds it on the shelf. |
 | 8 · Self-test as a new user | Done | `npx playwright test` → 15 passed, 5 skipped on purpose (heavy flows run on one size only), exit 0. Desktop: sign up from the landing page's username form, import 1,704 records, build the shelf from templates (block a compartment, columns traversal, genre → artist), generate the map, search "Faith George Michael" and see shelf, row, column, %, neighbors; reload keeps the map. Desktop and mobile: sign up, load the demo into the account, calibrate, add Kind of Blue. Plus: demo without an account, saving it on sign-up, resume after closing the tab, 6-hour re-sync, and a mistyped username (mobile). Sign-up uses `@clerk/testing` (testing token) and `+clerk_test` emails. Screenshots in `docs/screenshots/` (local, git-ignored). Stuck points below. |
-| 9 · Hardening and polish | Todo | |
+| 9 · Hardening and polish | Done | States: loading, onboarding (with the import error and the username filled in), import progress, error with retry, empty compartments, no search results, no shelves, records that don't fit, an `error.tsx` for the app screen, and a `not-found.tsx`. Accessibility: every input labeled, focus kept inside dialogs (Tab cycles, Escape closes, focus returns), view switcher with `aria-pressed`, map cells with full `aria-label`s, `ink-faint` darkened from 3.45:1 to 6.17:1 (all text tokens ≥ 4.5:1, computed). Security self-review below; fixes applied and covered by `npm run test:rls` (17/17 PASS). README complete. After the changes: `npm run test` exit 0, `npm run lint` exit 0, `npm run build` exit 0, `npx playwright test` 16 passed. |
 | 10 · Morning summary | Todo | |
 
 ## Assumptions and questions for Ale
@@ -102,6 +102,31 @@ Format: question · what I chose · why · how hard it is to change.
 9. **Logged: Google sign-in is enabled in Clerk but not covered by the automated tests.**
 10. **Dev only:** the Next.js dev indicator (bottom-left "N") overlaps content in screenshots; it doesn't exist in production builds.
 
+### Security self-review (Phase 9), diff `main...v1-build`
+
+Checked:
+
+- **Secrets.** No `.env*` or key files are tracked; `git grep` finds no key values. Server secrets (`CLERK_SECRET_KEY`, `DISCOGS_TOKEN`, `DISCOGS_USER_AGENT`, `CRON_SECRET`) are read only in route handlers and server modules; `src/lib/discogs/client.ts` throws if it's ever bundled for the browser. The built client chunks contain no key values (they only mention variable names inside library code).
+- **Public variables.** Only `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, all public by design.
+- **RLS.** Enabled on all 8 tables, with explicit grants (anon: none; authenticated: CRUD limited by policies on `(select auth.jwt()->>'sub') = user_id`). Composite foreign keys stop a row from pointing at another user's rows. All functions are `security invoker` with an empty `search_path`, and `execute` is revoked from `public`. Proven by `npm run test:rls`.
+- **Input validation.** zod on every route with input: import start (username regex), import step (uuid), Discogs search (2–120 chars), release (positive integer). `/api/demo` takes no input; the cron route checks `CRON_SECRET` with a timing-safe comparison.
+- **Rate limits on routes that call Discogs.** Search and release: 30/min per user, 15/min per IP without an account. Demo: 20/min per IP, plus a server cache. Import: 10 starts/min and 120 steps/min per user. Every Discogs call reads `X-Discogs-Ratelimit-Remaining` and backs off on 429.
+
+Fixed tonight:
+
+- A user could store a `javascript:` link or a tracking-pixel "cover" in a record they add by hand (self-XSS only, since RLS keeps it in their own account). Now the database rejects non-Discogs links and covers (migration `20261115020557_record_data_checks.sql`, checked by the RLS test), and release links are built from the release id.
+- Security headers: `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options: DENY`, `Permissions-Policy`; the `X-Powered-By` header is off.
+
+Open, for Ale (not fixed):
+
+1. **Anonymous routes use the shared Discogs token** (`/api/demo`, `/api/discogs/search`, `/api/discogs/release`). Per-IP limits and the cache soften it, but many IPs at once could drain the app's 60/min. If that's a worry for the fair, "Where does this record go?" could require an account.
+2. **The rate limits live in memory, per server instance.** Good enough for a class project; a shared store would mean a new service (not allowed in v1).
+3. **No Content-Security-Policy.** Clerk's scripts need a tuned policy; worth doing in v2 with Clerk's CSP guide.
+4. **Deleting a Clerk account doesn't delete its Supabase rows.** Needs a Clerk webhook (v2).
+5. **Some database error messages reach the browser** on import failures. Minor information leak.
+
+- **Dev-server note:** running `npm run build` while `npm run dev` is running made the dev page reload in a loop once; the e2e test that hit it passed on a rerun. Run e2e tests with the dev server alone.
+
 ## Blocked: needs Ale
 
 ## Ideas for v2
@@ -121,5 +146,6 @@ Format: question · what I chose · why · how hard it is to change.
 - 2026-11-14 19:36 · Phase 4 Done. 54 tests pass; `docs/algorithm.md` written.
 - 2026-11-14 19:59 · Phases 3, 5, 6, 7 Done: app shell, configurator, map, compartment view, record card, search, calibration, add-record. All e2e tests pass on desktop and mobile.
 - 2026-11-14 20:04 · Phase 8 Done. 15 e2e tests pass; stuck points listed; two of them fixed.
+- 2026-11-14 20:16 · Phase 9 Done: states, accessibility, security review and fixes, README.
 
 ## Morning summary

@@ -81,8 +81,8 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const json = (await res.json().catch(() => ({}))) as T & { error?: string };
-  if (!res.ok) throw new Error(json.error ?? `Request failed (${res.status}).`);
+  const json = (await res.json().catch(() => ({}))) as T & { error?: string; retryAfterMs?: number };
+  if (!res.ok) throw Object.assign(new Error(json.error ?? `Request failed (${res.status}).`), { status: res.status, retryAfterMs: json.retryAfterMs });
   return json;
 }
 
@@ -232,7 +232,17 @@ export function useShelfApp(startParam: string | null) {
     async (client: SupabaseClient, job: JobRow, background: boolean): Promise<JobRow> => {
       let current = job;
       while (alive.current && (current.status === "queued" || current.status === "running")) {
-        const step = await api<{ job: JobRow; retryAfterMs?: number }>("/api/import/step", { jobId: current.id });
+        let step: { job: JobRow; retryAfterMs?: number };
+        try {
+          step = await api<{ job: JobRow; retryAfterMs?: number }>("/api/import/step", { jobId: current.id });
+        } catch (err) {
+          // Too fast: wait and try the same step again.
+          if ((err as { status?: number }).status === 429) {
+            await sleep((err as { retryAfterMs?: number }).retryAfterMs ?? 3000);
+            continue;
+          }
+          throw err;
+        }
         current = step.job;
         if (!alive.current) break;
         if (background) setSyncJob(current);

@@ -3,6 +3,7 @@
 import { displayArtist, locate, type Location } from "@/lib/layout";
 import { percent } from "@/lib/design";
 import { formatLine, slotTitle } from "@/lib/shelf/describe";
+import { releaseUrl } from "@/lib/discogs/map";
 import type { MediaView, ShelfConfig, StoredRecord } from "@/lib/shelf/model";
 import { Cover } from "./cover";
 import { DiscogsAttribution } from "./discogs-attribution";
@@ -128,7 +129,7 @@ export function RecordDetails({
             </>
           )}
           <dd className="pt-1">
-            <DiscogsAttribution href={record.discogs_url} />
+            <DiscogsAttribution href={releaseUrl(record.discogs_release_id)} />
           </dd>
         </dl>
       </div>

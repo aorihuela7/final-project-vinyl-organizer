@@ -93,6 +93,10 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
           />
         ))}
 
+        {furniture.length === 0 && (
+          <p className="rounded-card bg-warning-soft p-3 text-sm text-warning">Add at least one shelf to generate the map.</p>
+        )}
+
         <div className="flex flex-wrap items-end gap-2 rounded-card border border-dashed border-line-strong p-3">
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-ink">Add a shelf</span>

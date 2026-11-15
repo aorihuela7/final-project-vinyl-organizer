@@ -17,7 +17,7 @@ test("the demo built without an account is saved when the visitor signs up", asy
   await expect(page.getByRole("region", { name: "Living room" })).toBeVisible({ timeout: 60_000 });
 
   // Change something locally: unblock a compartment and regenerate.
-  await page.getByRole("tab", { name: "Shelves & order" }).click();
+  await page.getByRole("button", { name: "Shelves & order" }).click();
   await page.locator("article").first().getByRole("button", { name: /row 2, column 2: blocked/ }).click();
   await page.getByRole("button", { name: "Generate map" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Recompute" }).click();

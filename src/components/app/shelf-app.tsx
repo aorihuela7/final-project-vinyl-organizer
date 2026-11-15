@@ -107,7 +107,7 @@ export function ShelfApp() {
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-1 rounded-control border border-line bg-surface p-1 text-sm" role="tablist" aria-label="Views">
+          <div className="flex items-center gap-1 rounded-control border border-line bg-surface p-1 text-sm" role="group" aria-label="Views">
             {(
               [
                 ["map", "Map"],
@@ -116,9 +116,8 @@ export function ShelfApp() {
             ).map(([id, label]) => (
               <button
                 key={id}
-                role="tab"
                 type="button"
-                aria-selected={tab === id}
+                aria-pressed={tab === id}
                 onClick={() => setTab(id)}
                 className={`flex-1 rounded px-3 py-2 font-medium ${tab === id ? "bg-ink text-surface" : "text-ink-muted hover:text-ink"}`}
               >

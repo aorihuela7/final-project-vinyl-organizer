@@ -69,12 +69,12 @@ export function CompartmentSheet({ slot, view, config, byId, app, onClose, onPic
                   className="flex w-full items-center gap-2 rounded-cell px-2 py-2 text-left text-sm text-ink hover:brightness-95"
                   style={{ background: spineColor(colors.get(r.id) ?? 0) }}
                 >
-                  <span className="w-7 shrink-0 text-right text-xs tabular-nums text-ink/60">{i + 1}</span>
+                  <span className="w-7 shrink-0 text-right text-xs tabular-nums text-ink/75">{i + 1}</span>
                   <span className="min-w-0 truncate">
                     <span className="font-semibold">{displayArtist(r.artist)}</span>
                     <span className="text-ink/70"> · {r.title}</span>
                   </span>
-                  {stored?.origin === "added" && <span className="ml-auto shrink-0 text-[10px] uppercase text-ink/60">added</span>}
+                  {stored?.origin === "added" && <span className="ml-auto shrink-0 text-[10px] uppercase text-ink/75">added</span>}
                 </button>
               </li>
             );

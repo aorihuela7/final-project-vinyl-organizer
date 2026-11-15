@@ -1,4 +1,11 @@
+import { timingSafeEqual } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+
+function sameSecret(given: string | null, expected: string): boolean {
+  const a = Buffer.from(given ?? "");
+  const b = Buffer.from(`Bearer ${expected}`);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 /**
  * Daily Vercel cron (see vercel.json). Runs one minimal query so the
@@ -7,7 +14,7 @@ import { createClient } from "@supabase/supabase-js";
  */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!secret || !sameSecret(request.headers.get("authorization"), secret)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { RecordInput } from "@/lib/discogs/map";
+import { releaseUrl, type RecordInput } from "@/lib/discogs/map";
 import { buildIndex, displayArtist, locate } from "@/lib/layout";
 import { formatLine, slotTitle } from "@/lib/shelf/describe";
 import { toLayoutRecord, toSortSettings, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
@@ -148,7 +148,7 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord }: Props) {
               <p className="font-semibold text-ink">{displayArtist(chosen.artist)}</p>
               <p className="text-ink">{chosen.title}</p>
               <p className="text-ink-muted">{[chosen.year, formatLine(chosen), chosen.label].filter(Boolean).join(" · ")}</p>
-              <DiscogsAttribution href={chosen.discogs_url} />
+              <DiscogsAttribution href={releaseUrl(chosen.discogs_release_id)} />
             </div>
           </div>
 

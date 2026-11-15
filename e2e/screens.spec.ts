@@ -10,9 +10,9 @@ test("captures the main screens", async ({ page }, testInfo) => {
   await shot("onboarding");
   await page.getByRole("button", { name: "Load the demo" }).click();
   await expect(page.getByRole("region", { name: "Living room" })).toBeVisible({ timeout: 60_000 });
-  await page.getByRole("tab", { name: "Shelves & order" }).click();
+  await page.getByRole("button", { name: "Shelves & order" }).click();
   await shot("configurator", true);
-  await page.getByRole("tab", { name: "Map" }).click();
+  await page.getByRole("button", { name: "Map", exact: true }).click();
   await page.getByRole("button", { name: "Where does this record go?" }).click();
   await page.getByRole("dialog").getByRole("searchbox").fill("Thriller Michael Jackson");
   await page.getByRole("dialog").getByRole("button", { name: /Michael Jackson/ }).first().click({ timeout: 30_000 });
