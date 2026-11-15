@@ -47,6 +47,22 @@ describe("range labels", () => {
     expect(labels.get(slots[1]!.id)?.label).toBe("Rock · O – P");
   });
 
+  it("shows both groups when a compartment crosses from one genre into the next, and never cuts genres", () => {
+    const settings: SortSettings = { levels: ["genre", "artist"], ignoreArticles: true };
+    const slots = traverse([shelf({ rows: 1, cols: 2, defaultCapacity: 5 })], "vinyl");
+    const records = [
+      rec("Miles Davis", { id: "a", genre: "Jazz" }),
+      rec("Nina Simone", { id: "b", genre: "Jazz" }),
+      rec("Oasis", { id: "c", genre: "Rock" }),
+      rec("Pixies", { id: "d", genre: "Rock" }),
+    ];
+    const placement: Placement = new Map([["a", slots[0]!.id], ["b", slots[1]!.id], ["c", slots[1]!.id], ["d", slots[1]!.id]]);
+    const labels = rangeLabels(buildIndex(records, placement, slots, settings), settings);
+    expect(labels.get(slots[1]!.id)?.label).toBe("Jazz · N – Rock · P");
+    const genreOnly: SortSettings = { levels: ["genre"], ignoreArticles: true };
+    expect(rangeLabels(buildIndex(records, placement, slots, genreOnly), genreOnly).get(slots[1]!.id)?.label).toBe("Jazz – Rock");
+  });
+
   it("colors spines by the first sort level, from a fixed palette", () => {
     const settings: SortSettings = { levels: ["genre", "artist"], ignoreArticles: true };
     const slots = traverse([shelf({ rows: 1, cols: 1, defaultCapacity: 10 })], "vinyl");

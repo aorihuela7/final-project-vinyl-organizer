@@ -3,7 +3,7 @@
  * Tailwind v4 turns every token in @theme into utilities
  * (bg-canvas, text-ink, rounded-cover, shadow-cover, bg-spine-3, …).
  */
-@theme {
+@theme static {
   /* Neutral, warm-gray interface. The covers bring the color. */
   --color-canvas: #f6f4f1;
   --color-surface: #ffffff;

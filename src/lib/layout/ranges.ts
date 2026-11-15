@@ -41,16 +41,35 @@ export function rangeLabels(index: ShelfIndex, settings: SortSettings): Map<stri
     const nextFirst = nextSlot ? index.keys.get(index.bySlot.get(nextSlot.id)![0]!.id)! : null;
 
     const top = levels[0]!;
-    const sameGroup = levels.length > 1 && collator.compare(partOf(first, top), partOf(last, top)) === 0;
-    const level = sameGroup ? levels[1]! : top;
-    const neighborValue = (k: SortKey | null) =>
-      k && (!sameGroup || collator.compare(partOf(k, top), partOf(first, top)) === 0) ? partOf(k, level) : null;
+    const second = levels[1];
+    const sameGroup = !!second && collator.compare(partOf(first, top), partOf(last, top)) === 0;
+    // Genres and years are shown whole; names and titles are cut to the shortest distinguishing prefix.
+    const short = (level: SortLevel, value: string, neighbor: string | null) =>
+      level === "year" || level === "genre" ? value : abbreviate(value, neighbor);
+    const sameTop = (a: SortKey | null, b: SortKey) => !!a && collator.compare(partOf(a, top), partOf(b, top)) === 0;
 
-    const isYear = level === "year";
-    const start = isYear ? partOf(first, level) : abbreviate(partOf(first, level), neighborValue(prevLast));
-    const end = isYear ? partOf(last, level) : abbreviate(partOf(last, level), neighborValue(nextFirst));
-    const group = sameGroup ? partOf(first, top) : null;
-    const range = records.length === 1 || start === end ? start : `${start} – ${end}`;
+    let start: string;
+    let end: string;
+    let group: string | null = null;
+    let range: string;
+    if (sameGroup) {
+      // "Jazz · M – N": the whole compartment is inside one first-level group.
+      group = partOf(first, top);
+      start = short(second, partOf(first, second), sameTop(prevLast, first) ? partOf(prevLast!, second) : null);
+      end = short(second, partOf(last, second), sameTop(nextFirst, last) ? partOf(nextFirst!, second) : null);
+      range = records.length === 1 || start === end ? start : `${start} – ${end}`;
+    } else if (second) {
+      // "Pop · J – Rock · Al": the compartment crosses from one group into another.
+      const s2 = short(second, partOf(first, second), sameTop(prevLast, first) ? partOf(prevLast!, second) : null);
+      const e2 = short(second, partOf(last, second), sameTop(nextFirst, last) ? partOf(nextFirst!, second) : null);
+      start = `${partOf(first, top)} · ${s2}`;
+      end = `${partOf(last, top)} · ${e2}`;
+      range = `${start} – ${end}`;
+    } else {
+      start = short(top, partOf(first, top), prevLast ? partOf(prevLast, top) : null);
+      end = short(top, partOf(last, top), nextFirst ? partOf(nextFirst, top) : null);
+      range = records.length === 1 || start === end ? start : `${start} – ${end}`;
+    }
     labels.set(slot.id, { start, end, group, label: group ? `${group} · ${range}` : range });
   });
   return labels;
