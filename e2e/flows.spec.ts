@@ -112,3 +112,44 @@ test("a typo in the Discogs username explains the problem and lets you fix it", 
   await expect(page.getByText(/couldn't find the Discogs user/)).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole("heading", { name: "Build your shelf" })).toHaveCount(0);
 });
+
+test("a demo account imports its own Discogs collection: a typo changes nothing, a real one replaces the demo", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Runs once.");
+  test.setTimeout(300_000);
+  const email = `e2e-replace-${Date.now().toString(36)}+clerk_test@example.com`;
+  const userId = await ensureTestUser(email);
+  const session = await openSession(userId);
+  const supabase = supabaseAs(() => session.token());
+
+  await page.goto("/");
+  await clerk.signIn({ page, emailAddress: email });
+  await page.goto("/app?start=demo");
+  await expect(page.getByRole("region", { name: "Living room" })).toBeVisible({ timeout: 90_000 });
+
+  // A typo: the demo stays as it was.
+  await page.getByRole("button", { name: "Shelves & order" }).click();
+  await expect(page.getByText(/The demo collection: 1,000 records/)).toBeVisible();
+  await page.getByLabel("Import your own collection from Discogs instead").fill("no-such-user-zz9x");
+  await page.getByRole("button", { name: "Import", exact: true }).click();
+  await page.getByRole("button", { name: "Replace my collection" }).click();
+  await expect(page.getByText(/Couldn't import "no-such-user-zz9x".*Your current collection didn't change\./)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/The demo collection: 1,000 records/)).toBeVisible();
+  const { count: shelvesAfterTypo } = await supabase.from("furniture").select("id", { count: "exact", head: true });
+  expect(shelvesAfterTypo).toBe(2);
+
+  // The real collection replaces the demo and its shelves.
+  await page.getByLabel("Import your own collection from Discogs instead").fill("aorihuelar");
+  await page.getByRole("button", { name: "Import", exact: true }).click();
+  await expect(page.getByText(/Your 1,000 records and your shelves are replaced/)).toBeVisible();
+  await page.getByRole("button", { name: "Replace my collection" }).click();
+  await expect(page.getByRole("heading", { name: "Build your shelf" })).toBeVisible({ timeout: 240_000 });
+  await expect(page.getByText(/1,704 records imported/)).toBeVisible();
+  await expect(page.getByText(`The Discogs collection of "aorihuelar" replaced the previous one. Build your shelf for it.`)).toBeVisible();
+
+  const { data: collection } = await supabase.from("collections").select("source, discogs_username").single();
+  expect(collection).toEqual({ source: "discogs", discogs_username: "aorihuelar" });
+  const { count: shelves } = await supabase.from("furniture").select("id", { count: "exact", head: true });
+  expect(shelves).toBe(0);
+  const { count: records } = await supabase.from("records").select("id", { count: "exact", head: true });
+  expect(records).toBe(1704);
+});

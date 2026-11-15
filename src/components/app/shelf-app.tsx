@@ -15,6 +15,7 @@ import { SearchPanel } from "./search-panel";
 import { SetupView } from "./setup-view";
 import { Sheet } from "./sheet";
 import { AddRecord } from "./add-record";
+import { CollectionPanel } from "./collection-panel";
 import { useShelfApp, type Notice } from "./use-shelf-app";
 
 export function ShelfApp() {
@@ -104,6 +105,7 @@ export function ShelfApp() {
             </p>
           </div>
           <SetupView app={app} initial={suggestedConfig(data.records)} records={data.records} onDone={() => setTab("map")} />
+          <CollectionPanel app={app} />
         </div>
       ) : (
         <>
@@ -127,7 +129,10 @@ export function ShelfApp() {
           </div>
 
           {tab === "setup" ? (
-            <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} />
+            <>
+              <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} />
+              <CollectionPanel app={app} />
+            </>
           ) : (
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2 sm:flex-row">

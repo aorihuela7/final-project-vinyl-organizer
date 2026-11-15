@@ -7,7 +7,7 @@ Project for Design, Build, Ship (MPCS 51238, UChicago, Autumn 2026). Focus: **Sy
 ## What you can do
 
 1. **Open it without an account** and try the demo collection: 1,000 real records from a public Discogs collection, on two prebuilt shelves (a Kallax 4×4 with two compartments blocked by the turntable, and a 1×5 tower for CDs).
-2. **Import your own collection** by typing your Discogs username (the collection must be public). You create an account right before the import; it runs in steps of 100 records and resumes if you close the tab.
+2. **Import your own collection** by typing your Discogs username (the collection must be public). You create an account right before the import; it runs in steps of 100 records and resumes if you close the tab. Started with the demo? Import yours later from "Shelves & order": it replaces the demo, and you set up your shelves for it.
 3. **Build your shelf from templates:** Kallax 4×4, Kallax 5×5, low unit 2×4, tower 1×5, crates in a row, or custom. Edit rows and columns, tap compartments to block them, set the capacity per shelf or per compartment, choose whether it's read by rows or by columns, and whether it holds vinyl or CDs. Several shelves, in order.
 4. **Pick the sort order:** up to three levels from genre, artist, year, label, and title, with "ignore articles" and a slack percentage.
 5. **See the map:** every compartment with its range ("A – Bea") and how full it is.

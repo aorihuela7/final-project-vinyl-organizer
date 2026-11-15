@@ -31,6 +31,7 @@ import {
   type JobRow,
   type LayoutEvent,
 } from "@/lib/store/remote";
+import { replacesCollection } from "@/lib/import/replace";
 import {
   buildViews,
   computeInitial,
@@ -88,6 +89,11 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const replacedNotice = (username: string): Notice => ({
+  tone: "success",
+  text: `The Discogs collection of "${username}" replaced the previous one. Build your shelf for it.`,
+});
 
 function demoRecords(payload: { records: RecordInput[] }): StoredRecord[] {
   return payload.records.map((r) => ({ ...r, id: `d${r.discogs_instance_id}`, origin: "import" as const }));
@@ -265,7 +271,12 @@ export function useShelfApp(startParam: string | null) {
   const afterImport = useCallback(
     async (client: SupabaseClient) => {
       let { state, next } = await reloadRemote(client);
-      const local = loadLocal();
+      let local = loadLocal();
+      if (local && state.collection && state.collection.source !== "demo") {
+        // They imported their own collection instead of saving the browser demo.
+        clearLocal();
+        local = null;
+      }
 
       if (local && state.collection?.source === "demo" && !state.config) {
         // The visitor built something in the demo before signing up: keep it.
@@ -338,8 +349,15 @@ export function useShelfApp(startParam: string | null) {
     [reloadRemote, userId],
   );
 
+  /** A replacement failed: nothing changed, so go back to the current collection and say why. */
+  const failReplacement = useCallback((username: string, message: string) => {
+    setStatus({ kind: "ready" });
+    setNotice({ tone: "warning", text: `Couldn't import "${username}": ${message} Your current collection didn't change.` });
+  }, []);
+
   const startRemoteImport = useCallback(
-    async (client: SupabaseClient, input: { source: "discogs"; username: string } | { source: "demo" }, background: boolean) => {
+    async (client: SupabaseClient, input: { source: "discogs"; username: string } | { source: "demo" }, background: boolean, replacing = false) => {
+      const username = input.source === "discogs" ? input.username : "the demo";
       if (!background) setStatus({ kind: "importing", job: null, message: input.source === "demo" ? "Loading the demo collection…" : "Starting the import…" });
       try {
         const { job } = await api<{ job: JobRow }>("/api/import/start", input);
@@ -348,20 +366,23 @@ export function useShelfApp(startParam: string | null) {
         if (!alive.current || (finished.status !== "done" && finished.status !== "error")) return;
         if (finished.status === "error") {
           if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${finished.last_error ?? "unknown error"}` });
+          else if (replacing) failReplacement(username, finished.last_error ?? "The import failed.");
           else setStatus({ kind: "onboarding", error: finished.last_error ?? "The import failed.", username: input.source === "discogs" ? input.username : undefined });
           return;
         }
         await afterImport(client);
+        if (replacing && alive.current) setNotice(replacedNotice(username));
       } catch (err) {
         if (!alive.current) return;
         const message = err instanceof Error ? err.message : "The import failed.";
         if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${message}` });
+        else if (replacing) failReplacement(username, message);
         else setStatus({ kind: "onboarding", error: message, username: input.source === "discogs" ? input.username : undefined });
       } finally {
         if (alive.current && background) setSyncJob(null);
       }
     },
-    [afterImport, runJob],
+    [afterImport, runJob, failReplacement],
   );
 
   // ------------------------------------------------------------ boot
@@ -395,30 +416,38 @@ export function useShelfApp(startParam: string | null) {
         if (!alive.current) return;
         const pending = takePendingImport();
         if (pending) {
+          // A different collection than the one they have replaces it: show it as a full import, not a quiet re-sync.
+          const replacing = state.records.length > 0 && replacesCollection(state.collection, { source: "discogs", discogs_username: pending });
           if (state.records.length > 0) {
             setData(next);
             setStatus({ kind: "ready" });
           }
-          await startRemoteImport(client, { source: "discogs", username: pending }, state.records.length > 0);
+          await startRemoteImport(client, { source: "discogs", username: pending }, state.records.length > 0 && !replacing, replacing);
           return;
         }
         if (state.activeJob) {
-          const background = state.records.length > 0 && !!state.config;
+          const replacing = state.records.length > 0 && replacesCollection(state.collection, state.activeJob);
+          const background = state.records.length > 0 && !!state.config && !replacing;
+          if (state.records.length > 0) setData(next);
           if (background) {
-            setData(next);
             setStatus({ kind: "ready" });
             setSyncJob(state.activeJob);
           }
           const finished = await runJob(client, state.activeJob, background);
           if (!alive.current) return;
+          const username = finished.source === "demo" ? "the demo" : finished.discogs_username;
           if (finished.status === "error") {
             if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${finished.last_error}` });
+            else if (replacing) failReplacement(username, finished.last_error ?? "The import failed.");
             else setStatus({ kind: "onboarding", error: finished.last_error ?? "The import failed.", username: finished.discogs_username });
             setSyncJob(null);
             return;
           }
           setSyncJob(null);
-          if (finished.status === "done") await afterImport(client);
+          if (finished.status === "done") {
+            await afterImport(client);
+            if (replacing && alive.current) setNotice(replacedNotice(username));
+          }
           return;
         }
         if (state.records.length === 0 && state.lastJob?.status === "error") {
@@ -454,7 +483,7 @@ export function useShelfApp(startParam: string | null) {
         if (alive.current) setStatus({ kind: "error", message: err instanceof Error ? err.message : "Couldn't load your shelf." });
       }
     })();
-  }, [mode, userId, supabase, startParam, startLocalDemo, refreshLocalDemo, reloadRemote, startRemoteImport, runJob, afterImport]);
+  }, [mode, userId, supabase, startParam, startLocalDemo, refreshLocalDemo, reloadRemote, startRemoteImport, runJob, afterImport, failReplacement]);
 
   // ------------------------------------------------------------ actions
   const startDemo = useCallback(() => {
@@ -465,13 +494,14 @@ export function useShelfApp(startParam: string | null) {
   const importDiscogs = useCallback(
     (username: string) => {
       if (mode === "remote" && supabase) {
-        void startRemoteImport(supabase, { source: "discogs", username }, !!data?.config);
+        const replacing = (data?.records.length ?? 0) > 0 && replacesCollection(data?.collection, { source: "discogs", discogs_username: username });
+        void startRemoteImport(supabase, { source: "discogs", username }, !!data?.config && !replacing, replacing);
       } else {
         setPendingImport(username);
         clerk.openSignUp({ forceRedirectUrl: "/app", signInForceRedirectUrl: "/app" });
       }
     },
-    [mode, supabase, startRemoteImport, data?.config, clerk],
+    [mode, supabase, startRemoteImport, data, clerk],
   );
 
   const views: MediaView[] = useMemo(() => (data?.config ? buildViews(data.records, data.config, data.placement) : []), [data]);

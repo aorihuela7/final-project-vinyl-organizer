@@ -77,6 +77,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 
 - Each step of an `import_job` processes one page of 100 from `GET /users/{username}/collection/folders/0/releases`, upserts by `discogs_instance_id`, and advances `next_page`. The UI shows progress and requests the next step; if the user closes the tab, the job stays in the database and resumes.
 - When a full sync finishes, records that job didn't see are deleted (and lose their placement). New records found in a re-sync go in through insertion, not a full relayout.
+- One collection per user. Importing a different collection (the demo → your own, or another username, from "Shelves & order") replaces the current one only when that import finishes: every record it didn't see (added ones too) and the shelves are deleted, and the user builds shelves again for the new collection. An import that fails (typo, private collection) changes nothing.
 - If `last_synced_at` is more than 6 hours old when the user opens the app, re-sync and show "Updating…".
 - There is one token for the whole app: send a unique User-Agent, read `X-Discogs-Ratelimit-Remaining`, back off exponentially on a 429, and allow only one active job per user.
 
@@ -145,3 +146,4 @@ Demo collection source: the 1,000 most recently added records of the public Disc
 - Formats: shelves hold vinyl or CDs; each media is laid out separately with the same sort settings.
 - Defaults: sort by artist, ignore articles off ("The Beatles" under T), slack 10%, 80 records per cube, 70 per crate, 60 CDs per cube.
 - Artist spellings: "The Beatles" and "Beatles" are the same artist and sort together under the spelling with the article.
+- Switching collections: one per user; a new import replaces the old collection and its shelves, then "Build your shelf" with suggested templates.

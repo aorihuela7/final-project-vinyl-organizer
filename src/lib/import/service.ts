@@ -8,6 +8,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { DEMO, FRESHNESS_MS } from "@/lib/config";
 import { DiscogsError, getCollectionPage, getRelease } from "@/lib/discogs/client";
 import { mapCollectionItem, mapRelease } from "@/lib/discogs/map";
+import { replacesCollection } from "./replace";
 
 export type ImportJob = {
   id: string;
@@ -78,12 +79,10 @@ export async function startImport(
   }
 
   const username = input.source === "demo" ? DEMO.username : input.username;
-  const { data: collection, error: collectionError } = await supabase
-    .from("collections")
-    .upsert({ user_id: userId, source: input.source, discogs_username: username }, { onConflict: "user_id" })
-    .select("id")
-    .single();
-  if (collectionError || !collection) throw new ImportError(collectionError?.message ?? "Couldn't save the collection.", 500);
+  // One collection per user. An existing one keeps its source and username until
+  // the new import finishes (finishSync), so a typo or a private collection
+  // never replaces what the user already has.
+  const collection = await ensureCollection(supabase, userId, input.source, username);
 
   const job =
     input.source === "demo"
@@ -94,7 +93,7 @@ export async function startImport(
     .from("import_jobs")
     .insert({
       user_id: userId,
-      collection_id: collection.id,
+      collection_id: collection,
       source: input.source,
       discogs_username: username,
       status: "queued",
@@ -112,6 +111,22 @@ export async function startImport(
     throw new ImportError(error.message, 500);
   }
   return data as ImportJob;
+}
+
+async function ensureCollection(supabase: SupabaseClient, userId: string, source: ImportJob["source"], username: string): Promise<string> {
+  const { data: existing, error: readError } = await supabase.from("collections").select("id").maybeSingle();
+  if (readError) throw new ImportError(readError.message, 500);
+  if (existing) return existing.id as string;
+  const { data: created, error: createError } = await supabase
+    .from("collections")
+    .upsert({ user_id: userId, source, discogs_username: username }, { onConflict: "user_id", ignoreDuplicates: true })
+    .select("id");
+  if (createError) throw new ImportError(createError.message, 500);
+  if (created?.[0]) return created[0].id as string;
+  // Another request created it first.
+  const { data: again, error: againError } = await supabase.from("collections").select("id").single();
+  if (againError || !again) throw new ImportError(againError?.message ?? "Couldn't save the collection.", 500);
+  return again.id as string;
 }
 
 function friendlyDiscogsError(err: DiscogsError, username: string): string {
@@ -213,6 +228,30 @@ export async function stepImport(supabase: SupabaseClient, userId: string, jobId
 
 /** End of a full sync: sweep unseen records, refresh added ones, stamp the collection. */
 async function finishSync(supabase: SupabaseClient, job: ImportJob, expected: number) {
+  const { data: collection, error: collectionError } = await supabase
+    .from("collections")
+    .select("source, discogs_username")
+    .eq("id", job.collection_id)
+    .maybeSingle();
+  if (collectionError) throw new ImportError(collectionError.message, 500);
+
+  if (replacesCollection(collection, job)) {
+    // One collection per user: the new one replaces the old one entirely. Every
+    // record this job didn't see goes, including records added by hand, and so do
+    // the shelves (their compartments and placements cascade); the user builds
+    // shelves again for the new collection.
+    const { error: recordsError } = await supabase.from("records").delete().eq("user_id", job.user_id).or(`last_seen_job_id.is.null,last_seen_job_id.neq.${job.id}`);
+    if (recordsError) throw new ImportError(recordsError.message, 500);
+    const { error: furnitureError } = await supabase.from("furniture").delete().eq("user_id", job.user_id);
+    if (furnitureError) throw new ImportError(furnitureError.message, 500);
+    const { error: stampError } = await supabase
+      .from("collections")
+      .update({ source: job.source, discogs_username: job.discogs_username, last_synced_at: new Date().toISOString() })
+      .eq("id", job.collection_id);
+    if (stampError) throw new ImportError(stampError.message, 500);
+    return;
+  }
+
   // Pages are offsets: if a record was removed on Discogs mid-import, later ones
   // shift into a page we already read and this job never saw them. Only sweep
   // when the job saw as many records as Discogs reports; otherwise the next sync does.
