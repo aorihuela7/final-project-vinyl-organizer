@@ -154,7 +154,7 @@ export function ShelfApp() {
 
               <p className="text-sm text-ink-muted">
                 {data.records.length.toLocaleString("en-US")} records · sorted by{" "}
-                {config.settings.sortLevels.join(" → ")}
+                {config.settings.sortLevels.map((l) => l[0]!.toUpperCase() + l.slice(1)).join(" → ")}
                 {config.settings.ignoreArticles ? ", ignoring articles" : ""} · {config.settings.slackPct}% slack
               </p>
               {(leftover > 0 || others > 0 || cdsWithoutShelf > 0) && (

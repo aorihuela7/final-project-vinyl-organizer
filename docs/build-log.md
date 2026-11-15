@@ -53,7 +53,7 @@ Setup confirmed by Ale before the run:
 | 5 · Shelf configurator and sort order | Done | `e2e/core-task.spec.ts` (PASS): a new user builds shelves from the suggested Kallax templates, blocks a compartment by tapping it, switches one shelf to columns, picks genre → artist, and generates the map with a confirmation. `npx tsx --env-file=.env.local scripts/db-check.ts` afterwards: that user has 3 shelves, 48 compartments, 1 blocked, 1,698 placements (1,704 records minus 6 cassettes/files), and one `initial` layout event. A demo user gets "Living room" (Kallax 4×4, 2 blocked) and "Studio" (tower 1×5, CDs) automatically: 998 placements, `initial:998`. Changing an existing map asks for confirmation with the number of records that change compartment (`e2e/flows.spec.ts`). |
 | 6 · Map, compartment view, record card, search | Done | `e2e/demo.spec.ts` (PASS, desktop and mobile): with the demo, searching a known record shows shelf, row, column, "% from the left", two neighbors on each side with covers, the "Data provided by Discogs" link to the release; "Show on the map" highlights the compartment; tapping it shows the spines left to right. Covers load from `i.discogs.com` with `<img loading="lazy">` (checked `naturalWidth > 0`). Screenshots in `docs/screenshots/` (local only). |
 | 7 · If-time features | Done | Both were marked yes. Calibration: `e2e/core-task.spec.ts` (PASS) opens a compartment, picks the last record of the previous one through search, and the count goes up by one; event `calibrate:1` stored. "Where does this record go?": Discogs search through `/api/discogs/search` (debounced 450 ms, 30 per minute per user, 15 per IP without an account), shows compartment, neighbors, and whether it fits, with the list of moves if it doesn't; "Add" saves the record (`origin = added`), its placement, and an `insert` event (`insert:1` in the DB check); after a reload the search finds it on the shelf. |
-| 8 · Self-test as a new user | Doing | |
+| 8 · Self-test as a new user | Done | `npx playwright test` → 15 passed, 5 skipped on purpose (heavy flows run on one size only), exit 0. Desktop: sign up from the landing page's username form, import 1,704 records, build the shelf from templates (block a compartment, columns traversal, genre → artist), generate the map, search "Faith George Michael" and see shelf, row, column, %, neighbors; reload keeps the map. Desktop and mobile: sign up, load the demo into the account, calibrate, add Kind of Blue. Plus: demo without an account, saving it on sign-up, resume after closing the tab, 6-hour re-sync, and a mistyped username (mobile). Sign-up uses `@clerk/testing` (testing token) and `+clerk_test` emails. Screenshots in `docs/screenshots/` (local, git-ignored). Stuck points below. |
 | 9 · Hardening and polish | Todo | |
 | 10 · Morning summary | Todo | |
 
@@ -89,6 +89,19 @@ Format: question · what I chose · why · how hard it is to change.
 - **Spines are horizontal strips stacked top to bottom (reading "left → right")** instead of vertical strips, because 60–80 vertical spines don't fit on a phone. · Easy to change in `compartment-sheet.tsx`.
 - **Search covers artist, title, label, and year**, accent- and case-insensitive. · Easy.
 
+### Where a new person would get stuck (Phase 8), most severe first
+
+1. **Fixed: a failed import left you on an empty shelf.** A mistyped username or a private collection ended on "Build your shelf · 0 records imported" with no way to retry. Now you go back to the start screen with the reason ("We couldn't find the Discogs user…", or how to make the collection public) and the username filled in. Covered by an e2e test.
+2. **Fixed: a demo user whose shelves weren't built yet skipped the 6-hour re-sync.** Covered by an e2e test.
+3. **Logged: there's no "change my Discogs username" button after a successful import.** It works by typing a new username in the landing page form while signed in (it imports and lays the shelf out again), but nobody will find that. Proposed: a small "Collection" section in "Shelves & order". Needs your call.
+4. **Logged: capacities are unmeasured (80 per cube, 70 per crate, 60 CDs).** Until someone calibrates, the map can drift from the real shelf. The calibration entry point is the button "The first record here is different…" inside a compartment; worth watching in user tests whether people find it.
+5. **Logged: compartment labels are small (11 px) on phones with 4+ columns**, and long genres ("Folk, World, & Country") get cut after three lines. Readable, but tight.
+6. **Fixed: the sort summary showed internal names** ("genre → artist"); now "Genre → Artist".
+7. **Logged: "Sign in" / "Sign up" appear in the header only after Clerk loads** (under a second); the space is empty before.
+8. **Logged: a record that isn't on Discogs can't be added** (no manual entry in v1).
+9. **Logged: Google sign-in is enabled in Clerk but not covered by the automated tests.**
+10. **Dev only:** the Next.js dev indicator (bottom-left "N") overlaps content in screenshots; it doesn't exist in production builds.
+
 ## Blocked: needs Ale
 
 ## Ideas for v2
@@ -107,5 +120,6 @@ Format: question · what I chose · why · how hard it is to change.
 - 2026-11-14 19:30 · Phase 4 started: tests first.
 - 2026-11-14 19:36 · Phase 4 Done. 54 tests pass; `docs/algorithm.md` written.
 - 2026-11-14 19:59 · Phases 3, 5, 6, 7 Done: app shell, configurator, map, compartment view, record card, search, calibration, add-record. All e2e tests pass on desktop and mobile.
+- 2026-11-14 20:04 · Phase 8 Done. 15 e2e tests pass; stuck points listed; two of them fixed.
 
 ## Morning summary

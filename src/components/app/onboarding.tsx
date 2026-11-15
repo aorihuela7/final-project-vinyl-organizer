@@ -6,12 +6,18 @@ import type { ShelfApp } from "./use-shelf-app";
 
 /** First screen when there's nothing yet: the demo or your own Discogs collection. No login wall. */
 export function Onboarding({ app }: { app: ShelfApp }) {
-  const [username, setUsername] = useState(app.pendingImport ?? "");
+  const previous = app.status.kind === "onboarding" ? app.status : null;
+  const [username, setUsername] = useState(previous?.username ?? app.pendingImport ?? "");
   const [error, setError] = useState<string | null>(null);
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
       <h1 className="text-2xl font-semibold tracking-tight text-ink">Let&apos;s map your shelf</h1>
+      {previous?.error && (
+        <p role="alert" className="rounded-card bg-danger-soft p-3 text-sm text-danger">
+          {previous.error}
+        </p>
+      )}
       <div className="rounded-card border border-line bg-surface p-4 shadow-card">
         <h2 className="font-semibold text-ink">Try the demo collection</h2>
         <p className="mt-1 text-sm text-ink-muted">1,000 real records on two prebuilt shelves. {app.mode === "local" ? "No account needed." : ""}</p>

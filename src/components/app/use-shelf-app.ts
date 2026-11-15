@@ -54,7 +54,7 @@ export type AppData = {
 
 export type Status =
   | { kind: "loading"; message: string }
-  | { kind: "onboarding" }
+  | { kind: "onboarding"; error?: string; username?: string }
   | { kind: "importing"; job: JobRow | null; message: string }
   | { kind: "ready" }
   | { kind: "error"; message: string };
@@ -313,7 +313,7 @@ export function useShelfApp(startParam: string | null) {
         if (!alive.current) return;
         if (finished.status === "error") {
           if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${finished.last_error ?? "unknown error"}` });
-          else setStatus({ kind: "error", message: finished.last_error ?? "The import failed." });
+          else setStatus({ kind: "onboarding", error: finished.last_error ?? "The import failed.", username: input.source === "discogs" ? input.username : undefined });
           return;
         }
         await afterImport(client);
@@ -321,7 +321,7 @@ export function useShelfApp(startParam: string | null) {
         if (!alive.current) return;
         const message = err instanceof Error ? err.message : "The import failed.";
         if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${message}` });
-        else setStatus({ kind: "error", message });
+        else setStatus({ kind: "onboarding", error: message, username: input.source === "discogs" ? input.username : undefined });
       } finally {
         if (alive.current && background) setSyncJob(null);
       }
@@ -377,12 +377,17 @@ export function useShelfApp(startParam: string | null) {
           const finished = await runJob(client, state.activeJob, background);
           if (finished.status === "error") {
             if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${finished.last_error}` });
-            else setStatus({ kind: "error", message: finished.last_error ?? "The import failed." });
+            else setStatus({ kind: "onboarding", error: finished.last_error ?? "The import failed.", username: finished.discogs_username });
             setSyncJob(null);
             return;
           }
           setSyncJob(null);
           await afterImport(client);
+          return;
+        }
+        if (state.records.length === 0 && state.lastJob?.status === "error") {
+          // The last import failed (a typo, a private collection): let them fix it.
+          setStatus({ kind: "onboarding", error: state.lastJob.last_error ?? "The last import failed.", username: state.lastJob.discogs_username });
           return;
         }
         if (!state.collection) {

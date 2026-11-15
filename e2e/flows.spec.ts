@@ -80,3 +80,22 @@ test("data older than 6 hours is refreshed with an 'Updating…' notice", async 
   const { data } = await supabase.from("collections").select("last_synced_at").single();
   expect(new Date(data!.last_synced_at as string).getTime()).toBeGreaterThan(Date.now() - 5 * 60 * 1000);
 });
+
+test("a typo in the Discogs username explains the problem and lets you fix it", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "Runs once, on a phone.");
+  test.setTimeout(120_000);
+  await setupClerkTestingToken({ page });
+  const account = newAccount("typo");
+  await page.goto("/");
+  await page.getByLabel("Your Discogs username").fill("no-such-user-zz9x");
+  await page.getByRole("button", { name: "Import", exact: true }).click();
+  await page.locator("input[name=emailAddress]").fill(account.email);
+  await page.locator("input[name=password]").fill(account.password);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByText(`We couldn't find the Discogs user "no-such-user-zz9x". Check the spelling.`)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByLabel("Your Discogs username (the collection must be public)")).toHaveValue("no-such-user-zz9x");
+  // After a reload it still explains it, instead of showing an empty shelf.
+  await page.reload();
+  await expect(page.getByText(/couldn't find the Discogs user/)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("heading", { name: "Build your shelf" })).toHaveCount(0);
+});
