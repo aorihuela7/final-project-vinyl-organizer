@@ -55,7 +55,7 @@ Setup confirmed by Ale before the run:
 | 7 · If-time features | Done | Both were marked yes. Calibration: `e2e/core-task.spec.ts` (PASS) opens a compartment, picks the last record of the previous one through search, and the count goes up by one; event `calibrate:1` stored. "Where does this record go?": Discogs search through `/api/discogs/search` (debounced 450 ms, 30 per minute per user, 15 per IP without an account), shows compartment, neighbors, and whether it fits, with the list of moves if it doesn't; "Add" saves the record (`origin = added`), its placement, and an `insert` event (`insert:1` in the DB check); after a reload the search finds it on the shelf. |
 | 8 · Self-test as a new user | Done | `npx playwright test` → 15 passed, 5 skipped on purpose (heavy flows run on one size only), exit 0. Desktop: sign up from the landing page's username form, import 1,704 records, build the shelf from templates (block a compartment, columns traversal, genre → artist), generate the map, search "Faith George Michael" and see shelf, row, column, %, neighbors; reload keeps the map. Desktop and mobile: sign up, load the demo into the account, calibrate, add Kind of Blue. Plus: demo without an account, saving it on sign-up, resume after closing the tab, 6-hour re-sync, and a mistyped username (mobile). Sign-up uses `@clerk/testing` (testing token) and `+clerk_test` emails. Screenshots in `docs/screenshots/` (local, git-ignored). Stuck points below. |
 | 9 · Hardening and polish | Done | States: loading, onboarding (with the import error and the username filled in), import progress, error with retry, empty compartments, no search results, no shelves, records that don't fit, an `error.tsx` for the app screen, and a `not-found.tsx`. Accessibility: every input labeled, focus kept inside dialogs (Tab cycles, Escape closes, focus returns), view switcher with `aria-pressed`, map cells with full `aria-label`s, `ink-faint` darkened from 3.45:1 to 6.17:1 (all text tokens ≥ 4.5:1, computed). Security self-review below; fixes applied and covered by `npm run test:rls` (17/17 PASS). README complete. After the changes: `npm run test` exit 0, `npm run lint` exit 0, `npm run build` exit 0, `npx playwright test` (clean run, dev server alone) → 15 passed, 5 skipped on purpose, exit 0. |
-| 10 · Morning summary | Todo | |
+| 10 · Morning summary | Done | "Morning summary" below; final message to Ale in Spanish. Last commit on `v1-build`: `npm run test` exit 0 (64 tests), `npm run build` exit 0. |
 
 ## Assumptions and questions for Ale
 
@@ -74,7 +74,7 @@ Format: question · what I chose · why · how hard it is to change.
 - **`supabase db push` needs `--yes` in agent mode.** The CLI refuses to apply migrations without an interactive confirmation and suggests `--yes`. · Chose: use `--yes`, because the plan (rule 9) approves applying migrations to this project. · Not a permission workaround: it's the CLI's own confirmation flag.
 - **Demo for visitors without an account is cached on the server** (`/api/demo`, `use cache`, revalidate 1 h, expire 2 h) so the shared Discogs limit survives a busy demo. The browser refetches when its copy is older than 6 hours. · Why: 10 Discogs requests per anonymous visit would drain the 60/min limit at the fair. · Easy to change in `src/app/api/demo/route.ts`. Terms question for Ale: is a ≤ 2 h server cache acceptable under "don't store longer than necessary"? I think yes, since the 6-hour freshness rule still holds.
 - **Import order.** A full import reads the collection sorted by date added, ascending, so records added mid-import land at the end and don't shift earlier pages. The demo reads newest first. · Easy.
-- **Test users created in Clerk (development instance):** `rls-a+clerk_test@example.com`, `rls-b+clerk_test@example.com`, `import-check+clerk_test@example.com`, `demo-check+clerk_test@example.com` (no passwords; sessions are created through the Backend API).
+- **Test users created in Clerk (development instance):** `rls-a+clerk_test@example.com`, `rls-b+clerk_test@example.com`, `import-check+clerk_test@example.com`, `demo-check+clerk_test@example.com`, `replace-check+clerk_test@example.com` (no passwords; sessions come from the Backend API), plus one `e2e-…+clerk_test@example.com` user per Playwright run (about 25 tonight). Their rows in Supabase are test data. All can be deleted from the Clerk dashboard (Users, filter by "clerk_test").
 
 - **Articles apply to artist and title, not to label or genre.** · Why: that's how most shelves file "The Beatles" and "The Wall". · Easy: one line in `sort.ts`.
 - **Article list:** The, A, An, El, La, Los, Las, Le, Les, L' (CLAUDE.md's list plus the French elision). Not added: Die, Der, Das, Il, I, O, Un, Una, because they collide with real names ("I Am Kloot", "O Rappa"). · Easy: `DEFAULT_ARTICLES` in `normalize.ts`.
@@ -148,10 +148,16 @@ After the fixes: `npm run test` → 64 tests in 8 files, exit 0; `npm run lint` 
 
 ## Blocked: needs Ale
 
+Nothing is blocked. Everything that needed Ale was done before the run (CLI logins, linking, Clerk ↔ Supabase). What's left for Ale is in the morning summary: review, `/security-review`, and connecting Vercel.
+
 ## Ideas for v2
 
+- Minimum-move insertion (the v2 algorithm), measured against tonight's naive method with the `layout_events` baseline and a purchase simulator.
+- A "Collection" section to change the Discogs username or go back to the demo (stuck point 3).
 - A separate sort order per media (vinyl vs. CDs).
-- Automatic purge of Discogs data for users who haven't opened the app in N days.
+- A more general calibration (any record, any compartment) and calibration by count ("74 fit here").
+- Automatic purge of Discogs data for users who haven't opened the app in N days; delete Supabase rows when a Clerk account is deleted (Clerk webhook).
+- A Content-Security-Policy tuned for Clerk; rate limits in a shared store.
 - CSV import and manual entry.
 
 ## Timeline
@@ -167,5 +173,84 @@ After the fixes: `npm run test` → 64 tests in 8 files, exit 0; `npm run lint` 
 - 2026-11-14 20:04 · Phase 8 Done. 15 e2e tests pass; stuck points listed; two of them fixed.
 - 2026-11-14 20:16 · Phase 9 Done: states, accessibility, security review and fixes, README.
 - 2026-11-14 20:32 · Independent review: 10 findings, all fixed with tests. Demo-added records now carry over on sign-up.
+- 2026-11-14 22:09 · Phase 10 Done: morning summary written; PR description synced.
 
 ## Morning summary
+
+### 1. What works end to end
+
+All ten phases are Done. A new person can, without help:
+
+- open the app with no login wall and try the demo (1,000 real records on "Living room", a Kallax 4×4 with two blocked cubes, and "Studio", a 1×5 tower for CDs), then sign up to save it;
+- or type a Discogs username, sign up (email + password, no verification; Google also on), and watch the import run in steps (1,704 records in about 25 s; it resumes if the tab closes);
+- build shelves from the six templates (rows, columns, blocked compartments by tapping, capacity per shelf and per compartment, rows or columns, vinyl or CDs, several shelves reordered with arrows) and pick up to three sort levels, articles, and slack;
+- see the map (ranges like "A – Bea", fill bars, blocked cubes shaded), open a compartment (spines left to right, colored by the first level), open a record card (cover, data, "Data provided by Discogs");
+- search a record and see shelf, row, column, "% from the left", and the two neighbors on each side;
+- calibrate ("The first record here is different…") and ask "Where does this record go?" with Discogs search, the moves, and Add.
+
+Data older than 6 hours is refreshed with "Updating from Discogs…". RLS is proven with two accounts.
+
+Try it locally:
+
+```bash
+cd ~/final-project-vinyl-organizer
+git checkout v1-build
+npm install
+npm run dev                 # open http://localhost:3000 → "Try the demo collection"
+npm run test                # 64 unit tests
+npm run test:rls            # 17 RLS checks with two Clerk test users
+npm run check:import        # with npm run dev running: full import, demo, resume, re-sync, job replacement
+npx playwright test         # with npm run dev running: 15 end-to-end tests, desktop and mobile
+```
+
+### 2. Blocked, and what Ale must do
+
+Nothing is blocked. In order:
+
+1. Review the draft PR (#1) and run `/security-review` on `v1-build` against `main`.
+2. Connect Vercel (section 4) and try the deployed demo on your phone.
+3. Answer the questions in section 3 (all have a working default).
+4. Optional: delete the `…+clerk_test@example.com` users in the Clerk dashboard.
+5. Measure a real cube (records per Kallax cube, per crate, CDs per cube) and update the defaults in `src/lib/shelf/templates.ts` and CLAUDE.md.
+
+### 3. Questions for Ale (assumption taken · how hard to change)
+
+1. **Vinyl and CDs:** each shelf holds vinyl or CDs, and both use the same sort order. · Medium.
+2. **Demo shelves:** "Studio" (tower 1×5) holds the demo's CDs. · Easy.
+3. **Discogs terms:** the anonymous demo is cached on the server for at most 2 hours and kept in the browser up to 6 hours. Is that "not longer than necessary"? · Easy.
+4. **Anonymous "Where does this record go?"** uses the app's Discogs token (limited per IP). Should it require an account for the fair? · Easy.
+5. **Change collection:** there's no visible way to switch Discogs username after importing. Add a "Collection" section? · Easy.
+6. **Insertion edge cases:** besides CLAUDE.md's rule, an empty compartment between the neighbors (or before the first one) takes the new record instead of cascading. OK to keep in the naive baseline? · Easy.
+7. **Articles:** The, A, An, El, La, Los, Las, Le, Les, L', applied to artist and title only. · Easy.
+8. **Spines:** horizontal strips stacked "left → right", because vertical ones don't fit on a phone. · Easy.
+9. **Calibration:** only with a record from that compartment or the previous one. · Medium.
+10. **Re-sync with mostly new records** (e.g., demo → own collection) lays the shelf out again instead of inserting one by one. · Medium.
+11. **Tailwind package:** `@tailwindcss/turbopack` (scaffold default) instead of the approved `@tailwindcss/postcss`. · Easy.
+
+### 4. Connect Vercel
+
+1. Go to https://vercel.com/new → **Import Git Repository** → `aorihuela7/final-project-vinyl-organizer` (allow the GitHub app if asked).
+2. **Framework Preset: Next.js** (auto-detected). Root Directory `./`. Leave Build, Install, and Output at their defaults.
+3. **Environment Variables** (Production and Preview): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `DISCOGS_TOKEN`, `DISCOGS_USER_AGENT`, `CRON_SECRET`.
+4. **Deploy.** Production builds from `main`, so until the PR is merged, `v1-build` gets a Preview URL (Deployments tab). Merge the PR when you're happy for the production URL.
+5. Settings → General → **Node.js Version: 24.x**.
+6. Settings → **Cron Jobs**: `/api/cron/keepalive` should appear, daily (it runs on production deployments only).
+7. Check: open the URL → "Try the demo collection"; sign up; then `curl -H "Authorization: Bearer <your CRON_SECRET>" https://<your-app>.vercel.app/api/cron/keepalive` should answer `{"ok":true,…}`.
+
+Clerk's development instance works on `*.vercel.app`, with a "Development mode" badge and dev limits. That's fine for class. A Clerk production instance needs your own domain. Supabase needs no change.
+
+### 5. What to review first in the PR
+
+1. `src/lib/layout/` (`initial.ts`, `insert.ts`, `calibrate.ts`) with **`docs/algorithm.md`**. This is what you defend in class; the worked 10-record example is generated by the real code.
+2. `supabase/migrations/`: RLS, explicit grants, composite foreign keys, the `save_setup` / `apply_placements` functions, and the URL checks.
+3. `src/lib/import/service.ts` and `src/lib/discogs/client.ts`: resumable import, sweep, freshness, rate limits.
+4. `src/components/app/use-shelf-app.ts`: the state machine (browser demo vs. account).
+5. `docs/build-log.md`: decisions, stuck points, the security review, and the independent review.
+6. `CLAUDE.md` diff: Decisions log filled in, `furniture.media`, and core task step 1 (no login wall).
+
+### 6. Final results
+
+- `npm run test` → exit 0 (64 tests in 8 files).
+- `npm run build` → exit 0.
+- Also: `npm run lint` exit 0; `npm run test:rls` 17/17 PASS; `npm run check:import` 5/5 PASS; `npx playwright test` 15 passed, 5 skipped on purpose, exit 0.
+- Draft PR: https://github.com/aorihuela7/final-project-vinyl-organizer/pull/1
