@@ -64,7 +64,7 @@ There are three cases:
 ## 6. Inserting a new record (`insert.ts`), the v1 naive method
 
 1. **Find its place in the global order:** binary search gives the record just before it (prev) and just after it (next).
-2. **Pick the candidate compartment:** prev's compartment, or next's compartment if prev's is full and next's isn't. Either one keeps contiguity, because the new record goes at the end of prev's range or at the start of next's.
+2. **Pick the candidate compartment:** prev's compartment, or next's compartment if prev's is full and next's isn't. Either one keeps contiguity, because the new record goes at the end of prev's range or at the start of next's. Two edge cases: if empty compartments sit between prev's and next's (a calibration or a sync can empty one), the first of them with room is used; and if the new record sorts first of all, an empty compartment before next's can take it. Both keep contiguity, because those compartments hold nothing.
 3. **If the candidate has room:** done, **1 move** (putting the new record on the shelf).
 4. **If not, cascade:** put the record in, then push the *last* record of that compartment to the *start* of the next available compartment. If that one was full too, push its last record forward, and so on until a compartment with room absorbs one. Each push is one more move. If the push falls off the last compartment, that record no longer fits and is reported.
 
@@ -129,6 +129,6 @@ Sorting n records is O(n log n), and the comparisons use normalized keys compute
 - **Sort key:** articles (The Beatles with and without), suffixes (Nirvana (2)), two artists, no genre, accents and numbers, ties, unknown years, three levels.
 - **Traversal:** a Kallax 4×4 with two blocked compartments, by rows and by columns; several shelves; capacity override.
 - **Initial layout:** proportional counts, both invariants for every size from 0 to 60 records, slack reduced, a collection that doesn't fit, vinyl vs CD vs other, an empty shelf, and the 3,000-record timing test.
-- **Insertion:** fits (1 move), next compartment, a cascade across three compartments, the new record itself pushed forward, overflow at the end, an empty shelf, and 200 random insertions that keep both invariants.
+- **Insertion:** fits (1 move), next compartment, an empty compartment in between, a new first record with an empty compartment before it, a cascade across three compartments, the new record itself pushed forward, overflow at the end, an empty shelf, 200 random insertions that keep both invariants, and collapsing repeated moves.
 - **Calibration:** boundary moved back (with the over-capacity flag), moved forward, only one boundary touched, no-op, and refusals.
 - **Position, neighbors, ranges, and spine colors.**

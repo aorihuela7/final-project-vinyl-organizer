@@ -160,8 +160,10 @@ export async function saveSetupRemote(
 
 /** Upserts or removes some placements and records the event, in one transaction. */
 export async function applyPlacementsRemote(supabase: SupabaseClient, placement: Placement, moves: Move[], event: LayoutEvent) {
-  const updates = moves.filter((m) => m.to !== null).map((m) => ({ record_id: m.recordId, compartment_id: placement.get(m.recordId)! }));
-  const removals = moves.filter((m) => m.to === null).map((m) => m.recordId);
+  // One row per record, taken from the final placement (a record can appear in several moves).
+  const touched = [...new Set(moves.map((m) => m.recordId))];
+  const updates = touched.filter((id) => placement.has(id)).map((id) => ({ record_id: id, compartment_id: placement.get(id)! }));
+  const removals = touched.filter((id) => !placement.has(id));
   const { error } = await supabase.rpc("apply_placements", {
     p_placements: updates,
     p_event: { kind: event.kind, moves: event.moves, moved_count: event.movedCount },

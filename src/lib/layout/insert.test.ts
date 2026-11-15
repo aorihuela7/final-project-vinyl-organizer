@@ -81,6 +81,21 @@ describe("insertion, v1 naive method", () => {
     expect(result.moves.at(-1)).toEqual({ recordId: "Eagles", from: state.slots[1]!.id, to: null });
   });
 
+  it("uses an empty compartment between prev and next instead of cascading", () => {
+    const state = stateFrom([["Abba", "Blondie"], [], ["Doors", "Eagles"]], 2);
+    const result = insertRecord(state, rec("Cher", { id: "Cher" }));
+    expect(result.movedCount).toBe(1);
+    expect(picture(state, result.placement, [result.record])).toEqual([["Abba", "Blondie"], ["Cher"], ["Doors", "Eagles"]]);
+  });
+
+  it("never pushes a record off the shelf when an earlier compartment is empty", () => {
+    const state = stateFrom([[], ["Beck", "Blondie"]], 2);
+    const result = insertRecord(state, rec("Abba", { id: "Abba" }));
+    expect(result.overflow).toEqual([]);
+    expect(result.movedCount).toBe(1);
+    expect(picture(state, result.placement, [result.record])).toEqual([["Abba"], ["Beck", "Blondie"]]);
+  });
+
   it("puts the first record of an empty shelf in the first compartment", () => {
     const state = stateFrom([[], [], []], 2);
     const result = insertRecord(state, rec("Abba", { id: "Abba" }));
@@ -186,5 +201,31 @@ describe("insertion keeps the invariants", () => {
     // 8 × 30 = 240 places for 350 records: exactly 110 must be reported as not fitting.
     expect(placement.size).toBe(240);
     expect(overflowed).toBe(110);
+  });
+});
+
+describe("collapseMoves", () => {
+  it("keeps one move per record: its first origin and its last destination", async () => {
+    const { collapseMoves } = await import("./insert");
+    expect(
+      collapseMoves([
+        { recordId: "a", from: "s1", to: "s2" },
+        { recordId: "b", from: null, to: "s1" },
+        { recordId: "a", from: "s2", to: "s3" },
+        { recordId: "c", from: "s3", to: "s4" },
+        { recordId: "c", from: "s4", to: "s3" },
+      ]),
+    ).toEqual([
+      { recordId: "a", from: "s1", to: "s3" },
+      { recordId: "b", from: null, to: "s1" },
+    ]);
+  });
+
+  it("insertMany never reports the same record twice", async () => {
+    const { insertMany } = await import("./insert");
+    const state = stateFrom([["Abba", "Blondie"], ["Doors", "Eagles"], ["Genesis"]], 2);
+    const result = insertMany(state, [rec("Beck", { id: "Beck" }), rec("Bjork", { id: "Bjork" }), rec("Cher", { id: "Cher" })]);
+    const ids = result.moves.map((m) => m.recordId);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

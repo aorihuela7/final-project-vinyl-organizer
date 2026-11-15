@@ -100,9 +100,13 @@ function Calibrate({ slot, view, byId, app, onDone }: { slot: Slot; view: MediaV
 
   async function choose(id: string) {
     setError(null);
-    const result = await app.calibrate(id, slot.id);
-    if (!result.ok) setError(result.reason);
-    else onDone();
+    try {
+      const result = await app.calibrate(id, slot.id);
+      if (!result.ok) setError(result.reason);
+      else onDone();
+    } catch (err) {
+      setError(err instanceof Error ? `Couldn't save the calibration: ${err.message}` : "Couldn't save the calibration.");
+    }
   }
 
   return (

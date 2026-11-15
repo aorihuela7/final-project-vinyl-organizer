@@ -86,11 +86,25 @@ async function main() {
   const okResync = job.status === "done" && afterResync === reported;
   console.log(`${okResync ? "PASS" : "FAIL"}  re-sync is idempotent: ${afterResync} records after the second full sync`);
 
+  console.log("A different collection replaces the active job:");
+  const replacedUser = await openSession(await ensureTestUser("replace-check+clerk_test@example.com"));
+  const own = (await call("/api/import/start", await replacedUser.token(), { source: "discogs", username: USERNAME })).job!;
+  const demoJob = (await call("/api/import/start", await replacedUser.token(), { source: "demo" })).job!;
+  const { data: oldJob } = await supabaseAs(() => replacedUser.token()).from("import_jobs").select("status, last_error").eq("id", own.id).single();
+  const okReplace = demoJob.id !== own.id && oldJob?.status === "error";
+  console.log(`${okReplace ? "PASS" : "FAIL"}  asking for the demo while an import of ${USERNAME} is active retires it (${oldJob?.status}: ${oldJob?.last_error})`);
+  let dj = demoJob;
+  while (dj.status === "queued" || dj.status === "running") {
+    const step = await call("/api/import/step", await replacedUser.token(), { jobId: dj.id });
+    dj = step.job!;
+    if (step.retryAfterMs) await new Promise((r) => setTimeout(r, step.retryAfterMs));
+  }
+
   const okFull = full.job.status === "done" && full.count === reported;
   const okDemo = demo.job.status === "done" && demo.count === Math.min(1000, reported);
   console.log(`${okFull ? "PASS" : "FAIL"}  full import stored ${full.count}, Discogs reports ${reported}`);
   console.log(`${okDemo ? "PASS" : "FAIL"}  demo import stored ${demo.count}, expected ${Math.min(1000, reported)}`);
-  process.exit(okFull && okDemo && okResume && okResync ? 0 : 1);
+  process.exit(okFull && okDemo && okResume && okResync && okReplace ? 0 : 1);
 }
 
 main().catch((err) => {

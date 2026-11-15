@@ -24,6 +24,16 @@ test("the demo built without an account is saved when the visitor signs up", asy
   await expect(page.getByText(/Map updated/)).toBeVisible();
   await expect(page.getByRole("region", { name: "Living room" }).getByText("Blocked")).toHaveCount(1);
 
+  // Add a purchase in the browser demo, before having an account.
+  await page.getByRole("button", { name: "Map", exact: true }).click();
+  await page.getByRole("button", { name: "Where does this record go?" }).click();
+  await page.getByRole("dialog").getByRole("searchbox").fill("Kind of Blue Miles Davis");
+  await page.getByRole("dialog").getByRole("button", { name: /Miles Davis/ }).first().click({ timeout: 30_000 });
+  await page.getByRole("dialog").getByRole("button", { name: "Add to my shelf" }).click();
+  await expect(page.getByText(/^Added\./)).toBeVisible({ timeout: 30_000 });
+  await page.keyboard.press("Escape"); // close the record card that opens after adding
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
   const account = newAccount("save");
   await page.getByRole("button", { name: "Sign up to save" }).click();
   await page.locator("input[name=emailAddress]").fill(account.email);
@@ -33,6 +43,9 @@ test("the demo built without an account is saved when the visitor signs up", asy
   await expect(page.getByText("Your demo shelf is saved to your account.")).toBeVisible({ timeout: 120_000 });
   await expect(page.getByRole("region", { name: "Living room" }).getByText("Blocked")).toHaveCount(1);
   await expect(page.getByText("This demo lives only in this browser")).toHaveCount(0);
+  // The record added before signing up came along, on the shelf.
+  await page.getByLabel("Search your records").fill("Kind of Blue");
+  await expect(page.getByRole("list", { name: "Search results" }).getByText(/% from the left/).first()).toBeVisible();
 });
 
 test("an import resumes after the tab is closed", async ({ browser }, testInfo) => {

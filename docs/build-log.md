@@ -54,7 +54,7 @@ Setup confirmed by Ale before the run:
 | 6 · Map, compartment view, record card, search | Done | `e2e/demo.spec.ts` (PASS, desktop and mobile): with the demo, searching a known record shows shelf, row, column, "% from the left", two neighbors on each side with covers, the "Data provided by Discogs" link to the release; "Show on the map" highlights the compartment; tapping it shows the spines left to right. Covers load from `i.discogs.com` with `<img loading="lazy">` (checked `naturalWidth > 0`). Screenshots in `docs/screenshots/` (local only). |
 | 7 · If-time features | Done | Both were marked yes. Calibration: `e2e/core-task.spec.ts` (PASS) opens a compartment, picks the last record of the previous one through search, and the count goes up by one; event `calibrate:1` stored. "Where does this record go?": Discogs search through `/api/discogs/search` (debounced 450 ms, 30 per minute per user, 15 per IP without an account), shows compartment, neighbors, and whether it fits, with the list of moves if it doesn't; "Add" saves the record (`origin = added`), its placement, and an `insert` event (`insert:1` in the DB check); after a reload the search finds it on the shelf. |
 | 8 · Self-test as a new user | Done | `npx playwright test` → 15 passed, 5 skipped on purpose (heavy flows run on one size only), exit 0. Desktop: sign up from the landing page's username form, import 1,704 records, build the shelf from templates (block a compartment, columns traversal, genre → artist), generate the map, search "Faith George Michael" and see shelf, row, column, %, neighbors; reload keeps the map. Desktop and mobile: sign up, load the demo into the account, calibrate, add Kind of Blue. Plus: demo without an account, saving it on sign-up, resume after closing the tab, 6-hour re-sync, and a mistyped username (mobile). Sign-up uses `@clerk/testing` (testing token) and `+clerk_test` emails. Screenshots in `docs/screenshots/` (local, git-ignored). Stuck points below. |
-| 9 · Hardening and polish | Done | States: loading, onboarding (with the import error and the username filled in), import progress, error with retry, empty compartments, no search results, no shelves, records that don't fit, an `error.tsx` for the app screen, and a `not-found.tsx`. Accessibility: every input labeled, focus kept inside dialogs (Tab cycles, Escape closes, focus returns), view switcher with `aria-pressed`, map cells with full `aria-label`s, `ink-faint` darkened from 3.45:1 to 6.17:1 (all text tokens ≥ 4.5:1, computed). Security self-review below; fixes applied and covered by `npm run test:rls` (17/17 PASS). README complete. After the changes: `npm run test` exit 0, `npm run lint` exit 0, `npm run build` exit 0, `npx playwright test` 16 passed. |
+| 9 · Hardening and polish | Done | States: loading, onboarding (with the import error and the username filled in), import progress, error with retry, empty compartments, no search results, no shelves, records that don't fit, an `error.tsx` for the app screen, and a `not-found.tsx`. Accessibility: every input labeled, focus kept inside dialogs (Tab cycles, Escape closes, focus returns), view switcher with `aria-pressed`, map cells with full `aria-label`s, `ink-faint` darkened from 3.45:1 to 6.17:1 (all text tokens ≥ 4.5:1, computed). Security self-review below; fixes applied and covered by `npm run test:rls` (17/17 PASS). README complete. After the changes: `npm run test` exit 0, `npm run lint` exit 0, `npm run build` exit 0, `npx playwright test` (clean run, dev server alone) → 15 passed, 5 skipped on purpose, exit 0. |
 | 10 · Morning summary | Todo | |
 
 ## Assumptions and questions for Ale
@@ -127,6 +127,25 @@ Open, for Ale (not fixed):
 
 - **Dev-server note:** running `npm run build` while `npm run dev` is running made the dev page reload in a loop once; the e2e test that hit it passed on a rerun. Run e2e tests with the dev server alone.
 
+- **Records added by hand in the browser demo are carried into the account on sign-up:** they're inserted first (as `origin = added`), then the shelves, sort order, calibrations, and placements are saved in one transaction. If the save fails halfway, those added records stay in the account without a placement and get placed by insertion on the next visit.
+
+### Independent code review (after Phase 9)
+
+A separate reviewer read the state machine, the import service, the RPCs, and the algorithm without my notes. It found 10 issues; all are fixed and covered by tests:
+
+1. **High:** several insertions in a row could send the same record twice to `apply_placements`, which Postgres rejects, and the app could get stuck in an error on every load. Fixed: moves are collapsed per record (`collapseMoves`, unit-tested), the RPC gets one row per record from the final placement, and a failure placing new records after a sync shows a notice instead of blocking the app.
+2. **High:** in the browser demo, the 6-hour refresh could overwrite a calibration or an added record made while it was fetching. Fixed: the refresh merges into what's saved at that moment.
+3. **Medium:** records added in the browser demo were dropped at sign-up. Fixed (see above), covered by `e2e/flows.spec.ts`.
+4. **Medium:** leaving the page mid-import could build the demo shelves from a partial import. Fixed: shelves are built only after a job that finished.
+5. **Medium:** if saving a new record's placement failed, the record stayed without a placement, and Add again made a duplicate. Fixed: the row is removed on failure.
+6. **Low-medium:** a new first record could push one off the shelf while an earlier compartment was empty. Fixed in `insert.ts`: it uses an empty compartment between prev's and next's (or before next's for a new first record). Unit-tested; `docs/algorithm.md` updated; the worked example gives the same numbers.
+7. **Low-medium:** if a record was removed on Discogs mid-import, later records could shift into an already-read page and be swept by mistake. Fixed: the sweep runs only when the job saw at least as many records as Discogs reports.
+8. **Low:** typing a new username while another import was active was ignored. Fixed: a different collection retires the active job (`npm run check:import` now checks it: PASS).
+9. **Low:** a failed calibration showed no message. Fixed.
+10. **Low:** generating the map right after a background sync could fail with a raw foreign-key error. Fixed: it reloads the records first.
+
+After the fixes: `npm run test` → 64 tests in 8 files, exit 0; `npm run lint` exit 0; `npm run test:rls` 17/17 PASS; `npm run check:import` 5/5 PASS; `npx playwright test` → 15 passed, 5 skipped on purpose, exit 0.
+
 ## Blocked: needs Ale
 
 ## Ideas for v2
@@ -147,5 +166,6 @@ Open, for Ale (not fixed):
 - 2026-11-14 19:59 · Phases 3, 5, 6, 7 Done: app shell, configurator, map, compartment view, record card, search, calibration, add-record. All e2e tests pass on desktop and mobile.
 - 2026-11-14 20:04 · Phase 8 Done. 15 e2e tests pass; stuck points listed; two of them fixed.
 - 2026-11-14 20:16 · Phase 9 Done: states, accessibility, security review and fixes, README.
+- 2026-11-14 20:32 · Independent review: 10 findings, all fixed with tests. Demo-added records now carry over on sign-up.
 
 ## Morning summary

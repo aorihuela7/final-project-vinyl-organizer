@@ -64,7 +64,18 @@ export async function startImport(
   input: { source: "discogs"; username: string } | { source: "demo" },
 ): Promise<ImportJob> {
   const existing = await activeJob(supabase);
-  if (existing) return existing;
+  if (existing) {
+    const same =
+      existing.source === input.source &&
+      (input.source === "demo" || existing.discogs_username.toLowerCase() === input.username.toLowerCase());
+    if (same) return existing;
+    // A different collection was asked for: retire the active job and start the new one.
+    const { error: retireError } = await supabase
+      .from("import_jobs")
+      .update({ status: "error", last_error: "Replaced by a newer import.", finished_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("id", existing.id);
+    if (retireError) throw new ImportError(retireError.message, 500);
+  }
 
   const username = input.source === "demo" ? DEMO.username : input.username;
   const { data: collection, error: collectionError } = await supabase
@@ -172,7 +183,7 @@ export async function stepImport(supabase: SupabaseClient, userId: string, jobId
   }
 
   const isLast = page >= totalPages || rows.length === 0;
-  if (isLast) await finishSync(supabase, job);
+  if (isLast) await finishSync(supabase, job, itemsTotal);
 
   const updated = await updateJob(
     supabase,
@@ -201,13 +212,24 @@ export async function stepImport(supabase: SupabaseClient, userId: string, jobId
 }
 
 /** End of a full sync: sweep unseen records, refresh added ones, stamp the collection. */
-async function finishSync(supabase: SupabaseClient, job: ImportJob) {
-  const { error: sweepError } = await supabase
+async function finishSync(supabase: SupabaseClient, job: ImportJob, expected: number) {
+  // Pages are offsets: if a record was removed on Discogs mid-import, later ones
+  // shift into a page we already read and this job never saw them. Only sweep
+  // when the job saw as many records as Discogs reports; otherwise the next sync does.
+  const { count: seen, error: countError } = await supabase
     .from("records")
-    .delete()
+    .select("id", { count: "exact", head: true })
     .eq("origin", "import")
-    .or(`last_seen_job_id.is.null,last_seen_job_id.neq.${job.id}`);
-  if (sweepError) throw new ImportError(sweepError.message, 500);
+    .eq("last_seen_job_id", job.id);
+  if (countError) throw new ImportError(countError.message, 500);
+  if ((seen ?? 0) >= expected) {
+    const { error: sweepError } = await supabase
+      .from("records")
+      .delete()
+      .eq("origin", "import")
+      .or(`last_seen_job_id.is.null,last_seen_job_id.neq.${job.id}`);
+    if (sweepError) throw new ImportError(sweepError.message, 500);
+  }
 
   // Records added by hand aren't in the Discogs collection: refresh them from
   // /releases so they also meet the 6-hour freshness rule.
