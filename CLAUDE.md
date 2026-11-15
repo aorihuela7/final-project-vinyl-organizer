@@ -94,7 +94,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 
 - Restrained interface: neutral background, clear typography, a single accent color. The covers bring the color.
 - Covers are never altered (no filters, no text on top); they're integrated through the frame: square, same radius and same shadow everywhere.
-- Spines in the compartment view: typographic strips (artist · title) colored by the first level of the sort order, from a fixed palette. The cover appears when a spine is tapped and in the neighbors card.
+- Spines in the compartment view: on larger screens, vertical spines side by side, left to right as on the real shelf, each one record's share of the compartment's capacity wide, so the free space shows on the right. Each spine takes the palette color of its first-level group (fixed palette), darkened by a stable per-record amount so neighbors look different. Hovering or focusing a spine shows artist and title in a rounded bubble; clicking it opens the record card, and only there the cover. On phones, typographic strips (artist · title) for now; the mobile version of the spines is still to be designed.
 - Record without a cover: our own placeholder (initials on a palette tile), never a broken image.
 - Design tokens (colors, type, radii, shadows) in a single file.
 - Mobile first: people use it standing in front of their shelf.
@@ -147,3 +147,4 @@ Demo collection source: the 1,000 most recently added records of the public Disc
 - Defaults: sort by artist, ignore articles off ("The Beatles" under T), slack 10%, 80 records per cube, 70 per crate, 60 CDs per cube.
 - Artist spellings: "The Beatles" and "Beatles" are the same artist and sort together under the spelling with the article.
 - Switching collections: one per user; a new import replaces the old collection and its shelves, then "Build your shelf" with suggested templates.
+- Compartment view: vertical spines with a hover bubble on larger screens (colors: group palette color with a per-record shade); phones keep the strips until we design the mobile version.

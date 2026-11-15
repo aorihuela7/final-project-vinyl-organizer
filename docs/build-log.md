@@ -254,3 +254,15 @@ Clerk's development instance works on `*.vercel.app`, with a "Development mode" 
 - `npm run build` → exit 0.
 - Also: `npm run lint` exit 0; `npm run test:rls` 17/17 PASS; `npm run check:import` 5/5 PASS; `npx playwright test` 15 passed, 5 skipped on purpose, exit 0.
 - Draft PR: https://github.com/aorihuela7/final-project-vinyl-organizer/pull/1
+
+## Follow-up: Ale's answers (Nov 15)
+
+Answers to the questions in the morning summary, and what changed:
+
+- **Demo without an account (Q4):** keep it open; "Where does this record go?" doesn't require an account. No change.
+- **Switching collections (Q5):** one collection per user. "Shelves & order" now has a Collection panel to import your own Discogs collection instead of the demo, or another username. The collection keeps its source until the new import finishes, so a typo or a private collection changes nothing (warning, demo intact). When it finishes, every record it didn't see (added ones too) and the shelves are deleted, and the user goes to "Build your shelf" with suggested templates (Ale chose this over keeping the demo shelves). Evidence: `e2e/flows.spec.ts` "a demo account imports its own Discogs collection…" PASS (typo → 2 shelves kept; aorihuelar → source discogs, 0 shelves, 1,704 records); `npm run check:import` 5/5 PASS.
+- **Empty compartment between neighbors (Q6):** keep it. No change.
+- **Articles (Q7):** "ignore articles" is now off by default ("The Beatles" under T). Names that differ only by a leading article, case, or accents are one artist and sort together under the spelling with the article. Inserting "The X" when the shelf has records by "X" moves those records with the same insertion rule and lists the moves. Known limit: if a re-sync deletes the only "The X", the remaining "X" records keep their place until the next full layout. Neither case appears in the 1,000 demo records (0 artists written both ways). Tests: 3 in `sort.test.ts`, 2 in `insert.test.ts`. `docs/algorithm.md` updated. The database default of `shelf_settings.ignore_articles` is still `true`; the app always writes the value, so it was left alone instead of adding a migration.
+- **Spines (Q8):** vertical spines side by side as on the real shelf, each one record's share of the capacity wide (free space on the right). Color: the group's palette color (first sort level) darkened by a stable per-record shade, so neighbors look different. Ale also offered the cover's main color, but reading cover pixels in the browser means fetching every cover of the compartment and processing Discogs images, which the terms don't clearly cover, so it wasn't done without asking. Hover or keyboard focus shows artist and title in a rounded bubble; click opens the record card with the cover; arrow keys move between spines; the last record looked at is outlined. Phones keep the strips until the mobile version is designed.
+- **Calibration rule (Q9) and full relayout on a mostly new re-sync (Q10):** keep both. No change.
+- **Tailwind plugin (Q11):** nothing to do.

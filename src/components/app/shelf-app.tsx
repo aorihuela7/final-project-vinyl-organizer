@@ -23,7 +23,13 @@ export function ShelfApp() {
   const app = useShelfApp(params.get("start"));
   const [tab, setTab] = useState<"map" | "setup">("map");
   const [openSlot, setOpenSlot] = useState<Slot | null>(null);
-  const [openRecord, setOpenRecord] = useState<string | null>(null);
+  const [openRecord, setOpenRecordState] = useState<string | null>(null);
+  // The record the user last looked at: its spine is marked when they open its compartment.
+  const [lastRecord, setLastRecord] = useState<string | null>(null);
+  const setOpenRecord = (id: string | null) => {
+    setOpenRecordState(id);
+    if (id) setLastRecord(id);
+  };
   const [highlight, setHighlight] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
@@ -194,6 +200,7 @@ export function ShelfApp() {
           config={config}
           byId={byId}
           app={app}
+          highlightId={lastRecord}
           onClose={() => setOpenSlot(null)}
           onPickRecord={(id) => {
             setOpenSlot(null);

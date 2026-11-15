@@ -10,7 +10,7 @@ Project for Design, Build, Ship (MPCS 51238, UChicago, Autumn 2026). Focus: **Sy
 2. **Import your own collection** by typing your Discogs username (the collection must be public). You create an account right before the import; it runs in steps of 100 records and resumes if you close the tab. Started with the demo? Import yours later from "Shelves & order": it replaces the demo, and you set up your shelves for it.
 3. **Build your shelf from templates:** Kallax 4×4, Kallax 5×5, low unit 2×4, tower 1×5, crates in a row, or custom. Edit rows and columns, tap compartments to block them, set the capacity per shelf or per compartment, choose whether it's read by rows or by columns, and whether it holds vinyl or CDs. Several shelves, in order.
 4. **Pick the sort order:** up to three levels from genre, artist, year, label, and title, with "ignore articles" and a slack percentage.
-5. **See the map:** every compartment with its range ("A – Bea") and how full it is.
+5. **See the map:** every compartment with its range ("A – Bea") and how full it is. Open a compartment to see its records as spines, left to right, with the free space on the right; point at a spine for the artist and title, click it for the details and the cover.
 6. **Search a record:** shelf, row, column, how far into the compartment ("40% from the left"), and the two records on each side.
 7. **Calibrate:** "This is the first record in this compartment" moves one boundary so the map matches the real shelf.
 8. **Where does this record go?** Search Discogs for a new purchase, see where it goes and how many records must move, and add it.

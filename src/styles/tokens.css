@@ -42,6 +42,8 @@
   --color-spine-9: #cddce6;
   --color-spine-10: #f3ddb6;
   --color-spine-11: #d8d3ea;
+  /* Vertical spines mix their palette color with this ink, a different amount per record, so neighbors look different. */
+  --color-spine-ink: #2b2622;
 
   /* Type */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -57,6 +59,9 @@
   --shadow-cover: 0 1px 2px rgb(28 26 23 / 0.14), 0 6px 16px rgb(28 26 23 / 0.1);
   --shadow-card: 0 1px 2px rgb(28 26 23 / 0.06), 0 2px 8px rgb(28 26 23 / 0.05);
   --shadow-sheet: 0 -8px 32px rgb(28 26 23 / 0.16);
+  /* A vertical spine: a light left edge and a dark right edge, like a sleeve seen from the side. */
+  --shadow-spine: inset 1px 0 0 rgb(255 255 255 / 0.28), inset -1px 0 0 rgb(28 26 23 / 0.22);
+  --shadow-tooltip: 0 2px 6px rgb(28 26 23 / 0.18), 0 8px 24px rgb(28 26 23 / 0.14);
 }
 
 /* Number of spine palette entries, mirrored in src/lib/design.ts. */

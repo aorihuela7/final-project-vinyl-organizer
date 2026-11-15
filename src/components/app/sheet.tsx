@@ -3,7 +3,20 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 /** A bottom sheet on phones, a centered panel on larger screens. Escape and the backdrop close it. */
-export function Sheet({ title, onClose, children, labelledBy }: { title: ReactNode; onClose: () => void; children: ReactNode; labelledBy?: string }) {
+export function Sheet({
+  title,
+  onClose,
+  children,
+  labelledBy,
+  wide = false,
+}: {
+  title: ReactNode;
+  onClose: () => void;
+  children: ReactNode;
+  labelledBy?: string;
+  /** Wider on larger screens (the compartment view's spines). */
+  wide?: boolean;
+}) {
   const panel = useRef<HTMLDivElement>(null);
   const titleId = labelledBy ?? "sheet-title";
 
@@ -47,7 +60,7 @@ export function Sheet({ title, onClose, children, labelledBy }: { title: ReactNo
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative flex max-h-[88dvh] w-full max-w-lg flex-col rounded-t-card bg-surface shadow-sheet outline-none sm:rounded-card"
+        className={`relative flex max-h-[88dvh] w-full max-w-lg flex-col rounded-t-card bg-surface shadow-sheet outline-none sm:rounded-card ${wide ? "sm:max-w-3xl" : ""}`}
       >
         <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
           <h2 id={titleId} className="min-w-0 text-base font-semibold text-ink">

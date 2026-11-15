@@ -8,6 +8,7 @@ import { toSortSettings, type MediaView, type ShelfConfig, type StoredRecord } f
 import { searchRecords } from "@/lib/search";
 import { DiscogsAttribution } from "./discogs-attribution";
 import { Sheet } from "./sheet";
+import { SpineShelf } from "./spines";
 import type { ShelfApp } from "./use-shelf-app";
 
 type Props = {
@@ -16,12 +17,18 @@ type Props = {
   config: ShelfConfig;
   byId: Map<string, StoredRecord>;
   app: ShelfApp;
+  /** The record the user last looked at: its spine is marked. */
+  highlightId: string | null;
   onClose: () => void;
   onPickRecord: (id: string) => void;
 };
 
-/** The records of one compartment, left to right, as typographic spines. */
-export function CompartmentSheet({ slot, view, config, byId, app, onClose, onPickRecord }: Props) {
+/**
+ * The records of one compartment, left to right: vertical spines on larger
+ * screens (hover for artist and title, click for the record card), and
+ * typographic strips on phones for now.
+ */
+export function CompartmentSheet({ slot, view, config, byId, app, highlightId, onClose, onPickRecord }: Props) {
   const [calibrating, setCalibrating] = useState(false);
   const settings = toSortSettings(config.settings);
   const records = view.index.bySlot.get(slot.id) ?? [];
@@ -31,7 +38,7 @@ export function CompartmentSheet({ slot, view, config, byId, app, onClose, onPic
   const over = records.length > slot.capacity;
 
   return (
-    <Sheet title={slotTitle(slot, furniture)} onClose={onClose}>
+    <Sheet title={slotTitle(slot, furniture)} onClose={onClose} wide>
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="text-sm font-medium text-ink">{label ?? "Empty compartment"}</p>
@@ -58,7 +65,11 @@ export function CompartmentSheet({ slot, view, config, byId, app, onClose, onPic
         )}
 
         {records.length > 0 && <p className="text-xs uppercase tracking-wide text-ink-faint">Left → right</p>}
-        <ol className="flex flex-col gap-1">
+        <div className="hidden sm:block">
+          <SpineShelf records={records} capacity={slot.capacity} colors={colors} byId={byId} highlightId={highlightId} onPick={onPickRecord} />
+          {records.length > 0 && <p className="mt-2 text-xs text-ink-muted">Point at a spine to see the record; click it for the details and the cover.</p>}
+        </div>
+        <ol className="flex flex-col gap-1 sm:hidden">
           {records.map((r, i) => {
             const stored = byId.get(r.id);
             return (
