@@ -48,7 +48,7 @@ Setup confirmed by Ale before the run:
 | --- | --- | --- |
 | 1 · Discogs spike | Done | `npx tsx --env-file=.env.local scripts/discogs-spike.ts` → exit 0: 1,704 items in 18 pages, limit 60 with token / 25 without, covers load without auth (200 image/jpeg), search returned 1,053 results. Notes in `docs/discogs-notes.md`. |
 | 2 · Skeleton | Done | `npm run build` → exit 0 (Next 16.4.6, Cache Components on). `npm run dev` + `npx playwright test e2e/smoke.spec.ts` → 4 passed (home shows pitch, "Try the demo collection", and the Discogs notice; `/sign-up` renders Clerk's email + password form; desktop and mobile). `curl /api/cron/keepalive` without the secret → 401. |
-| 3 · Schema, RLS, and import | Todo | |
+| 3 · Schema, RLS, and import | Doing | Migration `20261115012019_init_schema.sql` applied with `supabase db push --remote --yes` (exit 0). `npm run test:rls` → 16/16 PASS with two Clerk test users and real session tokens (B can't read, update, delete, spoof, or reference A's rows; anon can't read tables). `npm run check:import` (dev server running) → PASS full import 1,704 stored = 1,704 reported by Discogs (26 s); PASS demo 1,000 = 1,000 (13 s); PASS resume returns the same active job at next_page 3; PASS re-sync idempotent (1,704). Progress UI, resume in the browser, and 6-hour re-sync ship with the app shell. |
 | 4 · Layout algorithm | Todo | |
 | 5 · Shelf configurator and sort order | Todo | |
 | 6 · Map, compartment view, record card, search | Todo | |
@@ -71,6 +71,11 @@ Format: question · what I chose · why · how hard it is to change.
 - **Clerk Core 3.** `<SignedIn>`/`<SignedOut>` were removed in `@clerk/nextjs` 7; the header uses the `useAuth()` hook in a client component instead of the server `<Show>` (which would make every page dynamic). · Easy.
 - **Header buttons open Clerk in a modal**; the `/sign-in` and `/sign-up` pages also exist for direct links. · Easy.
 
+- **`supabase db push` needs `--yes` in agent mode.** The CLI refuses to apply migrations without an interactive confirmation and suggests `--yes`. · Chose: use `--yes`, because the plan (rule 9) approves applying migrations to this project. · Not a permission workaround: it's the CLI's own confirmation flag.
+- **Demo for visitors without an account is cached on the server** (`/api/demo`, `use cache`, revalidate 1 h, expire 2 h) so the shared Discogs limit survives a busy demo. The browser refetches when its copy is older than 6 hours. · Why: 10 Discogs requests per anonymous visit would drain the 60/min limit at the fair. · Easy to change in `src/app/api/demo/route.ts`. Terms question for Ale: is a ≤ 2 h server cache acceptable under "don't store longer than necessary"? I think yes, since the 6-hour freshness rule still holds.
+- **Import order.** A full import reads the collection sorted by date added, ascending, so records added mid-import land at the end and don't shift earlier pages. The demo reads newest first. · Easy.
+- **Test users created in Clerk (development instance):** `rls-a+clerk_test@example.com`, `rls-b+clerk_test@example.com`, `import-check+clerk_test@example.com`, `demo-check+clerk_test@example.com` (no passwords; sessions are created through the Backend API).
+
 ## Blocked: needs Ale
 
 ## Ideas for v2
@@ -85,5 +90,6 @@ Format: question · what I chose · why · how hard it is to change.
 
 - 2026-11-14 19:12 · Phase 1 Done. Spike ran against `aorihuelar`; notes written.
 - 2026-11-14 19:18 · Phase 2 Done. Next.js skeleton, Clerk, landing page, footer notice, keepalive cron, tokens, Vitest, Playwright smoke test, README.
+- 2026-11-14 19:28 · Phase 3 backend done: schema, RLS, grants, RPCs, import routes, demo route. RLS and import checks pass.
 
 ## Morning summary
