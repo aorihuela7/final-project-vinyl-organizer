@@ -46,7 +46,7 @@ Setup confirmed by Ale before the run:
 
 | Phase | Status | Evidence |
 | --- | --- | --- |
-| 1 · Discogs spike | Todo | |
+| 1 · Discogs spike | Done | `npx tsx --env-file=.env.local scripts/discogs-spike.ts` → exit 0: 1,704 items in 18 pages, limit 60 with token / 25 without, covers load without auth (200 image/jpeg), search returned 1,053 results. Notes in `docs/discogs-notes.md`. |
 | 2 · Skeleton | Todo | |
 | 3 · Schema, RLS, and import | Todo | |
 | 4 · Layout algorithm | Todo | |
@@ -61,6 +61,10 @@ Setup confirmed by Ale before the run:
 
 Format: question · what I chose · why · how hard it is to change.
 
+- **Media of the demo shelves.** Ale's collection is 1,367 vinyl and 327 CDs. Q: which demo shelf holds CDs? · Chose: "Living room" Kallax 4×4 holds vinyl, "Studio" tower 1×5 holds CDs, so the demo shows both maps. · Why: CLAUDE.md fixes the two demo shelves, and this way the 1,000-record demo places almost everything. · Easy to change: one field in the demo seed.
+- **Which format decides the shelf.** Q: how to classify box sets and vinyl+CD editions? · Chose: the first format named Vinyl/Shellac/Flexi-disc → vinyl; the first named CD/CDr → CD; otherwise not placed. · Why: matches what is physically in the sleeve in most cases. · Easy: one function.
+- **Records without a year (210 of 1,704).** Chose: they sort after all known years and show "—". · Easy.
+
 ## Blocked: needs Ale
 
 ## Ideas for v2
@@ -72,5 +76,7 @@ Format: question · what I chose · why · how hard it is to change.
 ## Timeline
 
 - 2026-11-14 19:09 · Kickoff. Branch `v1-build` created from `main` (7308bc4). Log created with Ale's answers.
+
+- 2026-11-14 19:20 · Phase 1 Done. Spike ran against `aorihuelar`; notes written.
 
 ## Morning summary
