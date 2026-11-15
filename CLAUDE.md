@@ -55,7 +55,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 ## Algorithm (`src/lib/layout`, pure TypeScript, no Next or Supabase imports)
 
 - **Sort key:** the chosen levels (from: genre, artist, year, label, title), then fixed tiebreakers artist → year → title → id, so the order is total and stable. Compare with `Intl.Collator('en', { sensitivity: 'base', numeric: true })`.
-- **Normalization:** strip Discogs' disambiguation suffix from artist names ("Nirvana (2)" → "Nirvana"); optional ignoring of leading articles (configurable list: The, A, An, El, La, Los, Las, Le, Les…); with multiple artists, use the first; if genre is missing, use "No genre".
+- **Normalization:** strip Discogs' disambiguation suffix from artist names ("Nirvana (2)" → "Nirvana"); optional ignoring of leading articles (configurable list: The, A, An, El, La, Los, Las, Le, Les…; off by default); names that differ only by a leading article, case, or accents are one artist: if the collection has both "The Beatles" and "Beatles", all of them sort under "The Beatles"; with multiple artists, use the first; if genre is missing, use "No genre".
 - **Traversal:** shelves by `sort_index`; within each, by rows (left to right, top to bottom) or by columns (top to bottom, then the next column); blocked compartments are skipped.
 - **Invariant 1, contiguity:** walking the sorted collection, the compartment's traversal index never decreases. Each compartment holds a continuous range.
 - **Invariant 2, capacity:** after the initial layout, no compartment exceeds its capacity. If the collection doesn't fit, report how many records are left over; never drop them silently.
@@ -143,4 +143,5 @@ Demo collection source: the 1,000 most recently added records of the public Disc
 - Sign-in: email + password without email verification, plus Google (Clerk).
 - No login wall: the demo works without an account (in the browser); sign-up is asked to save or to run an own import.
 - Formats: shelves hold vinyl or CDs; each media is laid out separately with the same sort settings.
-- Defaults: sort by artist, ignore articles on, slack 10%, 80 records per cube, 70 per crate, 60 CDs per cube.
+- Defaults: sort by artist, ignore articles off ("The Beatles" under T), slack 10%, 80 records per cube, 70 per crate, 60 CDs per cube.
+- Artist spellings: "The Beatles" and "Beatles" are the same artist and sort together under the spelling with the article.

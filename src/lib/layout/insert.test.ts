@@ -104,6 +104,30 @@ describe("insertion, v1 naive method", () => {
   });
 });
 
+describe("insertion with artist aliases", () => {
+  it("moves the 'Beatles' records next to a new 'The Beatles' record when articles are kept, and counts those moves", () => {
+    const keep: SortSettings = { levels: ["artist"], ignoreArticles: false };
+    const state = { ...stateFrom([["Beatles", "Blondie"], ["Talking Heads"], []], 3), settings: keep };
+    const result = insertRecord(state, rec("The Beatles", { id: "The Beatles" }));
+    expect(result.movedCount).toBe(2);
+    expect(result.moves).toEqual(
+      expect.arrayContaining([
+        { recordId: "The Beatles", from: null, to: state.slots[1]!.id },
+        { recordId: "Beatles", from: state.slots[0]!.id, to: state.slots[1]!.id },
+      ]),
+    );
+    const index = buildIndex([...state.records, result.record], result.placement, state.slots, keep);
+    expect(state.slots.map((s) => (index.bySlot.get(s.id) ?? []).map((r) => r.id))).toEqual([["Blondie"], ["Talking Heads", "Beatles", "The Beatles"], []]);
+  });
+
+  it("doesn't move anything else when the new record doesn't change any alias", () => {
+    const keep: SortSettings = { levels: ["artist"], ignoreArticles: false };
+    const state = { ...stateFrom([["Beatles", "Blondie"], ["Talking Heads"], []], 3), settings: keep };
+    const result = insertRecord(state, rec("Bob Dylan", { id: "Bob Dylan" }));
+    expect(result.moves).toEqual([{ recordId: "Bob Dylan", from: null, to: state.slots[0]!.id }]);
+  });
+});
+
 describe("calibration: 'This is the first record in this compartment'", () => {
   it("moves the boundary back when the record is in the previous compartment, and flags overfull", () => {
     const state = stateFrom([["Abba", "Beck", "Blondie"], ["Doors", "Eagles"], ["Genesis"]], 3);

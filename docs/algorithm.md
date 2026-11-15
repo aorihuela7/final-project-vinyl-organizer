@@ -18,7 +18,8 @@ The user picks up to three levels from genre, artist, year, label, and title, fo
 Before comparing, values are normalized:
 
 - **Discogs suffixes:** Discogs writes "Nirvana (2)" to tell apart two artists with the same name. We strip " (2)" for sorting and display.
-- **Leading articles (optional):** "The Beatles" files under B. The list is configurable: The, A, An, El, La, Los, Las, Le, Les, L'. An article is only removed if something follows it, so "The The" stays "The".
+- **Leading articles (optional, off by default):** with the option on, "The Beatles" files under B. The list is configurable: The, A, An, El, La, Los, Las, Le, Les, L'. An article is only removed if something follows it, so "The The" stays "The". With the option off, "The Beatles" files under T.
+- **One artist, one name:** names that differ only by a leading article ("The Beatles" and "Beatles"), by case, or by accents are the same artist. If the collection has both spellings, every record of that artist sorts under the spelling **with** the article, so they all sit together under T. With articles ignored they already sit together under B. This is computed from the records being laid out (`artistAliases` in `normalize.ts`), so it only kicks in when both spellings are actually there.
 - **Leading punctuation** is ignored ('"Weird Al" Yankovic' files under W).
 - **Several artists:** we keep the first one.
 - **No genre:** treated as "No genre". **No year:** sorts after every known year.
@@ -67,6 +68,8 @@ There are three cases:
 2. **Pick the candidate compartment:** prev's compartment, or next's compartment if prev's is full and next's isn't. Either one keeps contiguity, because the new record goes at the end of prev's range or at the start of next's. Two edge cases: if empty compartments sit between prev's and next's (a calibration or a sync can empty one), the first of them with room is used; and if the new record sorts first of all, an empty compartment before next's can take it. Both keep contiguity, because those compartments hold nothing.
 3. **If the candidate has room:** done, **1 move** (putting the new record on the shelf).
 4. **If not, cascade:** put the record in, then push the *last* record of that compartment to the *start* of the next available compartment. If that one was full too, push its last record forward, and so on until a compartment with room absorbs one. Each push is one more move. If the push falls off the last compartment, that record no longer fits and is reported.
+
+**Special case, aliases:** if the new record is "The X" and the shelf already has records by "X" (articles kept), those records now sort as "The X" and belong somewhere else. They are taken off, the new record goes in, and each of them is put back with the same steps 1–4; their moves are counted and listed like any other. If records leave instead (a re-sync deletes the only "The X"), the remaining "X" records keep their place until the next full layout. Neither case appears in the demo collection: Discogs always writes an artist the same way.
 
 The result is a list of moves ("Fleetwood Mac: C2 → C3") and their count, saved as a `layout_event`. This is the **baseline** for v2: the minimum-moves method will be measured against it on the same purchases.
 
@@ -126,7 +129,7 @@ Sorting n records is O(n log n), and the comparisons use normalized keys compute
 
 `src/lib/layout/*.test.ts` covers:
 
-- **Sort key:** articles (The Beatles with and without), suffixes (Nirvana (2)), two artists, no genre, accents and numbers, ties, unknown years, three levels.
+- **Sort key:** articles (The Beatles with and without, and "Beatles" next to "The Beatles"), suffixes (Nirvana (2)), two artists, no genre, accents and numbers, ties, unknown years, three levels.
 - **Traversal:** a Kallax 4×4 with two blocked compartments, by rows and by columns; several shelves; capacity override.
 - **Initial layout:** proportional counts, both invariants for every size from 0 to 60 records, slack reduced, a collection that doesn't fit, vinyl vs CD vs other, an empty shelf, and the 3,000-record timing test.
 - **Insertion:** fits (1 move), next compartment, an empty compartment in between, a new first record with an empty compartment before it, a cascade across three compartments, the new record itself pushed forward, overflow at the end, an empty shelf, 200 random insertions that keep both invariants, and collapsing repeated moves.

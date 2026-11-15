@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mapCollectionItem } from "@/lib/discogs/map";
-import { displayArtist, normalizeArtist, stripArticle, stripDisambiguation } from "./normalize";
+import { artistAliases, artistIdentity, displayArtist, normalizeArtist, stripArticle, stripDisambiguation } from "./normalize";
 import { compareRecords, sortRecords } from "./sort";
 import { rec } from "./test-helpers";
 import type { SortSettings } from "./types";
@@ -49,6 +49,24 @@ describe("sort key", () => {
     const records = [rec("Talking Heads"), rec("The Beatles"), rec("Blondie"), rec("Bob Dylan")];
     expect(names(sortRecords(records, byArtist))).toEqual(["The Beatles", "Blondie", "Bob Dylan", "Talking Heads"]);
     expect(names(sortRecords(records, byArtistKeepArticles))).toEqual(["Blondie", "Bob Dylan", "Talking Heads", "The Beatles"]);
+  });
+
+  it("treats 'The Beatles' and 'Beatles' as one artist, filed under 'The Beatles', when articles are kept", () => {
+    const records = [rec("Beatles"), rec("Blondie"), rec("The Beatles"), rec("Talking Heads"), rec("The Clash")];
+    expect(names(sortRecords(records, byArtistKeepArticles))).toEqual(["Blondie", "Talking Heads", "Beatles", "The Beatles", "The Clash"]);
+  });
+
+  it("keeps 'The Beatles' and 'Beatles' together under B when articles are ignored", () => {
+    const records = [rec("Beatles"), rec("Blondie"), rec("The Beatles"), rec("Talking Heads"), rec("The Clash")];
+    expect(names(sortRecords(records, byArtist))).toEqual(["Beatles", "The Beatles", "Blondie", "The Clash", "Talking Heads"]);
+  });
+
+  it("only aliases names that appear both with and without the article", () => {
+    expect(artistAliases(["The Beatles", "Blondie", "The Clash"]).size).toBe(0);
+    expect([...artistAliases(["Beatles", "the beatles", "The Beatles", "Blondie"])]).toEqual([["beatles", "The Beatles"]]);
+    expect(artistIdentity("The Beatles")).toBe(artistIdentity("beatles"));
+    expect(artistIdentity("Los Lobos")).toBe(artistIdentity("Lobos"));
+    expect(artistIdentity("Theo Parrish")).not.toBe(artistIdentity("Parrish"));
   });
 
   it("sorts 'Nirvana (2)' as 'Nirvana'", () => {

@@ -16,9 +16,13 @@
  *
  * Contiguity holds: every push moves the last record of a compartment to the
  * front of the next one.
+ *
+ * One special case: if the new record is "The X" and the shelf already has
+ * records by "X", those records now sort as "The X" (see artistAliases). They
+ * are taken off and put back with the same rule, and their moves are counted.
  */
 import { buildIndex } from "./query";
-import { compareKeys, sortKeyOf } from "./sort";
+import { aliasesFor, artistSortName, compareKeys, sortKeyOf, type ArtistAliases } from "./sort";
 import type { LayoutRecord, Move, Placement, Slot, SortSettings } from "./types";
 
 export type ShelfState = {
@@ -42,20 +46,60 @@ export type InsertResult = {
 };
 
 export function insertRecord(state: ShelfState, record: LayoutRecord): InsertResult {
+  const { settings } = state;
+  const others = state.records.filter((r) => r.id !== record.id);
+  const before = aliasesFor(others, settings);
+  const after = aliasesFor([...others, record], settings);
+  const renamed = sameAliases(before, after)
+    ? []
+    : others.filter((r) => state.placement.has(r.id) && artistSortName(r.artist, settings, before) !== artistSortName(r.artist, settings, after));
+  if (renamed.length === 0) return insertOne(state, record, after);
+
+  // Take the renamed records off the shelf, insert the new one, then put each renamed record back.
+  const original = state.placement;
+  let placement: Placement = new Map(original);
+  for (const r of renamed) placement.delete(r.id);
+  const all = [...others, record];
+  const moves: Move[] = [];
+  const overflow: string[] = [];
+  for (const r of [record, ...renamed]) {
+    const result = insertOne({ ...state, records: all, placement }, r, after);
+    placement = result.placement;
+    for (const m of result.moves) moves.push(m.from === null && r.id !== record.id && m.recordId === r.id ? { ...m, from: original.get(r.id) ?? null } : m);
+    overflow.push(...result.overflow);
+  }
+  const collapsed = collapseMoves(moves);
+  return {
+    record,
+    placement,
+    target: placement.get(record.id) ?? null,
+    moves: collapsed,
+    movedCount: collapsed.length,
+    overflow: [...new Set(overflow)].filter((id) => !placement.has(id)),
+  };
+}
+
+function sameAliases(a: ArtistAliases | undefined, b: ArtistAliases | undefined): boolean {
+  if ((a?.size ?? 0) !== (b?.size ?? 0)) return false;
+  for (const [k, v] of a ?? []) if (b?.get(k) !== v) return false;
+  return true;
+}
+
+function insertOne(state: ShelfState, record: LayoutRecord, aliases: ArtistAliases | undefined): InsertResult {
   const { slots, settings } = state;
   const placement: Placement = new Map(state.placement);
   if (slots.length === 0) {
     return { record, placement, target: null, moves: [], movedCount: 0, overflow: [record.id] };
   }
 
-  const index = buildIndex(state.records.filter((r) => r.id !== record.id), placement, slots, settings);
+  const index = buildIndex(state.records.filter((r) => r.id !== record.id), placement, slots, settings, aliases);
   const lists = slots.map((s) => [...(index.bySlot.get(s.id) ?? [])]);
   const originalCounts = lists.map((l) => l.length);
   const hasRoom = (i: number) => originalCounts[i]! < slots[i]!.capacity;
   const slotIndexOf = (id: string) => index.slotOf.get(id)!.index;
 
   // 1. Insertion point: the first placed record that sorts after the new one.
-  const key = sortKeyOf(record, settings);
+  const key = sortKeyOf(record, settings, aliases);
   let lo = 0;
   let hi = index.sorted.length;
   while (lo < hi) {

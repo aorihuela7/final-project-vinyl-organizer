@@ -2,7 +2,7 @@
  * Reading the stored state: which records are in each compartment, in order,
  * where one record is ("40% from the left"), and its neighbors.
  */
-import { compareKeys, sortKeyOf, type SortKey } from "./sort";
+import { aliasesFor, compareKeys, sortKeyOf, type ArtistAliases, type SortKey } from "./sort";
 import type { LayoutRecord, Placement, Slot, SortSettings } from "./types";
 
 export type ShelfIndex = {
@@ -21,7 +21,13 @@ export type ShelfIndex = {
  * contiguity this equals the plain sort order; after a calibration that left
  * a compartment overfull it still reflects the physical shelf.
  */
-export function buildIndex(records: readonly LayoutRecord[], placement: Placement, slots: Slot[], settings: SortSettings): ShelfIndex {
+export function buildIndex(
+  records: readonly LayoutRecord[],
+  placement: Placement,
+  slots: Slot[],
+  settings: SortSettings,
+  aliases: ArtistAliases | undefined = aliasesFor(records, settings),
+): ShelfIndex {
   const slotById = new Map(slots.map((s) => [s.id, s]));
   const keys = new Map<string, SortKey>();
   const placed: LayoutRecord[] = [];
@@ -29,7 +35,7 @@ export function buildIndex(records: readonly LayoutRecord[], placement: Placemen
     const slotId = placement.get(r.id);
     if (slotId && slotById.has(slotId)) {
       placed.push(r);
-      keys.set(r.id, sortKeyOf(r, settings));
+      keys.set(r.id, sortKeyOf(r, settings, aliases));
     }
   }
   placed.sort((a, b) => {

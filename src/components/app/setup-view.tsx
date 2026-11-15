@@ -146,7 +146,7 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
             onChange={(e) => setDraft((d) => ({ ...d, settings: { ...d.settings, ignoreArticles: e.target.checked } }))}
             className="size-4 accent-[var(--color-accent)]"
           />
-          Ignore articles (“The Beatles” under B, “Los Lobos” under L)
+          Ignore articles (“The Beatles” under B instead of T, “Los Lobos” under L)
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-ink">Free space to leave in every compartment (slack)</span>

@@ -56,7 +56,7 @@ export type SettingsConfig = {
 
 export type ShelfConfig = { furniture: FurnitureConfig[]; settings: SettingsConfig };
 
-export const DEFAULT_SETTINGS: SettingsConfig = { sortLevels: ["artist"], ignoreArticles: true, slackPct: DEFAULT_SLACK_PCT };
+export const DEFAULT_SETTINGS: SettingsConfig = { sortLevels: ["artist"], ignoreArticles: false, slackPct: DEFAULT_SLACK_PCT };
 
 export function toSortSettings(settings: SettingsConfig): SortSettings {
   return { levels: settings.sortLevels, ignoreArticles: settings.ignoreArticles };
@@ -127,7 +127,7 @@ export function demoConfig(): ShelfConfig {
     c.row === 1 && (c.col === 1 || c.col === 2) ? { ...c, status: "blocked" } : c,
   );
   const studio = newFurniture("tower_1x5", 1, "cd", "Studio");
-  return { furniture: [living, studio], settings: { sortLevels: ["genre", "artist"], ignoreArticles: true, slackPct: DEFAULT_SLACK_PCT } };
+  return { furniture: [living, studio], settings: { sortLevels: ["genre", "artist"], ignoreArticles: false, slackPct: DEFAULT_SLACK_PCT } };
 }
 
 /** A first suggestion for an imported collection: enough Kallax 4×4 for the vinyl, and one for CDs if there are any. */
