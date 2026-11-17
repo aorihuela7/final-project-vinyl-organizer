@@ -10,19 +10,27 @@ The same end-to-end suite that runs locally (16 Playwright tests on desktop and 
 
 ## What we saw when people used v1
 
-> To be filled in after the user tests: one row per person, with what they did and said. The priorities below are provisional until then.
+We showed v1 to the four people interviewed for the proposal and gave each one the core task without helping. What they said is paraphrased below.
 
-| Person | Collection and furniture | What they did | What they said | Where they got stuck |
+| Person | Collection and furniture | What they did | What came up | Where it fell short |
 | --- | --- | --- | --- | --- |
-| 1 | | | | |
-| 2 | | | | |
-| 3 | | | | |
+| 1 · Collector | ~850 records, two reinforced Kallax 4×4, by artist then year | Imported from Discogs, built two Kallax 4×4, sorted artist → year, searched records they knew | Search with neighbors and the map matched how they think about their shelf; it would have saved them the weekend they spent re-sorting after moving | The map was one or two compartments off toward the end: 80 per cube is unmeasured, and doubles and gatefolds take more room. Their real loss (a 10" slipping behind the 12"s) isn't addressed, since v1 treats all vinyl the same |
+| 2 · DJ | 3,000+ records, custom furniture, genre → label → bpm or vibe | Imported 3,000+ records, sorted genre → label, tried "Where does this record go?" | Useful for knowing where a new purchase goes | What they lose are the records they take out (their gig bag, the "discards" box), and v1 has no temporary locations. No third level for bpm or vibe. Many white labels aren't on Discogs and can't be added by hand |
+| 3 · Casual collector | ~150 records, vintage crates and a low mid-century bookcase, by vibe | Used the demo (no Discogs), browsed the map and spines, searched a record | Liked the look: the spines and the covers | Their order is by vibe, which no sort level supports, so they didn't see themselves using it. Their loss (a guest moved a record during a party) needs guest mode |
+| 4 · Store owner | 4,000–5,000 records, metal shelves, boxes and crates | Used the demo, searched records | Knowing which physical box a record is in is exactly what they want | Records come in and go out every day, and v1 only drops a record when it's removed on Discogs and re-synced. Their stock is Discogs inventory, not a collection. "New arrivals" and "gems" are fixed sections v1 doesn't have |
+
+**What we learned**
+
+- The core task works for someone who sorts the way the app does (person 1), and the map's accuracy depends on calibration and record thickness.
+- Three of four people need something outside the sorted shelf: records taken out (2), moved by someone else (3), or selling every day (4). Finding and returning records matters more than placing new ones, as the interviews already suggested.
+- Three of four don't sort only by Discogs fields: bpm or vibe (2), vibe (3), fixed sections (4).
+- Stores are a different product: inventory instead of a collection, constant turnover, and a Discogs terms question (collection data and images are non-commercial). They stay out of v2.
 
 ## Fix first
 
-These come from our own run as a new user, and they stay provisional until the user tests are in.
+These come from the tests above and from our own run as a new user.
 
-1. **The map drifts from the real shelf until someone calibrates.** Default capacities (80 per cube, 70 per crate, 60 CDs) aren't measured yet. We'll measure real cubes and crates and make calibration easier to find. Today it sits behind "The first record here is different…" inside a compartment.
+1. **The map drifts from the real shelf until someone calibrates** (person 1). Default capacities (80 per cube, 70 per crate, 60 CDs) aren't measured yet. We'll measure real cubes and crates and make calibration easier to find. Today it sits behind "The first record here is different…" inside a compartment.
 2. **Compartment view on phones.** People use the app standing in front of their shelf, but phones only get text strips. We'll design spines for small screens.
 3. **Small labels on phones** with 4+ columns, and long genre names that get cut off.
 
