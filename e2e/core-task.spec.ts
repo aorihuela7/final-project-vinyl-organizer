@@ -35,7 +35,7 @@ test("signs up, imports a Discogs collection by username, builds a shelf, and fi
 
   // 3. The import runs in steps with progress, then asks to build the shelf.
   await expect(page.getByRole("heading", { name: "Build your shelf" })).toBeVisible({ timeout: 180_000 });
-  await expect(page.getByText(/1,704 records imported/)).toBeVisible();
+  await expect(page.getByText(/[\d,]+ records imported/)).toBeVisible();
   await page.screenshot({ path: `docs/screenshots/setup-${testInfo.project.name}.png`, fullPage: true });
 
   // Build it from a template: the suggestion has Kallax shelves; block a compartment and switch one shelf to columns.

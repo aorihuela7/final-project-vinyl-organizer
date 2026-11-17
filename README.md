@@ -4,6 +4,8 @@ A web app for record collectors with hundreds or thousands of records. It models
 
 Project for Design, Build, Ship (MPCS 51238, UChicago, Autumn 2026). Focus: **Systems**.
 
+**Live:** https://final-project-vinyl-organizer.vercel.app · **Plan for v2:** [`docs/v2-plan.md`](docs/v2-plan.md)
+
 ## What you can do
 
 1. **Open it without an account** and try the demo collection: 1,000 real records from a public Discogs collection, on two prebuilt shelves (a Kallax 4×4 with two compartments blocked by the turntable, and a 1×5 tower for CDs).

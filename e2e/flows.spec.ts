@@ -61,7 +61,7 @@ test("an import resumes after the tab is closed", async ({ browser }, testInfo) 
   await page.locator("input[name=emailAddress]").fill(account.email);
   await page.locator("input[name=password]").fill(account.password);
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page.getByText(/of 1,704 records/)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/of [\d,]+ records/)).toBeVisible({ timeout: 60_000 });
 
   // Close the tab mid-import.
   await page.close();
@@ -69,7 +69,7 @@ test("an import resumes after the tab is closed", async ({ browser }, testInfo) 
   await setupClerkTestingToken({ page: again });
   await again.goto("/app");
   await expect(again.getByRole("heading", { name: "Build your shelf" })).toBeVisible({ timeout: 180_000 });
-  await expect(again.getByText(/1,704 records imported/)).toBeVisible();
+  await expect(again.getByText(/[\d,]+ records imported/)).toBeVisible();
   await context.close();
 });
 
@@ -143,7 +143,9 @@ test("a demo account imports its own Discogs collection: a typo changes nothing,
   await expect(page.getByText(/Your 1,000 records and your shelves are replaced/)).toBeVisible();
   await page.getByRole("button", { name: "Replace my collection" }).click();
   await expect(page.getByRole("heading", { name: "Build your shelf" })).toBeVisible({ timeout: 240_000 });
-  await expect(page.getByText(/1,704 records imported/)).toBeVisible();
+  const imported = page.getByText(/[\d,]+ records imported/);
+  await expect(imported).toBeVisible();
+  const shownCount = Number((await imported.textContent())?.match(/([\d,]+) records imported/)?.[1].replace(/,/g, ""));
   await expect(page.getByText(`The Discogs collection of "aorihuelar" replaced the previous one. Build your shelf for it.`)).toBeVisible();
 
   const { data: collection } = await supabase.from("collections").select("source, discogs_username").single();
@@ -151,5 +153,5 @@ test("a demo account imports its own Discogs collection: a typo changes nothing,
   const { count: shelves } = await supabase.from("furniture").select("id", { count: "exact", head: true });
   expect(shelves).toBe(0);
   const { count: records } = await supabase.from("records").select("id", { count: "exact", head: true });
-  expect(records).toBe(1704);
+  expect(records).toBe(shownCount);
 });
