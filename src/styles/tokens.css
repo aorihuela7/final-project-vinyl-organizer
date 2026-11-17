@@ -1,0 +1,70 @@
+/*
+ * Design tokens: the single source for colors, type, radii, and shadows.
+ * Tailwind v4 turns every token in @theme into utilities
+ * (bg-canvas, text-ink, rounded-cover, shadow-cover, bg-spine-3, …).
+ */
+@theme static {
+  /* Neutral, warm-gray interface. The covers bring the color. */
+  --color-canvas: #f6f4f1;
+  --color-surface: #ffffff;
+  --color-sunken: #efebe6;
+  --color-line: #e2ddd6;
+  --color-line-strong: #cbc4ba;
+  --color-ink: #1c1a17;
+  --color-ink-muted: #5f5850;
+  --color-ink-faint: #625a51;
+
+  /* The single accent color (burnt orange, like a record label). */
+  --color-accent: #c2410c;
+  --color-accent-hover: #9a3412;
+  --color-accent-soft: #fbe7dc;
+  --color-on-accent: #ffffff;
+
+  /* States */
+  --color-blocked: #e6e1da;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecea;
+  --color-success: #2f6f3e;
+  --color-success-soft: #e5f2e8;
+  --color-warning: #8a5a00;
+  --color-warning-soft: #fbf0d9;
+
+  /* Spine palette: spines are colored by the first sort level. Light tones so ink text stays readable. */
+  --color-spine-0: #f2d7c9;
+  --color-spine-1: #d9e4d3;
+  --color-spine-2: #d6e0ee;
+  --color-spine-3: #eee1b8;
+  --color-spine-4: #e5d4e8;
+  --color-spine-5: #cfe6e3;
+  --color-spine-6: #f0cfd2;
+  --color-spine-7: #dde3c2;
+  --color-spine-8: #e2d9cc;
+  --color-spine-9: #cddce6;
+  --color-spine-10: #f3ddb6;
+  --color-spine-11: #d8d3ea;
+  /* Vertical spines mix their palette color with this ink, a different amount per record, so neighbors look different. */
+  --color-spine-ink: #2b2622;
+
+  /* Type */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Radii */
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-cover: 0.375rem;
+  --radius-cell: 0.375rem;
+
+  /* Shadows: every cover uses the same frame. */
+  --shadow-cover: 0 1px 2px rgb(28 26 23 / 0.14), 0 6px 16px rgb(28 26 23 / 0.1);
+  --shadow-card: 0 1px 2px rgb(28 26 23 / 0.06), 0 2px 8px rgb(28 26 23 / 0.05);
+  --shadow-sheet: 0 -8px 32px rgb(28 26 23 / 0.16);
+  /* A vertical spine: a light left edge and a dark right edge, like a sleeve seen from the side. */
+  --shadow-spine: inset 1px 0 0 rgb(255 255 255 / 0.28), inset -1px 0 0 rgb(28 26 23 / 0.22);
+  --shadow-tooltip: 0 2px 6px rgb(28 26 23 / 0.18), 0 8px 24px rgb(28 26 23 / 0.14);
+}
+
+/* Number of spine palette entries, mirrored in src/lib/design.ts. */
+:root {
+  --spine-count: 12;
+}

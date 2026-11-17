@@ -21,7 +21,7 @@ Shelfify (native app) already maps Kallax-style shelves and shows neighboring re
 
 A new person, start to finish, without help:
 
-1. Signs up.
+1. Opens the app without signing in (no login wall) and either tries the demo collection right away or types their Discogs username; signing up is asked only to save their work or to run their own import.
 2. Imports their public Discogs collection with their username, or picks the demo collection.
 3. Builds their shelf from a template and picks their sort order.
 4. Sees the map: each compartment with its range ("A – Bea") and how full it is.
@@ -46,7 +46,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 - `collections`: collection source (`discogs` | `demo` | `manual`), `discogs_username`, `last_synced_at`. One per user in v1.
 - `records`: `discogs_release_id`, `discogs_instance_id` (two copies of the same release are two rows), `artist`, `title`, `year`, `label`, `genre` (primary), `styles[]`, `format_name`, `format_qty`, `format_descriptions[]`, `cover_url`, `thumb_url`, `discogs_url`, `synced_at`, `last_seen_job_id`, `origin` (`import` | `added`). Unique on (`user_id`, `discogs_instance_id`).
 - `import_jobs`: `status` (`queued` | `running` | `done` | `error`), `next_page`, `total_pages`, `items_total`, `items_done`, `attempts`, `last_error`, timestamps.
-- `furniture`: `name`, `template`, `rows`, `cols`, `traversal` (`rows` | `columns`), `default_capacity`, `sort_index`.
+- `furniture`: `name`, `template`, `media` (`vinyl` | `cd`), `rows`, `cols`, `traversal` (`rows` | `columns`), `default_capacity`, `sort_index`. Vinyl records flow only through vinyl shelves and CDs only through CD shelves; other formats are imported but not placed.
 - `compartments`: `furniture_id`, `row`, `col`, `status` (`available` | `blocked`), `capacity` (optional, overrides the shelf's). Unique on (`furniture_id`, `row`, `col`).
 - `shelf_settings`: `sort_levels` (max 3), `ignore_articles`, `slack_pct`.
 - `placements`: `record_id` (primary key), `compartment_id`. **This is the physical state of the shelf**: it is stored, not recomputed on every view. Order within a compartment comes from the sort key.
@@ -55,7 +55,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 ## Algorithm (`src/lib/layout`, pure TypeScript, no Next or Supabase imports)
 
 - **Sort key:** the chosen levels (from: genre, artist, year, label, title), then fixed tiebreakers artist → year → title → id, so the order is total and stable. Compare with `Intl.Collator('en', { sensitivity: 'base', numeric: true })`.
-- **Normalization:** strip Discogs' disambiguation suffix from artist names ("Nirvana (2)" → "Nirvana"); optional ignoring of leading articles (configurable list: The, A, An, El, La, Los, Las, Le, Les…); with multiple artists, use the first; if genre is missing, use "No genre".
+- **Normalization:** strip Discogs' disambiguation suffix from artist names ("Nirvana (2)" → "Nirvana"); optional ignoring of leading articles (configurable list: The, A, An, El, La, Los, Las, Le, Les…; off by default); names that differ only by a leading article, case, or accents are one artist: if the collection has both "The Beatles" and "Beatles", all of them sort under "The Beatles"; with multiple artists, use the first; if genre is missing, use "No genre".
 - **Traversal:** shelves by `sort_index`; within each, by rows (left to right, top to bottom) or by columns (top to bottom, then the next column); blocked compartments are skipped.
 - **Invariant 1, contiguity:** walking the sorted collection, the compartment's traversal index never decreases. Each compartment holds a continuous range.
 - **Invariant 2, capacity:** after the initial layout, no compartment exceeds its capacity. If the collection doesn't fit, report how many records are left over; never drop them silently.
@@ -77,6 +77,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 
 - Each step of an `import_job` processes one page of 100 from `GET /users/{username}/collection/folders/0/releases`, upserts by `discogs_instance_id`, and advances `next_page`. The UI shows progress and requests the next step; if the user closes the tab, the job stays in the database and resumes.
 - When a full sync finishes, records that job didn't see are deleted (and lose their placement). New records found in a re-sync go in through insertion, not a full relayout.
+- One collection per user. Importing a different collection (the demo → your own, or another username, from "Shelves & order") replaces the current one only when that import finishes: every record it didn't see (added ones too) and the shelves are deleted, and the user builds shelves again for the new collection. An import that fails (typo, private collection) changes nothing.
 - If `last_synced_at` is more than 6 hours old when the user opens the app, re-sync and show "Updating…".
 - There is one token for the whole app: send a unique User-Agent, read `X-Discogs-Ratelimit-Remaining`, back off exponentially on a 429, and allow only one active job per user.
 
@@ -93,14 +94,14 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 
 - Restrained interface: neutral background, clear typography, a single accent color. The covers bring the color.
 - Covers are never altered (no filters, no text on top); they're integrated through the frame: square, same radius and same shadow everywhere.
-- Spines in the compartment view: typographic strips (artist · title) colored by the first level of the sort order, from a fixed palette. The cover appears when a spine is tapped and in the neighbors card.
+- Spines in the compartment view: on larger screens, vertical spines side by side, left to right as on the real shelf, each one record's share of the compartment's capacity wide, so the free space shows on the right. Each spine takes the palette color of its first-level group (fixed palette), darkened by a stable per-record amount so neighbors look different. Hovering or focusing a spine shows artist and title in a rounded bubble; clicking it opens the record card, and only there the cover. On phones, typographic strips (artist · title) for now; the mobile version of the spines is still to be designed.
 - Record without a cover: our own placeholder (initials on a palette tile), never a broken image.
 - Design tokens (colors, type, radii, shadows) in a single file.
 - Mobile first: people use it standing in front of their shelf.
 
 ## Demo
 
-Demo collection source: [DECIDE IN SESSION 2]. Prebuilt shelves: "Living room", Kallax 4×4 with two blocked compartments (turntable); "Studio", tower 1×5. Sort order: genre → artist. Default capacity: [MEASURE] records per cube.
+Demo collection source: the 1,000 most recently added records of the public Discogs collection of user `aorihuelar`, imported through the same path as any username import (10 pages, page cap). Prebuilt shelves: "Living room", Kallax 4×4 with two blocked compartments (turntable); "Studio", tower 1×5. Sort order: genre → artist. Default capacity: 80 records per cube (unmeasured), 70 per crate, 60 CDs per cube; global slack 10%. Without an account, the demo runs entirely in the browser; signing up saves it to the account.
 
 ## Security and free tiers
 
@@ -136,7 +137,14 @@ Demo collection source: [DECIDE IN SESSION 2]. Prebuilt shelves: "Living room", 
 
 (Ale fills this in as the project moves forward.)
 
-- Name:
-- Demo source:
-- Calibration in v1 (first record per compartment / count / none):
-- "Where does this record go?" in v1 (yes / no):
+- Name: Record Organizer (working name, in a single constant).
+- Demo source: the 1,000 most recently added records of Discogs user `aorihuelar`, through the normal import path.
+- Calibration in v1 (first record per compartment / count / none): yes, first record per compartment.
+- "Where does this record go?" in v1 (yes / no): yes.
+- Sign-in: email + password without email verification, plus Google (Clerk).
+- No login wall: the demo works without an account (in the browser); sign-up is asked to save or to run an own import.
+- Formats: shelves hold vinyl or CDs; each media is laid out separately with the same sort settings.
+- Defaults: sort by artist, ignore articles off ("The Beatles" under T), slack 10%, 80 records per cube, 70 per crate, 60 CDs per cube.
+- Artist spellings: "The Beatles" and "Beatles" are the same artist and sort together under the spelling with the article.
+- Switching collections: one per user; a new import replaces the old collection and its shelves, then "Build your shelf" with suggested templates.
+- Compartment view: vertical spines with a hover bubble on larger screens (colors: group palette color with a per-record shade); phones keep the strips until we design the mobile version.
