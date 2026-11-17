@@ -53,8 +53,3 @@ The first item is the core of the Systems focus. The rest follow what the interv
 ## What waits until after v2
 
 Sort-order suggestions with growth projections (they need the simulator first), per-compartment dimensions, splitting and merging compartments, multiple rooms, tracklists, printable dividers, CSV import and manual entry, Discogs OAuth, barcode scanning, and any AI tagging.
-
-## Timeline
-
-- **Week of Nov 17:** minimum-move insertion and the purchase simulator, with Vitest tests against the naive baseline; temporary locations and "Put it back".
-- **Week of Nov 24:** calibration by count and thickness by format; custom sections and tags; guest mode; hardening; fair demo with the simulator's numbers.
