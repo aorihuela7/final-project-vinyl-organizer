@@ -556,5 +556,31 @@
     "lp": "LPs (12″ e 10″)",
     "single": "7″",
     "cd": "CDs"
+  },
+  "temp": {
+    "takenOut": "Você tirou o disco para {location}. O lugar dele na estante fica reservado.",
+    "putBack": "De volta à estante. O lugar dele está destacado no mapa.",
+    "failed": "Não foi possível salvar. Tente de novo.",
+    "outBanner": "Fora da estante: em {location}.",
+    "outHint": "O lugar dele fica reservado. Quando voltar, coloque no nicho acima, entre os discos de cada lado.",
+    "putBackButton": "Devolver",
+    "takeOut": "Tirar…",
+    "chooseTitle": "Para onde ele vai?",
+    "suggestions": {
+      "turntable": "Ao lado do toca-discos",
+      "gigBag": "Bolsa dos shows",
+      "discards": "Caixa de descarte",
+      "display": "Em exposição",
+      "pile": "Pilha sem ordem"
+    },
+    "otherPlaceholder": "Dê um nome ao lugar",
+    "confirm": "Tirar",
+    "panelTitle": {
+      "one": "{count} disco fora da estante",
+      "other": "{count} discos fora da estante"
+    },
+    "show": "Ver",
+    "searchOut": "Em {location}. O lugar dele: {place}",
+    "elsewhere": "Outro lugar"
   }
 }

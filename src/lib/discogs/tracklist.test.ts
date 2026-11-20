@@ -10,7 +10,10 @@ describe("sideOf", () => {
     expect(sideOf("C3a")).toBe("C");
     expect(sideOf("1")).toBeNull();
     expect(sideOf("12")).toBeNull();
-    expect(sideOf("CD1-1")).toBe("disc:1");
+    expect(sideOf("CD1-1")).toBe("medium:CD 1");
+    expect(sideOf("CD-1")).toBe("medium:CD");
+    expect(sideOf("CD12")).toBe("medium:CD");
+    expect(sideOf("DVD-2")).toBe("medium:DVD");
     expect(sideOf("2-03")).toBe("disc:2");
     expect(sideOf("")).toBeNull();
   });
@@ -59,9 +62,12 @@ describe("parseTracklist", () => {
       { position: "CD2-1", title: "c" },
     ]);
     expect(discs.map((s) => [s.side, s.items.length])).toEqual([
-      ["disc:1", 2],
-      ["disc:2", 1],
+      ["medium:CD 1", 2],
+      ["medium:CD 2", 1],
     ]);
+    // A vinyl release with a bonus CD: the CD gets its own section after side D.
+    const bonus = parseTracklist([{ position: "D3", title: "x" }, { position: "CD-1", title: "y" }, { position: "CD-2", title: "z" }]);
+    expect(bonus.map((s) => s.side)).toEqual(["D", "medium:CD"]);
   });
 
   it("returns nothing for an empty or missing tracklist", () => {

@@ -26,7 +26,13 @@ export type StoredRecord = Omit<RecordInput, "size_inches" | "format_group"> & P
   id: string;
   origin: "import" | "added";
   synced_at?: string | null;
+  /** Taken out to a temporary location (its placement stays: that's its home spot). */
+  temp_location_id?: string | null;
+  taken_out_at?: string | null;
 };
+
+/** A place outside the sort order: next to the turntable, the gig bag, the discards box… */
+export type TempLocation = { id: string; name: string };
 
 export type CompartmentConfig = {
   row: number;

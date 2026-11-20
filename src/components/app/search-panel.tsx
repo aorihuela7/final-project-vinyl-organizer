@@ -4,7 +4,7 @@ import { useId, useMemo, useState, type KeyboardEvent } from "react";
 import { displayArtist } from "@/lib/layout";
 import { searchRecords } from "@/lib/search";
 import { slotTitle } from "@/lib/shelf/describe";
-import { groupOf, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
+import { groupOf, type MediaView, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
 import { useI18n } from "@/i18n/client";
 import { btnSecondary } from "../ui";
 import { Cover } from "./cover";
@@ -18,11 +18,13 @@ export function SearchPanel({
   records,
   views,
   config,
+  locations = [],
   onPick,
 }: {
   records: StoredRecord[];
   views: MediaView[];
   config: ShelfConfig;
+  locations?: TempLocation[];
   onPick: (id: string) => void;
 }) {
   const { t } = useI18n();
@@ -58,7 +60,10 @@ export function SearchPanel({
     const loc = findLocation(views, r.id);
     if (loc) {
       const furniture = config.furniture.find((f) => f.key === loc.slot.shelfKey);
-      return t("search.where", { place: slotTitle(loc.slot, furniture, t), pct: Math.round(loc.fraction * 100) });
+      const place = slotTitle(loc.slot, furniture, t);
+      const out = r.temp_location_id ? locations.find((l) => l.id === r.temp_location_id) : undefined;
+      if (out) return t("temp.searchOut", { location: out.name, place });
+      return t("search.where", { place, pct: Math.round(loc.fraction * 100) });
     }
     const group = groupOf(r);
     if (group === "other") return t("search.notPlaced", { format: r.format_name ?? "?" });
@@ -132,19 +137,21 @@ export function SearchRow({
   records,
   views,
   config,
+  locations,
   onPick,
   onAdd,
 }: {
   records: StoredRecord[];
   views: MediaView[];
   config: ShelfConfig;
+  locations?: TempLocation[];
   onPick: (id: string) => void;
   onAdd: () => void;
 }) {
   const { t } = useI18n();
   return (
     <div className="grid grid-cols-1 items-center gap-3 text-center min-[700px]:grid-cols-[minmax(0,1fr)_auto_auto] min-[700px]:text-left" data-tour="search">
-      <SearchPanel records={records} views={views} config={config} onPick={onPick} />
+      <SearchPanel records={records} views={views} config={config} locations={locations} onPick={onPick} />
       <span className="text-sm text-muted">{t("search.or")}</span>
       <button type="button" onClick={onAdd} className={`${btnSecondary} py-[11px]`} data-tour="add">
         {t("search.addNew")}

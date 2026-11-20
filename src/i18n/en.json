@@ -556,5 +556,31 @@
     "lp": "LPs (12″ and 10″)",
     "single": "7″",
     "cd": "CDs"
+  },
+  "temp": {
+    "takenOut": "Taken out to {location}. Its spot on the shelf stays reserved.",
+    "putBack": "Back on the shelf. Its spot is highlighted on the map.",
+    "failed": "Couldn't save that. Try again.",
+    "outBanner": "Out of the shelf: in {location}.",
+    "outHint": "Its spot stays reserved. When it comes back, put it in the compartment above, between the records on each side.",
+    "putBackButton": "Put it back",
+    "takeOut": "Take it out…",
+    "chooseTitle": "Where is it going?",
+    "suggestions": {
+      "turntable": "Next to the turntable",
+      "gigBag": "Gig bag",
+      "discards": "Discards box",
+      "display": "On display",
+      "pile": "Unsorted pile"
+    },
+    "otherPlaceholder": "Name the place",
+    "confirm": "Take it out",
+    "panelTitle": {
+      "one": "{count} record out of the shelf",
+      "other": "{count} records out of the shelf"
+    },
+    "show": "Show",
+    "searchOut": "In {location}. Its spot: {place}",
+    "elsewhere": "Somewhere else"
   }
 }

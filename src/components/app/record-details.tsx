@@ -6,7 +6,8 @@ import { percent } from "@/lib/design";
 import { formatLine, slotTitle } from "@/lib/shelf/describe";
 import { releaseUrl } from "@/lib/discogs/map";
 import type { TracklistSection } from "@/lib/discogs/tracklist";
-import { groupOf, sizeOf, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
+import { groupOf, sizeOf, type MediaView, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
+import { OutBanner, TakeOutChooser } from "./temporary";
 import { genreName } from "@/i18n/core";
 import { useI18n } from "@/i18n/client";
 import { btnSecondarySm, card } from "../ui";
@@ -33,6 +34,11 @@ type CardProps = {
   /** In a sheet: a close button in the walnut band, which is also the sheet's handle area. */
   onClose?: () => void;
   headingId?: string;
+  /** Temporary locations: where the record is if it's out, and the places to take it to. */
+  locations?: TempLocation[];
+  busy?: boolean;
+  onTakeOut?: (name: string) => void;
+  onPutBack?: () => void;
 };
 
 /**
@@ -40,8 +46,24 @@ type CardProps = {
  * with it highlighted, the two records on each side, its tracklist, and the
  * Discogs link.
  */
-export function RecordCard({ record, location, views, config, byId, onShowOnMap, onPickRecord, onClose, headingId = "record-card-title" }: CardProps) {
+export function RecordCard({
+  record,
+  location,
+  views,
+  config,
+  byId,
+  onShowOnMap,
+  onPickRecord,
+  onClose,
+  headingId = "record-card-title",
+  locations = [],
+  busy = false,
+  onTakeOut,
+  onPutBack,
+}: CardProps) {
   const { t, locale } = useI18n();
+  const [choosing, setChoosing] = useState(false);
+  const outside = record.temp_location_id ? (locations.find((l) => l.id === record.temp_location_id) ?? null) : null;
   const furniture = location ? config.furniture.find((f) => f.key === location.slot.shelfKey) : undefined;
   const group = groupOf(record);
   const hasShelf = config.furniture.some((f) => f.media === group);
@@ -55,7 +77,7 @@ export function RecordCard({ record, location, views, config, byId, onShowOnMap,
 
   const genres = [record.genre ? genreName(locale, record.genre) : null, ...(record.styles ?? [])].filter(Boolean).join(", ");
   const view = location ? views.find((v) => v.index.slotById.has(location.slot.id)) : undefined;
-  const drawing = location && view ? (view.index.bySlot.get(location.slot.id) ?? []).map((r) => ({ id: r.id, size: (byId.get(r.id) ? sizeOf(byId.get(r.id)!) : null) ?? 12 })) : [];
+  const drawing = location && view ? (view.index.bySlot.get(location.slot.id) ?? []).map((r) => ({ id: r.id, size: (byId.get(r.id) ? sizeOf(byId.get(r.id)!) : null) ?? 12, out: !!byId.get(r.id)?.temp_location_id })) : [];
 
   return (
     <article className={`${card} grid gap-3.5 overflow-hidden pb-[18px]`} aria-labelledby={headingId} data-record-card>
@@ -77,6 +99,8 @@ export function RecordCard({ record, location, views, config, byId, onShowOnMap,
           </button>
         )}
       </header>
+
+      {outside && onPutBack && <OutBanner location={outside} busy={busy} onPutBack={onPutBack} />}
 
       <div className="mx-[18px] grid grid-cols-[104px_1fr] items-center gap-3.5">
         <Cover src={record.cover_url ?? record.thumb_url} artist={record.artist} title={record.title} size="detail" />
@@ -118,13 +142,34 @@ export function RecordCard({ record, location, views, config, byId, onShowOnMap,
 
       {record.discogs_release_id ? <Tracklist releaseId={record.discogs_release_id} /> : null}
 
+      {choosing && onTakeOut && (
+        <div className="mx-[18px]">
+          <TakeOutChooser
+            locations={locations}
+            busy={busy}
+            onChoose={(name) => {
+              onTakeOut(name);
+              setChoosing(false);
+            }}
+            onCancel={() => setChoosing(false)}
+          />
+        </div>
+      )}
+
       <div className="mx-[18px] flex flex-wrap items-center justify-between gap-2.5 text-[13px]">
         <DiscogsAttribution href={releaseUrl(record.discogs_release_id)} className="text-[13px] text-ink" />
-        {location && onShowOnMap && (
-          <button type="button" onClick={onShowOnMap} className={btnSecondarySm}>
-            {t("record.showOnMap")}
-          </button>
-        )}
+        <span className="flex flex-wrap gap-2">
+          {location && !outside && onTakeOut && !choosing && (
+            <button type="button" onClick={() => setChoosing(true)} className={btnSecondarySm}>
+              {t("temp.takeOut")}
+            </button>
+          )}
+          {location && onShowOnMap && (
+            <button type="button" onClick={onShowOnMap} className={btnSecondarySm}>
+              {t("record.showOnMap")}
+            </button>
+          )}
+        </span>
       </div>
     </article>
   );
@@ -223,6 +268,7 @@ export function Tracklist({ releaseId }: { releaseId: number }) {
   const sideName = (side: string | null) => {
     if (side === null) return null;
     if (side.startsWith("disc:")) return t("record.disc", { n: Number(side.slice(5)) });
+    if (side.startsWith("medium:")) return side.slice(7);
     return t("record.side", { side });
   };
 
@@ -261,7 +307,7 @@ export function Tracklist({ releaseId }: { releaseId: number }) {
                   <li key={j} className="border-b border-rule py-[3px] text-sm">
                     <TrackRow track={item} />
                     {item.parts && (
-                      <ol className="list-none pl-[42px]">
+                      <ol className="list-none pl-[52px]">
                         {item.parts.map((part, k) => (
                           <li key={k} className="py-[2px] text-[13px]">
                             <TrackRow track={part} />
@@ -281,7 +327,7 @@ export function Tracklist({ releaseId }: { releaseId: number }) {
 
 function TrackRow({ track }: { track: { position: string; title: string; duration: string | null } }) {
   return (
-    <span className="grid grid-cols-[34px_1fr_auto] gap-2">
+    <span className="grid grid-cols-[44px_1fr_auto] gap-2">
       <span className="text-muted tabular-nums">{track.position}</span>
       <span className="text-ink">{track.title}</span>
       <span className="text-muted tabular-nums">{track.duration ?? ""}</span>

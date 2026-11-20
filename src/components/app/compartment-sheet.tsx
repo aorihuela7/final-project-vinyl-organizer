@@ -50,7 +50,7 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
   const aspect = furniture && isBoxTemplate(furniture.template) ? 1.25 : 1;
   const over = records.length > slot.capacity;
   const drawing = useMemo(
-    () => records.map((r) => ({ id: r.id, size: (byId.get(r.id) ? sizeOf(byId.get(r.id)!) : null) ?? (view.media === "single" ? 7 : 12) })),
+    () => records.map((r) => ({ id: r.id, size: (byId.get(r.id) ? sizeOf(byId.get(r.id)!) : null) ?? (view.media === "single" ? 7 : 12), out: !!byId.get(r.id)?.temp_location_id })),
     [records, byId, view.media],
   );
   const shown = hover ? byId.get(hover.id) : undefined;

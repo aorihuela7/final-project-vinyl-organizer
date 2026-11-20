@@ -4,7 +4,8 @@ import { memo, useMemo } from "react";
 import { leanLayout, type LeanRecord, type RecordSize } from "@/lib/visual/lean";
 import { recordColor } from "@/lib/design";
 
-export type DrawingRecord = { id: string; size: RecordSize };
+/** out: taken to a temporary location; drawn hollow, so its spot shows. */
+export type DrawingRecord = { id: string; size: RecordSize; out?: boolean };
 
 type Props = {
   records: readonly DrawingRecord[];
@@ -58,10 +59,11 @@ export const CompartmentDrawing = memo(function CompartmentDrawing({
       aria-hidden="true"
       onMouseLeave={onHover ? () => onHover(null) : undefined}
     >
-      {layout.records.map((r) => (
+      {layout.records.map((r, i) => (
         <RecordShape
           key={r.id}
           record={r}
+          out={!!records[i]?.out}
           floor={layout.floor}
           found={r.id === foundId}
           lifted={lifted && r.id === foundId}
@@ -77,6 +79,7 @@ export const CompartmentDrawing = memo(function CompartmentDrawing({
 
 function RecordShape({
   record: r,
+  out,
   floor,
   found,
   lifted,
@@ -86,6 +89,7 @@ function RecordShape({
   onPick,
 }: {
   record: LeanRecord;
+  out: boolean;
   floor: number;
   found: boolean;
   lifted: boolean;
@@ -103,9 +107,10 @@ function RecordShape({
         height={r.height.toFixed(2)}
         className="transition-transform duration-500 ease-[cubic-bezier(.2,.8,.2,1)]"
         style={{
-          fill: found ? "var(--color-mustard)" : recordColor(r.id),
-          stroke: found ? "var(--color-ink)" : "var(--color-record-stroke)",
-          strokeWidth: (found ? 0.35 : 0.2) * scale,
+          fill: found ? "var(--color-mustard)" : out ? "none" : recordColor(r.id),
+          stroke: found ? "var(--color-ink)" : out ? "var(--color-on-walnut)" : "var(--color-record-stroke)",
+          strokeWidth: (found ? 0.35 : out ? 0.3 : 0.2) * scale,
+          strokeDasharray: out && !found ? `${1.2 * scale} ${0.8 * scale}` : undefined,
           transform: lifted ? `translateY(${-6 * scale}px)` : undefined,
           cursor: interactive ? "pointer" : undefined,
         }}

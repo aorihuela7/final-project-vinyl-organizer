@@ -12,6 +12,7 @@ import {
   type FurnitureConfig,
   type ShelfConfig,
   type StoredRecord,
+  type TempLocation,
 } from "@/lib/shelf/model";
 
 const KEY = "ro:local-v1";
@@ -25,6 +26,8 @@ export type LocalSnapshot = {
   /** recordId → slot id (position key). */
   placement: Array<[string, string]>;
   events: Array<{ kind: string; movedCount: number; at: string }>;
+  /** Temporary locations (the records carry temp_location_id). */
+  locations?: TempLocation[];
 };
 
 type SnapshotV1 = Omit<LocalSnapshot, "version" | "config"> & {

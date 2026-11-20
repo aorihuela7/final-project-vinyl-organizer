@@ -15,6 +15,7 @@ import { MapView } from "./map-view";
 import { BrassRail } from "./brass-rail";
 import { CalibrationHint } from "./calibration-hint";
 import { SimulatorCard } from "./simulator-card";
+import { OutOfShelfPanel } from "./temporary";
 import { toSortSettings } from "@/lib/shelf/model";
 import { Onboarding } from "./onboarding";
 import { RecordCard, RecordCardEmpty, findLocation } from "./record-details";
@@ -295,6 +296,7 @@ export function ShelfApp() {
                 records={data.records}
                 views={views}
                 config={config}
+                locations={data.locations ?? []}
                 onPick={(id) => {
                   setOpenRecord(id);
                   showFound(id);
@@ -323,6 +325,16 @@ export function ShelfApp() {
                 </ul>
               )}
 
+              <OutOfShelfPanel
+                records={data.records}
+                locations={data.locations ?? []}
+                busy={app.busy}
+                onPutBack={(id) => void app.putBack(id).then((ok) => ok && showFound(id))}
+                onShow={(id) => {
+                  setOpenRecord(id);
+                  showFound(id);
+                }}
+              />
               <div className={wide ? "grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-start gap-[22px]" : ""}>
                 <MapView
                   config={config}
@@ -357,6 +369,10 @@ export function ShelfApp() {
                           showFound(id);
                         }}
                         onShowOnMap={() => showFound(recordInSheet.id)}
+                        locations={data.locations ?? []}
+                        busy={app.busy}
+                        onTakeOut={(name) => void app.takeOut(recordInSheet.id, name)}
+                        onPutBack={() => void app.putBack(recordInSheet.id).then((ok) => ok && showFound(recordInSheet.id))}
                       />
                     ) : (
                       <RecordCardEmpty />
@@ -409,6 +425,17 @@ export function ShelfApp() {
               setTab("map");
               showFound(recordInSheet.id);
             }}
+            locations={data.locations ?? []}
+            busy={app.busy}
+            onTakeOut={(name) => void app.takeOut(recordInSheet.id, name)}
+            onPutBack={() =>
+              void app.putBack(recordInSheet.id).then((ok) => {
+                if (!ok) return;
+                setOpenRecord(null);
+                setTab("map");
+                showFound(recordInSheet.id);
+              })
+            }
           />
         </Sheet>
       )}

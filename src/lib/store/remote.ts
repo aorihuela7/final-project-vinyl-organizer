@@ -6,7 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RecordInput } from "@/lib/discogs/map";
 import type { Move, Placement, ShelfMedia } from "@/lib/layout";
-import type { CompartmentConfig, FurnitureConfig, ShelfConfig, StoredRecord } from "@/lib/shelf/model";
+import type { CompartmentConfig, FurnitureConfig, ShelfConfig, StoredRecord, TempLocation } from "@/lib/shelf/model";
 import { DEFAULT_SETTINGS } from "@/lib/shelf/model";
 import type { TemplateId } from "@/lib/shelf/templates";
 
@@ -42,10 +42,11 @@ export type RemoteState = {
   layoutAt: string | null;
   /** Whether the user has ever calibrated a compartment. */
   calibrated: boolean;
+  locations: TempLocation[];
 };
 
 const RECORD_COLUMNS =
-  "id, discogs_release_id, discogs_instance_id, artist, title, year, label, genre, styles, format_name, format_qty, format_descriptions, media, size_inches, format_group, cover_url, thumb_url, discogs_url, date_added, origin, synced_at";
+  "id, discogs_release_id, discogs_instance_id, artist, title, year, label, genre, styles, format_name, format_qty, format_descriptions, media, size_inches, format_group, cover_url, thumb_url, discogs_url, date_added, origin, synced_at, temp_location_id, taken_out_at";
 
 async function fetchAll<T>(supabase: SupabaseClient, table: string, columns: string, orderBy: string): Promise<T[]> {
   const size = 1000;
@@ -82,7 +83,7 @@ export function mediaToDb(media: ShelfMedia): FurnitureRow["media"] {
 type CompartmentRow = { id: string; furniture_id: string; row: number; col: number; status: "available" | "blocked"; capacity: number | null };
 
 export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState> {
-  const [records, furnitureRes, compartments, settingsRes, placements, collectionRes, jobsRes, eventRes, calibrateRes] = await Promise.all([
+  const [records, furnitureRes, compartments, settingsRes, placements, collectionRes, jobsRes, eventRes, calibrateRes, locationsRes] = await Promise.all([
     fetchAll<StoredRecord>(supabase, "records", RECORD_COLUMNS, "id"),
     supabase.from("furniture").select("id, name, template, media, rows, cols, traversal, default_capacity, sort_index").order("sort_index"),
     fetchAll<CompartmentRow>(supabase, "compartments", "id, furniture_id, row, col, status, capacity", "id"),
@@ -92,8 +93,9 @@ export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState>
     supabase.from("import_jobs").select("*").order("created_at", { ascending: false }).limit(5),
     supabase.from("layout_events").select("created_at").in("kind", ["initial", "relayout"]).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("layout_events").select("id").eq("kind", "calibrate").limit(1),
+    supabase.from("temporary_locations").select("id, name").order("created_at"),
   ]);
-  for (const res of [furnitureRes, settingsRes, collectionRes, jobsRes, eventRes, calibrateRes]) {
+  for (const res of [furnitureRes, settingsRes, collectionRes, jobsRes, eventRes, calibrateRes, locationsRes]) {
     if (res.error) throw new Error(res.error.message);
   }
 
@@ -131,6 +133,7 @@ export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState>
     lastJob: jobs[0] ?? null,
     layoutAt: (eventRes.data as { created_at: string } | null)?.created_at ?? null,
     calibrated: (calibrateRes.data?.length ?? 0) > 0,
+    locations: (locationsRes.data ?? []) as TempLocation[],
   };
 }
 
@@ -193,4 +196,29 @@ export async function addRecordRemote(supabase: SupabaseClient, userId: string, 
     .single();
   if (error) throw new Error(error.message);
   return data as unknown as StoredRecord;
+}
+
+/** A temporary location by name, created if it doesn't exist yet. */
+export async function ensureLocationRemote(supabase: SupabaseClient, userId: string, name: string): Promise<TempLocation> {
+  const { data, error } = await supabase
+    .from("temporary_locations")
+    .upsert({ user_id: userId, name }, { onConflict: "user_id,name" })
+    .select("id, name")
+    .single();
+  if (error) throw new Error(error.message);
+  return data as TempLocation;
+}
+
+/** Takes a record out to a location, or puts it back (null). Its placement doesn't change. */
+export async function setRecordLocationRemote(supabase: SupabaseClient, recordId: string, locationId: string | null) {
+  const { error } = await supabase
+    .from("records")
+    .update({ temp_location_id: locationId, taken_out_at: locationId ? new Date().toISOString() : null })
+    .eq("id", recordId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteLocationRemote(supabase: SupabaseClient, locationId: string) {
+  const { error } = await supabase.from("temporary_locations").delete().eq("id", locationId);
+  if (error) throw new Error(error.message);
 }

@@ -28,6 +28,8 @@ import { peekPendingImport, setPendingImport, takePendingImport } from "@/lib/lo
 import {
   addRecordRemote,
   applyPlacementsRemote,
+  ensureLocationRemote,
+  setRecordLocationRemote,
   loadRemote,
   saveSetupRemote,
   type CollectionRow,
@@ -48,6 +50,7 @@ import {
   type MediaView,
   type ShelfConfig,
   type StoredRecord,
+  type TempLocation,
 } from "@/lib/shelf/model";
 import { useSupabase } from "@/lib/supabase/browser";
 
@@ -60,6 +63,8 @@ export type AppData = {
   fetchedAt: string | null;
   /** Whether a compartment was ever calibrated (the map says it's computed from estimates until then). */
   calibrated?: boolean;
+  /** Temporary locations (records taken out carry temp_location_id). */
+  locations?: TempLocation[];
 };
 
 export type Status =
@@ -199,6 +204,7 @@ export function useShelfApp(startParam: string | null) {
       config: next.config ?? demoConfig(next.records, demoNames()),
       placement: [...next.placement],
       events: [...(previous?.events ?? []), ...(event ? [{ ...event, at: new Date().toISOString() }] : [])].slice(-50),
+      locations: next.locations ?? previous?.locations ?? [],
     };
     if (!saveLocal(snapshot)) setNotice({ tone: "warning", msg: msg("notices.localSaveFailed") });
   }, [demoNames]);
@@ -252,7 +258,12 @@ export function useShelfApp(startParam: string | null) {
         const latest = loadLocal() ?? snapshot;
         const refreshedAdded = new Map(added.map((r) => [r.id, r]));
         const addedNow = latest.records.filter((r) => r.origin === "added").map((r) => refreshedAdded.get(r.id) ?? r);
-        const fresh = [...demoRecords(payload), ...addedNow];
+        // Records taken out to a temporary location stay out after the refresh.
+        const outside = new Map(latest.records.filter((r) => r.temp_location_id).map((r) => [r.id, r]));
+        const fresh = [...demoRecords(payload), ...addedNow].map((r) => {
+          const was = outside.get(r.id);
+          return was ? { ...r, temp_location_id: was.temp_location_id, taken_out_at: was.taken_out_at } : r;
+        });
         const ids = new Set(fresh.map((r) => r.id));
         const kept = new Map([...new Map(latest.placement)].filter(([id]) => ids.has(id)));
         const placed = placeNewRecords(fresh, latest.config, kept);
@@ -263,6 +274,7 @@ export function useShelfApp(startParam: string | null) {
           collection: null,
           fetchedAt: payload.fetchedAt,
           calibrated: latest.events.some((e) => e.kind === "calibrate"),
+          locations: latest.locations ?? [],
         };
         persistLocal(next, placed.moves.length ? { kind: "insert", movedCount: placed.moves.length } : undefined);
         if (alive.current) setData(next);
@@ -278,7 +290,15 @@ export function useShelfApp(startParam: string | null) {
   // ------------------------------------------------------------ remote
   const reloadRemote = useCallback(async (client: SupabaseClient) => {
     const state = await loadRemote(client);
-    const next: AppData = { records: state.records, config: state.config, placement: state.placement, collection: state.collection, fetchedAt: null, calibrated: state.calibrated };
+    const next: AppData = {
+      records: state.records,
+      config: state.config,
+      placement: state.placement,
+      collection: state.collection,
+      fetchedAt: null,
+      calibrated: state.calibrated,
+      locations: state.locations,
+    };
     return { state, next };
   }, []);
 
@@ -448,6 +468,7 @@ export function useShelfApp(startParam: string | null) {
             collection: null,
             fetchedAt: snapshot.fetchedAt,
             calibrated: snapshot.events.some((e) => e.kind === "calibrate"),
+            locations: snapshot.locations ?? [],
           });
           setStatus({ kind: "ready" });
           if (loaded?.migration?.singlesBoxAdded) {
@@ -724,6 +745,61 @@ export function useShelfApp(startParam: string | null) {
     [data, mode, supabase, userId, views, applyChange],
   );
 
+  /** Takes a record out to a temporary location (created if it's new). It keeps its spot on the shelf. */
+  const takeOut = useCallback(
+    async (recordId: string, name: string): Promise<TempLocation | null> => {
+      const trimmed = name.trim().slice(0, 60);
+      if (!data || !trimmed) return null;
+      setBusy(true);
+      try {
+        let location = (data.locations ?? []).find((l) => l.name.toLocaleLowerCase() === trimmed.toLocaleLowerCase());
+        if (mode === "remote" && supabase && userId) {
+          if (!location) location = await ensureLocationRemote(supabase, userId, trimmed);
+          await setRecordLocationRemote(supabase, recordId, location.id);
+        } else if (!location) {
+          location = { id: `loc-${Date.now().toString(36)}`, name: trimmed };
+        }
+        const found = location;
+        const locations = (data.locations ?? []).some((l) => l.id === found.id) ? (data.locations ?? []) : [...(data.locations ?? []), found];
+        const records = data.records.map((r) => (r.id === recordId ? { ...r, temp_location_id: found.id, taken_out_at: new Date().toISOString() } : r));
+        const next: AppData = { ...data, records, locations };
+        if (mode !== "remote") persistLocal(next);
+        setData(next);
+        setNotice({ tone: "info", msg: msg("temp.takenOut", { location: found.name }) });
+        return found;
+      } catch (err) {
+        setNotice({ tone: "warning", msg: errorMsg(err, msg("temp.failed")) });
+        return null;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [data, mode, supabase, userId, persistLocal],
+  );
+
+  /** Puts a record back: its spot never changed, so the card and the map show where. */
+  const putBack = useCallback(
+    async (recordId: string): Promise<boolean> => {
+      if (!data) return false;
+      setBusy(true);
+      try {
+        if (mode === "remote" && supabase) await setRecordLocationRemote(supabase, recordId, null);
+        const records = data.records.map((r) => (r.id === recordId ? { ...r, temp_location_id: null, taken_out_at: null } : r));
+        const next: AppData = { ...data, records };
+        if (mode !== "remote") persistLocal(next);
+        setData(next);
+        setNotice({ tone: "success", msg: msg("temp.putBack") });
+        return true;
+      } catch (err) {
+        setNotice({ tone: "warning", msg: errorMsg(err, msg("temp.failed")) });
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [data, mode, supabase, persistLocal],
+  );
+
   const resetLocal = useCallback(() => {
     clearLocal();
     setData(null);
@@ -747,6 +823,8 @@ export function useShelfApp(startParam: string | null) {
     calibrate,
     previewInsert,
     addRecord,
+    takeOut,
+    putBack,
     resetLocal,
   };
 }

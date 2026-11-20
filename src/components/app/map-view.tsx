@@ -52,7 +52,7 @@ export function useGroupData(views: MediaView[], config: ShelfConfig, byId: Map<
           slotId,
           list.map((r) => {
             const stored = byId.get(r.id);
-            return { id: r.id, size: (stored ? sizeOf(stored) : null) ?? (view.media === "single" ? 7 : 12) };
+            return { id: r.id, size: (stored ? sizeOf(stored) : null) ?? (view.media === "single" ? 7 : 12), out: !!stored?.temp_location_id };
           }),
         );
       }

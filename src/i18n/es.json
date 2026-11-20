@@ -556,5 +556,31 @@
     "lp": "LP (12″ y 10″)",
     "single": "7″",
     "cd": "CD"
+  },
+  "temp": {
+    "takenOut": "Lo sacaste a {location}. Su lugar en la repisa queda reservado.",
+    "putBack": "De vuelta en la repisa. Su lugar está resaltado en el mapa.",
+    "failed": "No se pudo guardar. Intenta de nuevo.",
+    "outBanner": "Fuera de la repisa: en {location}.",
+    "outHint": "Su lugar queda reservado. Cuando vuelva, ponlo en el compartimiento de arriba, entre los discos de cada lado.",
+    "putBackButton": "Devolverlo",
+    "takeOut": "Sacarlo…",
+    "chooseTitle": "¿A dónde va?",
+    "suggestions": {
+      "turntable": "Junto al tocadiscos",
+      "gigBag": "Bolso de las fechas",
+      "discards": "Caja de descartes",
+      "display": "En exhibición",
+      "pile": "Pila sin ordenar"
+    },
+    "otherPlaceholder": "Ponle nombre al lugar",
+    "confirm": "Sacarlo",
+    "panelTitle": {
+      "one": "{count} disco fuera de la repisa",
+      "other": "{count} discos fuera de la repisa"
+    },
+    "show": "Ver",
+    "searchOut": "En {location}. Su lugar: {place}",
+    "elsewhere": "Otro lugar"
   }
 }
