@@ -46,7 +46,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | Phase | Status | Evidence |
 | --- | --- | --- |
 | 0. Issues, CLAUDE.md, branch | Done | Branch `v2-design`; issues #4–#14 (v2 plan: fix-first #4–#6, add #7–#11, hardening #12, security pass #13, design review #14) and #15–#23 (Nogal parts); CLAUDE.md has a v2 scope section, format groups, Nogal design, multilingual UI |
-| 1. Foundations | Todo | |
+| 1. Foundations | Done | Nogal tokens in `src/styles/tokens.css` (+ `surface-*` utilities in globals.css), Belleza and Nunito Sans via `next/font`, type scale 11–26, i18n in `src/i18n/` (core, server, client, `en.json`, 7 tests), app bar, banners, buttons, and inputs in `src/components/ui.tsx`; screenshots `p1-landing-*`, `p1-app-demo-*`; build and 76 tests pass |
 | 2. Lean function | Todo | |
 | 3. Format groups | Todo | |
 | 4. Map | Todo | |
@@ -74,6 +74,12 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 
 - **Order of the v2-plan issues vs. the Nogal phases.** Ale asked to implement the v2-plan issues too. Taken: Nogal phases first, then the remaining issues (minimum-move insertion and simulator, temporary locations, better calibration, custom sections and tags, guest mode, hardening, security pass, design review). Why: the redesign touches every screen, and the plan's constraint "modify `src/lib/layout` only for the format groups" applies to the Nogal phases; the minimum-move work changes the layout code afterwards, as the v2 plan says. Easy to change: the order is only a sequence of slices.
 
+- **Brass and engraving tuned for contrast.** The plan asks for AA on the gradient's darkest stop. With the mockup's values, engraving `#3E2C0F` on brass-dark `#9C7C35` is 3.4:1. Taken: brass-dark `#A8873C` and one engraving color `#2E2209` for plates and rail (4.6:1 on the darkest stop, 9.2:1 on the lightest). Visually almost identical. Easy to change: two tokens.
+- **Belleza has one weight.** The plan asks for "semibold" in the display face (record detail band). Belleza ships only 400, and a synthesized bold looks smeared, so display text is always 400 (`font-synthesis: none`); hierarchy comes from size. Easy to change: swap the font.
+- **How the language reaches the server.** `cacheComponents` is on, so reading the cookie outside a Suspense boundary would block prerendering. Taken: the root layout reads the `locale` cookie inside a Suspense boundary (the shell is prerendered, the rest streams), an inline script sets `<html lang>` before the first paint, and the client provider switches language in place (nothing remounts, so the person stays where they were) and calls `router.refresh()` for server components. No URL prefix. Medium to change.
+- **Messages in the app state.** Notices and statuses were stored as finished English sentences. They're now message descriptors (key + variables) rendered at display time, so changing the language updates them. Errors that come from servers (Discogs, Supabase) stay as raw English text.
+- **String conversion order.** Phase 1 converted the shell (header, footer, landing, onboarding, import progress, notices, banners). Each later phase converts the components it rebuilds; phase 9 sweeps whatever is left.
+
 ## Blocked: needs Ale
 
 (none yet)
@@ -90,6 +96,7 @@ If the session stops on a usage limit, a recurring session job (created when the
 
 - 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
 - 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
+- 2026-11-20 03:38 CST · Phase 1 done: tokens, fonts, i18n system, shell strings, ui primitives.
 
 ## Morning summary
 

@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { FRESHNESS_MS } from "@/lib/config";
+import { msg, rawMsg, type Msg } from "@/i18n/core";
 import type { RecordInput } from "@/lib/discogs/map";
 import {
   calibrate as calibrateLayout,
@@ -55,13 +56,13 @@ export type AppData = {
 };
 
 export type Status =
-  | { kind: "loading"; message: string }
-  | { kind: "onboarding"; error?: string; username?: string }
-  | { kind: "importing"; job: JobRow | null; message: string }
+  | { kind: "loading"; message: Msg }
+  | { kind: "onboarding"; error?: Msg; username?: string }
+  | { kind: "importing"; job: JobRow | null; message: Msg }
   | { kind: "ready" }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: Msg };
 
-export type Notice = { tone: "info" | "success" | "warning"; text: string; moves?: Move[] };
+export type Notice = { tone: "info" | "success" | "warning"; msg: Msg; moves?: Move[] };
 
 export type MapPreview = { config: ShelfConfig; changed: number; placed: number; leftover: number; notPlaced: number; hasMap: boolean; slackReduced: boolean };
 
@@ -90,10 +91,10 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const replacedNotice = (username: string): Notice => ({
-  tone: "success",
-  text: `The Discogs collection of "${username}" replaced the previous one. Build your shelf for it.`,
-});
+const replacedNotice = (username: string): Notice => ({ tone: "success", msg: msg("notices.replaced", { username }) });
+
+/** An error from a server or the network, as raw text (it comes in English), or a fallback message. */
+const errorMsg = (err: unknown, fallback: Msg): Msg => (err instanceof Error && err.message ? rawMsg(err.message) : fallback);
 
 function demoRecords(payload: { records: RecordInput[] }): StoredRecord[] {
   return payload.records.map((r) => ({ ...r, id: `d${r.discogs_instance_id}`, origin: "import" as const }));
@@ -143,7 +144,7 @@ export function useShelfApp(startParam: string | null) {
   const clerk = useClerk();
   const supabase = useSupabase();
   const [data, setData] = useState<AppData | null>(null);
-  const [status, setStatus] = useState<Status>({ kind: "loading", message: "Loading your shelf…" });
+  const [status, setStatus] = useState<Status>({ kind: "loading", message: msg("app.loadingShelf") });
   const [syncJob, setSyncJob] = useState<JobRow | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
@@ -169,11 +170,11 @@ export function useShelfApp(startParam: string | null) {
       placement: [...next.placement],
       events: [...(previous?.events ?? []), ...(event ? [{ ...event, at: new Date().toISOString() }] : [])].slice(-50),
     };
-    if (!saveLocal(snapshot)) setNotice({ tone: "warning", text: "This browser couldn't save the demo. It will reset when you leave." });
+    if (!saveLocal(snapshot)) setNotice({ tone: "warning", msg: msg("notices.localSaveFailed") });
   }, []);
 
   const startLocalDemo = useCallback(async () => {
-    setStatus({ kind: "loading", message: "Loading the demo collection from Discogs…" });
+    setStatus({ kind: "loading", message: msg("app.loadingDemo") });
     try {
       const payload = await api<{ records: RecordInput[]; fetchedAt: string }>("/api/demo");
       const records = demoRecords(payload);
@@ -186,10 +187,10 @@ export function useShelfApp(startParam: string | null) {
       setStatus({ kind: "ready" });
       setNotice({
         tone: "success",
-        text: `Demo ready: ${layout.groups.vinyl.sortedIds.length} records on "Living room" and ${layout.groups.cd.sortedIds.length} CDs in "Studio", sorted by genre, then artist.`,
+        msg: msg("notices.demoReady", { lps: layout.groups.vinyl.sortedIds.length, cds: layout.groups.cd.sortedIds.length }),
       });
     } catch (err) {
-      setStatus({ kind: "error", message: err instanceof Error ? err.message : "Couldn't load the demo." });
+      setStatus({ kind: "error", message: errorMsg(err, msg("notices.demoFailed")) });
     }
   }, [persistLocal]);
 
@@ -258,7 +259,7 @@ export function useShelfApp(startParam: string | null) {
         current = step.job;
         if (!alive.current) break;
         if (background) setSyncJob(current);
-        else setStatus({ kind: "importing", job: current, message: "Importing your collection…" });
+        else setStatus({ kind: "importing", job: current, message: msg("importing.importing") });
         if (step.retryAfterMs) await sleep(step.retryAfterMs);
       }
       void client;
@@ -304,7 +305,7 @@ export function useShelfApp(startParam: string | null) {
         await saveSetupRemote(client, config, byPosition, { kind: "initial", moves: [], movedCount: byPosition.size });
         clearLocal();
         ({ state, next } = await reloadRemote(client));
-        setNotice({ tone: "success", text: "Your demo shelf is saved to your account." });
+        setNotice({ tone: "success", msg: msg("notices.demoSaved") });
       } else if (!state.config && state.collection?.source === "demo") {
         const config = demoConfig();
         const { byPosition } = computeInitial(state.records, config);
@@ -319,7 +320,7 @@ export function useShelfApp(startParam: string | null) {
         };
         await saveSetupRemote(client, config, byPosition, { kind: "relayout", moves: [], movedCount: byPosition.size });
         ({ state, next } = await reloadRemote(client));
-        setNotice({ tone: "info", text: "Most records were new, so the whole shelf was laid out again with your settings." });
+        setNotice({ tone: "info", msg: msg("notices.relaidOut") });
       } else if (state.config) {
         const placed = placeNewRecords(next.records, state.config, next.placement);
         let saved = placed.moves.length > 0;
@@ -328,18 +329,18 @@ export function useShelfApp(startParam: string | null) {
             await applyPlacementsRemote(client, placed.placement, placed.moves, { kind: "insert", moves: placed.moves, movedCount: placed.moves.length });
           } catch (err) {
             saved = false;
-            setNotice({ tone: "warning", text: `Couldn't place the new records: ${err instanceof Error ? err.message : "unknown error"}. Regenerate the map to include them.` });
+            setNotice({ tone: "warning", msg: msg("notices.placeFailed", { message: err instanceof Error ? err.message : "?" }) });
           }
         }
         if (saved) {
           next = { ...next, placement: placed.placement };
           setNotice({
             tone: "info",
-            text: `${placed.placed} new record${placed.placed === 1 ? "" : "s"} placed on your shelf: ${placed.moves.length} move${placed.moves.length === 1 ? "" : "s"}.`,
+            msg: msg("notices.newPlaced", { count: placed.placed, moves: msg("notices.moves", { count: placed.moves.length }) }),
             moves: placed.moves,
           });
         } else if (placed.skipped > 0) {
-          setNotice({ tone: "warning", text: `${placed.skipped} new record${placed.skipped === 1 ? " doesn't" : "s don't"} fit where they belong. Add a shelf or regenerate the map.` });
+          setNotice({ tone: "warning", msg: msg("notices.newSkipped", { count: placed.skipped }) });
         }
       }
       if (!alive.current) return;
@@ -352,32 +353,32 @@ export function useShelfApp(startParam: string | null) {
   /** A replacement failed: nothing changed, so go back to the current collection and say why. */
   const failReplacement = useCallback((username: string, message: string) => {
     setStatus({ kind: "ready" });
-    setNotice({ tone: "warning", text: `Couldn't import "${username}": ${message} Your current collection didn't change.` });
+    setNotice({ tone: "warning", msg: msg("notices.replaceFailed", { username, message }) });
   }, []);
 
   const startRemoteImport = useCallback(
     async (client: SupabaseClient, input: { source: "discogs"; username: string } | { source: "demo" }, background: boolean, replacing = false) => {
-      const username = input.source === "discogs" ? input.username : "the demo";
-      if (!background) setStatus({ kind: "importing", job: null, message: input.source === "demo" ? "Loading the demo collection…" : "Starting the import…" });
+      const username = input.source === "discogs" ? input.username : "demo";
+      if (!background) setStatus({ kind: "importing", job: null, message: msg(input.source === "demo" ? "importing.loadingDemo" : "importing.starting") });
       try {
         const { job } = await api<{ job: JobRow }>("/api/import/start", input);
         if (background) setSyncJob(job);
         const finished = await runJob(client, job, background);
         if (!alive.current || (finished.status !== "done" && finished.status !== "error")) return;
         if (finished.status === "error") {
-          if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${finished.last_error ?? "unknown error"}` });
+          if (background) setNotice({ tone: "warning", msg: msg("notices.syncFailed", { message: finished.last_error ?? "?" }) });
           else if (replacing) failReplacement(username, finished.last_error ?? "The import failed.");
-          else setStatus({ kind: "onboarding", error: finished.last_error ?? "The import failed.", username: input.source === "discogs" ? input.username : undefined });
+          else setStatus({ kind: "onboarding", error: finished.last_error ? rawMsg(finished.last_error) : msg("notices.importFailed"), username: input.source === "discogs" ? input.username : undefined });
           return;
         }
         await afterImport(client);
         if (replacing && alive.current) setNotice(replacedNotice(username));
       } catch (err) {
         if (!alive.current) return;
-        const message = err instanceof Error ? err.message : "The import failed.";
-        if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${message}` });
+        const message = err instanceof Error ? err.message : "";
+        if (background) setNotice({ tone: "warning", msg: msg("notices.syncFailed", { message: message || "?" }) });
         else if (replacing) failReplacement(username, message);
-        else setStatus({ kind: "onboarding", error: message, username: input.source === "discogs" ? input.username : undefined });
+        else setStatus({ kind: "onboarding", error: message ? rawMsg(message) : msg("notices.importFailed"), username: input.source === "discogs" ? input.username : undefined });
       } finally {
         if (alive.current && background) setSyncJob(null);
       }
@@ -435,11 +436,11 @@ export function useShelfApp(startParam: string | null) {
           }
           const finished = await runJob(client, state.activeJob, background);
           if (!alive.current) return;
-          const username = finished.source === "demo" ? "the demo" : finished.discogs_username;
+          const username = finished.source === "demo" ? "demo" : finished.discogs_username;
           if (finished.status === "error") {
-            if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${finished.last_error}` });
+            if (background) setNotice({ tone: "warning", msg: msg("notices.syncFailed", { message: finished.last_error ?? "?" }) });
             else if (replacing) failReplacement(username, finished.last_error ?? "The import failed.");
-            else setStatus({ kind: "onboarding", error: finished.last_error ?? "The import failed.", username: finished.discogs_username });
+            else setStatus({ kind: "onboarding", error: finished.last_error ? rawMsg(finished.last_error) : msg("notices.importFailed"), username: finished.discogs_username });
             setSyncJob(null);
             return;
           }
@@ -452,7 +453,7 @@ export function useShelfApp(startParam: string | null) {
         }
         if (state.records.length === 0 && state.lastJob?.status === "error") {
           // The last import failed (a typo, a private collection): let them fix it.
-          setStatus({ kind: "onboarding", error: state.lastJob.last_error ?? "The last import failed.", username: state.lastJob.discogs_username });
+          setStatus({ kind: "onboarding", error: state.lastJob.last_error ? rawMsg(state.lastJob.last_error) : msg("notices.importFailed"), username: state.lastJob.discogs_username });
           return;
         }
         if (!state.collection) {
@@ -480,7 +481,7 @@ export function useShelfApp(startParam: string | null) {
           if (placed.moves.length > 0) await afterImport(client);
         }
       } catch (err) {
-        if (alive.current) setStatus({ kind: "error", message: err instanceof Error ? err.message : "Couldn't load your shelf." });
+        if (alive.current) setStatus({ kind: "error", message: errorMsg(err, msg("notices.loadFailed")) });
       }
     })();
   }, [mode, userId, supabase, startParam, startLocalDemo, refreshLocalDemo, reloadRemote, startRemoteImport, runJob, afterImport, failReplacement]);
@@ -558,15 +559,15 @@ export function useShelfApp(startParam: string | null) {
         }
         setNotice({
           tone: preview.leftover > 0 ? "warning" : "success",
-          text:
+          msg:
             preview.leftover > 0
-              ? `Map generated. ${preview.leftover} record${preview.leftover === 1 ? " doesn't" : "s don't"} fit: add a shelf or raise the capacity.`
+              ? msg("notices.mapLeftover", { count: preview.leftover })
               : preview.hasMap
-                ? `Map updated: ${preview.changed} record${preview.changed === 1 ? "" : "s"} changed compartment.`
-                : `Map generated: ${preview.placed} records placed.`,
+                ? msg("notices.mapUpdated", { count: preview.changed })
+                : msg("notices.mapGenerated", { count: preview.placed }),
         });
       } catch (err) {
-        setNotice({ tone: "warning", text: err instanceof Error ? err.message : "Couldn't save the map." });
+        setNotice({ tone: "warning", msg: errorMsg(err, msg("notices.mapSaveFailed")) });
       } finally {
         setBusy(false);
       }
@@ -590,10 +591,10 @@ export function useShelfApp(startParam: string | null) {
 
   const calibrate = useCallback(
     async (recordId: string, slotId: string) => {
-      if (!data?.config) return { ok: false as const, reason: "Generate a map first." };
+      if (!data?.config) return { ok: false as const, code: "notOnShelf" as const, reason: "Generate a map first." };
       const record = data.records.find((r) => r.id === recordId);
       const view = views.find((v) => v.media === record?.media);
-      if (!record || !view) return { ok: false as const, reason: "That record isn't on a shelf." };
+      if (!record || !view) return { ok: false as const, code: "notOnShelf" as const, reason: "That record isn't on a shelf." };
       const settings = toSortSettings(data.config.settings);
       const group = data.records.filter((r) => r.media === view.media).map(toLayoutRecord);
       const result = calibrateLayout({ slots: view.index.slots, records: group, placement: data.placement, settings }, recordId, slotId);
@@ -652,12 +653,12 @@ export function useShelfApp(startParam: string | null) {
         }
         setNotice({
           tone: "success",
-          text: `Added. ${result.movedCount === 1 ? "1 move: just put it in." : `${result.movedCount} moves.`}`,
+          msg: result.movedCount <= 1 ? msg("notices.addedOneMove") : msg("notices.addedMoves", { count: result.movedCount }),
           moves: result.moves,
         });
         return { stored, preview: result };
       } catch (err) {
-        setNotice({ tone: "warning", text: err instanceof Error ? err.message : "Couldn't add the record." });
+        setNotice({ tone: "warning", msg: errorMsg(err, msg("notices.addFailed")) });
         return null;
       } finally {
         setBusy(false);

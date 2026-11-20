@@ -8,6 +8,6 @@ export { compareRecords, sortRecords, sortKeyOf } from "./sort";
 export { traverse, positionKey } from "./traversal";
 export { distribute, initialLayout, type LayoutResult, type GroupLayout } from "./initial";
 export { insertRecord, insertMany, collapseMoves, type ShelfState, type InsertResult } from "./insert";
-export { calibrate, type CalibrateResult } from "./calibrate";
+export { calibrate, type CalibrateResult, type CalibrateRefusal } from "./calibrate";
 export { buildIndex, locate, positionInCompartment, countChanges, type ShelfIndex, type Location, type Neighbor } from "./query";
 export { abbreviate, rangeLabels, spineColors, type RangeLabel } from "./ranges";

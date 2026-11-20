@@ -1,0 +1,168 @@
+{
+  "meta": {
+    "pitch": "Model your real record shelf, compartment by compartment, and always know where every record is and where the next one goes.",
+    "myShelf": "My shelf"
+  },
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "back": "Back",
+    "done": "Done",
+    "dismiss": "Dismiss",
+    "tryAgain": "Try again",
+    "import": "Import",
+    "saving": "Saving…",
+    "loading": "Loading…",
+    "records": {
+      "one": "{count} record",
+      "other": "{count} records"
+    },
+    "language": "Language"
+  },
+  "header": {
+    "myShelf": "My shelf",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "account": "Account",
+    "takeTour": "Take the tour"
+  },
+  "importForm": {
+    "label": "Your Discogs username",
+    "placeholder": "For example, vinylcollector",
+    "help": "Your collection must be public on Discogs. You'll create a free account to save it.",
+    "checkUsername": "Check the username."
+  },
+  "validation": {
+    "usernameEmpty": "Type your Discogs username.",
+    "usernameLong": "That's too long for a Discogs username.",
+    "usernameChars": "Discogs usernames only use letters, numbers, dots, dashes, and underscores."
+  },
+  "onboarding": {
+    "title": "Let's map your shelf",
+    "demoTitle": "Try the demo collection",
+    "demoText": "1,000 real records on prebuilt shelves.",
+    "demoNoAccount": "No account needed.",
+    "demoButton": "Load the demo",
+    "importTitle": "Import your collection from Discogs",
+    "importLabel": "Your Discogs username (the collection must be public)",
+    "importAccount": "You'll create a free account first, so your shelf is saved."
+  },
+  "importing": {
+    "demoTitle": "Loading the demo collection",
+    "importing": "Importing your collection…",
+    "starting": "Starting the import…",
+    "loadingDemo": "Loading the demo collection…",
+    "progress": "{done} of {total} records",
+    "progressPages": "{done} of {total} records, page {page} of {pages}",
+    "talking": "Talking to Discogs…",
+    "closeTab": "You can close this tab: the import continues from here when you come back."
+  },
+  "app": {
+    "loadingShelf": "Loading your shelf…",
+    "loadingDemo": "Loading the demo collection from Discogs…",
+    "errorTitle": "Something went wrong",
+    "nothingYet": "Nothing to show yet.",
+    "startOver": "Start over",
+    "demoBanner": "This demo lives only in this browser. Sign up to save it and to import your own collection.",
+    "signUpToSave": "Sign up to save",
+    "updating": "Updating from Discogs…",
+    "updatingCount": "Updating from Discogs: {done} of {total}",
+    "buildTitle": "Build your shelf",
+    "buildText": "{count} records imported. Pick your furniture and your sort order, and the app computes where every record goes.",
+    "views": "Views",
+    "tabMap": "Map",
+    "tabSetup": "Shelves & order",
+    "summary": {
+      "one": "{count} record, sorted by {levels}, with {slack}% free space",
+      "other": "{count} records, sorted by {levels}, with {slack}% free space"
+    },
+    "summaryArticles": "{summary}, ignoring leading articles",
+    "levelJoin": "{first}, then {rest}",
+    "leftover": {
+      "one": "{count} record isn't on the shelf because it doesn't fit. Add a shelf or raise the capacity in Shelves & order.",
+      "other": "{count} records aren't on the shelf because they don't fit. Add a shelf or raise the capacity in Shelves & order."
+    },
+    "cdsWithoutShelf": {
+      "one": "{count} CD has no CD shelf yet.",
+      "other": "{count} CDs have no CD shelf yet."
+    },
+    "others": {
+      "one": "{count} cassette or other format stays off the shelves.",
+      "other": "{count} cassettes or other formats stay off the shelves."
+    },
+    "seeMoves": "See the moves",
+    "hideMoves": "Hide the moves",
+    "moveLine": "{record}: {from} to {to}",
+    "moveNew": "new",
+    "offTheShelf": "off the shelf",
+    "anotherCompartment": "another compartment",
+    "recordFallback": "Record",
+    "levelThen": ", then ",
+    "crashText": "Your shelf is safe. Try again, and if it keeps happening, reload the page."
+  },
+  "levels": {
+    "genre": "genre",
+    "artist": "artist",
+    "year": "year",
+    "label": "label",
+    "title": "title"
+  },
+  "landing": {
+    "title": "Know where every record is, and where the next one goes.",
+    "tryDemo": "Try the demo collection",
+    "signUp": "Sign up",
+    "noAccount": "No account needed for the demo. Sign up only when you want to save.",
+    "importTitle": "Import your collection from Discogs",
+    "heroLabel": "An example shelf",
+    "heroCaption": "Every compartment shows its letters and how full it is. Search for a record and see the exact compartment, how far in, and the records on each side."
+  },
+  "notFound": {
+    "title": "This page doesn't exist",
+    "text": "The link may be old, or the address has a typo.",
+    "home": "Go to the start"
+  },
+  "notices": {
+    "replaced": "The Discogs collection of “{username}” replaced the previous one. Build your shelf for it.",
+    "localSaveFailed": "This browser couldn't save the demo. It will reset when you leave.",
+    "demoReady": "Demo ready: {lps} LPs and {cds} CDs on prebuilt shelves, sorted by genre, then artist.",
+    "demoFailed": "Couldn't load the demo collection. Try again in a minute.",
+    "demoSaved": "Your demo shelf is saved to your account.",
+    "relaidOut": "Most records were new, so the whole shelf was laid out again with your settings.",
+    "placeFailed": "Couldn't place the new records ({message}). Generate the map again to include them.",
+    "newPlaced": {
+      "one": "{count} new record is on your shelf now, with {moves}.",
+      "other": "{count} new records are on your shelf now, with {moves}."
+    },
+    "moves": {
+      "one": "{count} move",
+      "other": "{count} moves"
+    },
+    "newSkipped": {
+      "one": "{count} new record doesn't fit where it belongs. Add a shelf or generate the map again.",
+      "other": "{count} new records don't fit where they belong. Add a shelf or generate the map again."
+    },
+    "replaceFailed": "Couldn't import “{username}”: {message} Your current collection didn't change.",
+    "syncFailed": "Couldn't update from Discogs: {message}",
+    "importFailed": "The import failed. Check the username and that the collection is public.",
+    "loadFailed": "Couldn't load your shelf.",
+    "mapLeftover": {
+      "one": "Map generated. {count} record doesn't fit: add a shelf or raise the capacity.",
+      "other": "Map generated. {count} records don't fit: add a shelf or raise the capacity."
+    },
+    "mapUpdated": {
+      "one": "Map updated: {count} record changed compartment.",
+      "other": "Map updated: {count} records changed compartment."
+    },
+    "mapGenerated": {
+      "one": "Map generated: {count} record placed.",
+      "other": "Map generated: {count} records placed."
+    },
+    "mapSaveFailed": "Couldn't save the map.",
+    "addedOneMove": "Record added. Just put it in: 1 move.",
+    "addedMoves": {
+      "one": "Record added: {count} move.",
+      "other": "Record added: {count} moves."
+    },
+    "addFailed": "Couldn't add the record."
+  }
+}

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { displayArtist, rangeLabels, spineColors, type Slot } from "@/lib/layout";
-import { SPINE_COUNT, spineColor } from "@/lib/design";
+import { SPINE_COUNT, recordColor } from "@/lib/design";
 import { slotTitle } from "@/lib/shelf/describe";
 import { toSortSettings, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { searchRecords } from "@/lib/search";
@@ -77,8 +77,8 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
                 <button
                   type="button"
                   onClick={() => onPickRecord(r.id)}
-                  className="flex w-full items-center gap-2 rounded-cell px-2 py-2 text-left text-sm text-ink hover:brightness-95"
-                  style={{ background: spineColor(colors.get(r.id) ?? 0) }}
+                  className="flex w-full items-center gap-2 rounded-cell border-l-4 bg-surface px-2 py-2 text-left text-sm text-ink hover:bg-sunken"
+                  style={{ borderLeftColor: recordColor(r.id) }}
                 >
                   <span className="w-7 shrink-0 text-right text-xs tabular-nums text-ink/75">{i + 1}</span>
                   <span className="min-w-0 truncate">

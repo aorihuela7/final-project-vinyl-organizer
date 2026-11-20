@@ -1,44 +1,50 @@
 "use client";
 
 import { useState } from "react";
-import { discogsUsernameSchema } from "@/lib/validation";
+import { usernameIssue, type UsernameIssue } from "@/lib/validation";
+import { useI18n } from "@/i18n/client";
+import { renderMsg } from "@/i18n/core";
+import { Banner, btnPrimary, card, input } from "../ui";
 import type { ShelfApp } from "./use-shelf-app";
 
 /** First screen when there's nothing yet: the demo or your own Discogs collection. No login wall. */
 export function Onboarding({ app }: { app: ShelfApp }) {
+  const { t } = useI18n();
   const previous = app.status.kind === "onboarding" ? app.status : null;
   const [username, setUsername] = useState(previous?.username ?? app.pendingImport ?? "");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UsernameIssue | null>(null);
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">Let&apos;s map your shelf</h1>
+      <h1 className="font-display text-2xl text-ink">{t("onboarding.title")}</h1>
       {previous?.error && (
-        <p role="alert" className="rounded-card bg-danger-soft p-3 text-sm text-danger">
-          {previous.error}
-        </p>
+        <Banner tone="danger" role="alert">
+          {renderMsg(t, previous.error)}
+        </Banner>
       )}
-      <div className="rounded-card border border-line bg-surface p-4 shadow-card">
-        <h2 className="font-semibold text-ink">Try the demo collection</h2>
-        <p className="mt-1 text-sm text-ink-muted">1,000 real records on two prebuilt shelves. {app.mode === "local" ? "No account needed." : ""}</p>
-        <button type="button" onClick={app.startDemo} className="mt-3 rounded-control bg-accent px-4 py-2.5 text-sm font-semibold text-on-accent hover:bg-accent-hover">
-          Load the demo
+      <div className={`${card} p-5`}>
+        <h2 className="font-display text-lg text-ink">{t("onboarding.demoTitle")}</h2>
+        <p className="mt-1 text-sm text-muted">
+          {t("onboarding.demoText")} {app.mode === "local" ? t("onboarding.demoNoAccount") : ""}
+        </p>
+        <button type="button" onClick={app.startDemo} className={`${btnPrimary} mt-3`}>
+          {t("onboarding.demoButton")}
         </button>
       </div>
       <form
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          const parsed = discogsUsernameSchema.safeParse(username);
-          if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Check the username.");
+          const issue = usernameIssue(username);
+          if (issue) return setError(issue);
           setError(null);
-          app.importDiscogs(parsed.data);
+          app.importDiscogs(username.trim());
         }}
-        className="rounded-card border border-line bg-surface p-4 shadow-card"
+        className={`${card} p-5`}
       >
-        <h2 className="font-semibold text-ink">Import your collection from Discogs</h2>
-        <label htmlFor="onboarding-username" className="mt-2 block text-sm text-ink-muted">
-          Your Discogs username (the collection must be public)
+        <h2 className="font-display text-lg text-ink">{t("onboarding.importTitle")}</h2>
+        <label htmlFor="onboarding-username" className="mt-2 block text-sm text-muted">
+          {t("onboarding.importLabel")}
         </label>
         <div className="mt-1 flex gap-2">
           <input
@@ -49,18 +55,18 @@ export function Onboarding({ app }: { app: ShelfApp }) {
             autoComplete="off"
             spellCheck={false}
             aria-invalid={error ? true : undefined}
-            className="min-w-0 flex-1 rounded-control border border-line-strong bg-surface px-3 py-2 text-base"
+            className={`${input} flex-1`}
           />
-          <button type="submit" className="rounded-control bg-ink px-4 py-2 text-sm font-semibold text-surface hover:bg-ink/85">
-            Import
+          <button type="submit" className={btnPrimary}>
+            {t("common.import")}
           </button>
         </div>
         {error && (
-          <p role="alert" className="mt-1 text-sm text-danger">
-            {error}
+          <p role="alert" className="mt-1 text-sm font-semibold text-danger">
+            {t(`validation.${error}`)}
           </p>
         )}
-        {app.mode === "local" && <p className="mt-2 text-xs text-ink-muted">You&apos;ll create a free account first, so your shelf is saved.</p>}
+        {app.mode === "local" && <p className="mt-2 text-xs text-muted">{t("onboarding.importAccount")}</p>}
       </form>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { hashIndex, initials, spineColor } from "@/lib/design";
+import { hashIndex, initials, onSpineColor, spineColor } from "@/lib/design";
 
 /**
  * A record cover, straight from the Discogs URL (never downloaded or proxied,
@@ -18,8 +18,8 @@ export function Cover({ src, artist, title, size = "md" }: { src: string | null 
       <div
         role="img"
         aria-label={`${artist} – ${title} (no cover)`}
-        className={`${box} flex aspect-square shrink-0 items-center justify-center rounded-cover font-semibold text-ink/70 shadow-cover ${text}`}
-        style={{ background: spineColor(hashIndex(artist)) }}
+        className={`${box} flex aspect-square shrink-0 items-center justify-center rounded-cover font-semibold shadow-cover ${text}`}
+        style={{ background: spineColor(hashIndex(artist)), color: onSpineColor(hashIndex(artist)) }}
       >
         {initials(artist)}
       </div>

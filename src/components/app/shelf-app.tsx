@@ -17,10 +17,15 @@ import { Sheet } from "./sheet";
 import { AddRecord } from "./add-record";
 import { CollectionPanel } from "./collection-panel";
 import { useShelfApp, type Notice } from "./use-shelf-app";
+import { useI18n } from "@/i18n/client";
+import { renderMsg } from "@/i18n/core";
+import { Banner, btnPrimary, btnPrimarySm, btnSecondary, btnText, card } from "../ui";
+import { collectionSummary } from "./summary";
 
 export function ShelfApp() {
   const params = useSearchParams();
   const app = useShelfApp(params.get("start"));
+  const { t } = useI18n();
   const [tab, setTab] = useState<"map" | "setup">("map");
   const [openSlot, setOpenSlot] = useState<Slot | null>(null);
   const [openRecord, setOpenRecordState] = useState<string | null>(null);
@@ -37,26 +42,26 @@ export function ShelfApp() {
 
   if (app.status.kind === "loading") {
     return (
-      <div className="flex flex-col items-center gap-3 py-16 text-ink-muted" role="status" aria-live="polite">
-        <span className="size-8 animate-spin rounded-full border-4 border-line border-t-accent" aria-hidden />
-        <p>{app.status.message}</p>
+      <div className="flex flex-col items-center gap-3 py-16 text-muted" role="status" aria-live="polite">
+        <span className="size-8 animate-spin rounded-full border-4 border-brass-light border-t-walnut" aria-hidden />
+        <p>{renderMsg(t, app.status.message)}</p>
       </div>
     );
   }
   if (app.status.kind === "onboarding") return <Onboarding app={app} />;
-  if (app.status.kind === "importing") return <ImportProgress job={app.status.job} message={app.status.message} />;
+  if (app.status.kind === "importing") return <ImportProgress job={app.status.job} message={renderMsg(t, app.status.message)} />;
   if (app.status.kind === "error" || !app.data) {
     return (
-      <div className="mx-auto flex max-w-md flex-col gap-3 rounded-card border border-line bg-surface p-5 shadow-card" role="alert">
-        <h1 className="text-lg font-semibold text-ink">Something went wrong</h1>
-        <p className="text-sm text-ink-muted">{app.status.kind === "error" ? app.status.message : "Nothing to show yet."}</p>
+      <div className={`${card} mx-auto flex max-w-md flex-col gap-3 p-5`} role="alert">
+        <h1 className="font-display text-lg text-ink">{t("app.errorTitle")}</h1>
+        <p className="text-sm text-muted">{app.status.kind === "error" ? renderMsg(t, app.status.message) : t("app.nothingYet")}</p>
         <div className="flex gap-2">
-          <button type="button" onClick={() => window.location.reload()} className="rounded-control bg-ink px-4 py-2 text-sm font-semibold text-surface">
-            Try again
+          <button type="button" onClick={() => window.location.reload()} className={btnPrimary}>
+            {t("common.tryAgain")}
           </button>
           {app.mode === "local" && (
-            <button type="button" onClick={app.resetLocal} className="rounded-control border border-line-strong px-4 py-2 text-sm font-medium">
-              Start over
+            <button type="button" onClick={app.resetLocal} className={btnSecondary}>
+              {t("app.startOver")}
             </button>
           )}
         </div>
@@ -72,54 +77,51 @@ export function ShelfApp() {
   const cdsWithoutShelf = config && !config.furniture.some((f) => f.media === "cd") ? data.records.filter((r) => r.media === "cd").length : 0;
   const recordInSheet = openRecord ? byId.get(openRecord) : undefined;
   const slotName = (id: string | null) => {
-    if (id === null) return "off the shelf";
+    if (id === null) return t("app.offTheShelf");
     for (const v of views) {
       const slot = v.index.slotById.get(id);
       if (slot) return slotTitle(slot, config?.furniture.find((f) => f.key === slot.shelfKey));
     }
-    return "another compartment";
+    return t("app.anotherCompartment");
   };
   const sheetLocation = openRecord ? findLocation(views, openRecord) : null;
 
   return (
     <div className="flex flex-col gap-4">
       {app.mode === "local" && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-accent/30 bg-accent-soft px-3 py-2 text-sm text-ink">
-          <span>This demo lives only in this browser. Sign up to save it and to import your own collection.</span>
+        <Banner className="flex flex-wrap items-center justify-between gap-2">
+          <span>{t("app.demoBanner")}</span>
           <SignUpButton mode="modal" forceRedirectUrl="/app">
-            <button type="button" className="rounded-control bg-accent px-3 py-1.5 font-semibold text-on-accent hover:bg-accent-hover">
-              Sign up to save
+            <button type="button" className={btnPrimarySm}>
+              {t("app.signUpToSave")}
             </button>
           </SignUpButton>
-        </div>
+        </Banner>
       )}
       {app.syncJob && (
-        <p className="flex items-center gap-2 rounded-card bg-sunken px-3 py-2 text-sm text-ink" role="status" aria-live="polite">
-          <span className="size-3 animate-spin rounded-full border-2 border-line-strong border-t-accent" aria-hidden />
-          Updating from Discogs…
-          {app.syncJob.items_total ? ` ${app.syncJob.items_done} of ${app.syncJob.items_total}` : ""}
-        </p>
+        <Banner className="flex items-center gap-2">
+          <span className="size-3 animate-spin rounded-full border-2 border-brass-light border-t-walnut" aria-hidden />
+          {app.syncJob.items_total ? t("app.updatingCount", { done: app.syncJob.items_done, total: app.syncJob.items_total }) : t("app.updating")}
+        </Banner>
       )}
       {app.notice && <NoticeBar notice={app.notice} byId={byId} slotName={slotName} onDismiss={app.dismissNotice} />}
 
       {!config ? (
         <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-ink">Build your shelf</h1>
-            <p className="text-sm text-ink-muted">
-              {data.records.length.toLocaleString("en-US")} records imported. Pick your furniture and your sort order; the app computes where every record goes.
-            </p>
+            <h1 className="font-display text-2xl text-ink">{t("app.buildTitle")}</h1>
+            <p className="text-sm text-muted">{t("app.buildText", { count: data.records.length })}</p>
           </div>
           <SetupView app={app} initial={suggestedConfig(data.records)} records={data.records} onDone={() => setTab("map")} />
           <CollectionPanel app={app} />
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-1 rounded-control border border-line bg-surface p-1 text-sm" role="group" aria-label="Views">
+          <div className="flex items-center gap-1 self-start rounded-pill border border-input-line bg-paper p-1 text-sm" role="group" aria-label={t("app.views")}>
             {(
               [
-                ["map", "Map"],
-                ["setup", "Shelves & order"],
+                ["map", t("app.tabMap")],
+                ["setup", t("app.tabSetup")],
               ] as const
             ).map(([id, label]) => (
               <button
@@ -127,7 +129,7 @@ export function ShelfApp() {
                 type="button"
                 aria-pressed={tab === id}
                 onClick={() => setTab(id)}
-                className={`flex-1 rounded px-3 py-2 font-medium ${tab === id ? "bg-ink text-surface" : "text-ink-muted hover:text-ink"}`}
+                className={`rounded-pill px-4 py-1.5 font-semibold ${tab === id ? "bg-ink text-paper" : "text-muted hover:text-ink"}`}
               >
                 {label}
               </button>
@@ -153,29 +155,21 @@ export function ShelfApp() {
                     }}
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setAdding(true)}
-                  className="rounded-control border border-line-strong bg-surface px-4 py-3 text-sm font-semibold text-ink shadow-card hover:bg-sunken"
-                >
+                <button type="button" onClick={() => setAdding(true)} className={btnSecondary}>
                   Where does this record go?
                 </button>
               </div>
 
-              <p className="text-sm text-ink-muted">
-                {data.records.length.toLocaleString("en-US")} records · sorted by{" "}
-                {config.settings.sortLevels.map((l) => l[0]!.toUpperCase() + l.slice(1)).join(" → ")}
-                {config.settings.ignoreArticles ? ", ignoring articles" : ""} · {config.settings.slackPct}% slack
-              </p>
+              <p className="text-sm text-muted">{collectionSummary(t, data.records.length, config.settings)}</p>
               {(leftover > 0 || others > 0 || cdsWithoutShelf > 0) && (
                 <ul className="flex flex-col gap-1 text-sm">
                   {leftover > 0 && (
-                    <li className="rounded-card bg-warning-soft px-3 py-2 text-warning">
-                      {leftover} record{leftover === 1 ? " isn't" : "s aren't"} on the shelf because {leftover === 1 ? "it doesn't" : "they don't"} fit. Add a shelf or raise the capacity in “Shelves &amp; order”.
+                    <li>
+                      <Banner tone="warning">{t("app.leftover", { count: leftover })}</Banner>
                     </li>
                   )}
-                  {cdsWithoutShelf > 0 && <li className="text-ink-muted">{cdsWithoutShelf} CDs have no CD shelf yet.</li>}
-                  {others > 0 && <li className="text-ink-muted">{others} cassette{others === 1 ? "" : "s"} or other formats stay off the shelves.</li>}
+                  {cdsWithoutShelf > 0 && <li className="text-muted">{t("app.cdsWithoutShelf", { count: cdsWithoutShelf })}</li>}
+                  {others > 0 && <li className="text-muted">{t("app.others", { count: others })}</li>}
                 </ul>
               )}
 
@@ -261,20 +255,19 @@ function NoticeBar({
   slotName: (id: string | null) => string;
   onDismiss: () => void;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const tone =
-    notice.tone === "success" ? "bg-success-soft text-success" : notice.tone === "warning" ? "bg-warning-soft text-warning" : "bg-sunken text-ink";
   return (
-    <div className={`rounded-card px-3 py-2 text-sm ${tone}`} role="status" aria-live="polite">
+    <Banner tone={notice.tone === "warning" ? "warning" : "info"}>
       <div className="flex items-start justify-between gap-2">
-        <p>{notice.text}</p>
-        <div className="flex shrink-0 gap-2">
+        <p>{renderMsg(t, notice.msg)}</p>
+        <div className="flex shrink-0 gap-1">
           {notice.moves && notice.moves.length > 0 && (
-            <button type="button" onClick={() => setOpen((o) => !o)} className="font-medium underline">
-              {open ? "Hide moves" : "See moves"}
+            <button type="button" onClick={() => setOpen((o) => !o)} className={btnText}>
+              {open ? t("app.hideMoves") : t("app.seeMoves")}
             </button>
           )}
-          <button type="button" onClick={onDismiss} aria-label="Dismiss" className="font-medium">
+          <button type="button" onClick={onDismiss} aria-label={t("common.dismiss")} className={btnText}>
             ✕
           </button>
         </div>
@@ -285,12 +278,16 @@ function NoticeBar({
             const r = byId.get(m.recordId);
             return (
               <li key={m.recordId}>
-                {r ? `${displayArtist(r.artist)} – ${r.title}` : "Record"}: {m.from === null ? "new" : slotName(m.from)} → {slotName(m.to)}
+                {t("app.moveLine", {
+                  record: r ? `${displayArtist(r.artist)}, ${r.title}` : t("app.recordFallback"),
+                  from: m.from === null ? t("app.moveNew") : slotName(m.from),
+                  to: slotName(m.to),
+                })}
               </li>
             );
           })}
         </ol>
       )}
-    </div>
+    </Banner>
   );
 }

@@ -15,15 +15,18 @@ import type { Move, Placement } from "./types";
 
 export type CalibrateResult =
   | { ok: true; placement: Placement; moves: Move[]; movedCount: number; overCapacity: string[] }
-  | { ok: false; reason: string };
+  | { ok: false; reason: string; code: CalibrateRefusal };
+
+/** Why a calibration was refused, for the UI to word it (in any language). */
+export type CalibrateRefusal = "unavailable" | "notOnShelf" | "firstCompartment" | "notAdjacent";
 
 export function calibrate(state: ShelfState, recordId: string, slotId: string): CalibrateResult {
   const { slots, settings } = state;
   const index = buildIndex(state.records, state.placement, slots, settings);
   const c = slots.findIndex((s) => s.id === slotId);
-  if (c === -1) return { ok: false, reason: "That compartment isn't available." };
+  if (c === -1) return { ok: false, code: "unavailable", reason: "That compartment isn't available." };
   const xSlot = index.slotOf.get(recordId);
-  if (!xSlot) return { ok: false, reason: "That record isn't on this shelf." };
+  if (!xSlot) return { ok: false, code: "notOnShelf", reason: "That record isn't on this shelf." };
   const p = c - 1;
   const inC = index.bySlot.get(slots[c]!.id) ?? [];
   const inP = p >= 0 ? (index.bySlot.get(slots[p]!.id) ?? []) : [];
@@ -34,7 +37,7 @@ export function calibrate(state: ShelfState, recordId: string, slotId: string): 
   if (xSlot.index === c) {
     const before = inC.slice(0, inC.findIndex((r) => r.id === recordId));
     if (before.length > 0 && p < 0) {
-      return { ok: false, reason: "This is the first compartment, so the records before it have nowhere to go." };
+      return { ok: false, code: "firstCompartment", reason: "This is the first compartment, so the records before it have nowhere to go." };
     }
     for (const r of before) {
       placement.set(r.id, slots[p]!.id);
@@ -49,6 +52,7 @@ export function calibrate(state: ShelfState, recordId: string, slotId: string): 
   } else {
     return {
       ok: false,
+      code: "notAdjacent",
       reason: "Pick a record from this compartment or the one right before it: calibration only moves the boundary between them.",
     };
   }

@@ -2,7 +2,7 @@
 
 import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { displayArtist, type LayoutRecord } from "@/lib/layout";
-import { spineFill, spineHeight } from "@/lib/design";
+import { recordColor } from "@/lib/design";
 import type { StoredRecord } from "@/lib/shelf/model";
 
 type Props = {
@@ -88,7 +88,7 @@ export function SpineShelf({ records, capacity, colors, byId, highlightId, onPic
             className={`shrink-0 rounded-t-[2px] shadow-spine transition-transform hover:-translate-y-1 focus-visible:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink ${
               r.id === highlightId ? "outline-2 outline-offset-1 outline-accent" : ""
             }`}
-            style={{ width: `calc(${width}% - 1px)`, height: `${spineHeight(r.id)}%`, background: spineFill(colors.get(r.id) ?? 0, r.id) }}
+            style={{ width: `calc(${width}% - 1px)`, height: "97%", background: recordColor(r.id) }}
           />
         ))}
         {records.length === 0 && <p className="m-auto text-sm text-ink-muted">Empty</p>}
