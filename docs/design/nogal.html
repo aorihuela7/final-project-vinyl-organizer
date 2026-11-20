@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Record Organizer · Nogal mid-century reference</title>
+<style>
+:root {
+  color-scheme: light;
+  --page-bg: #EEF0EE;
+  --page-ink: #1E2327;
+  --page-muted: #59616A;
+  --page-line: #CDD2D6;
+  --page-card: #FFFFFF;
+
+  --wall: #D3DBCD;
+  --walnut: #7A4A2B;
+  --walnut-dark: #4F2D19;
+  --walnut-inside-top: #8A6143;
+  --walnut-inside-bottom: #9B7253;
+  --walnut-blocked: #6B4329;
+  --brass-light: #E2C47A;
+  --brass: #C9A557;
+  --brass-dark: #9C7C35;
+  --engraving: #3E2C0F;
+  --engraving-rail: #4A3613;
+  --ink: #22302A;
+  --muted: #52605A;
+  --paper: #FBFAF6;
+  --on-walnut: #F1E4D2;
+  --mustard: #E8A825;
+  --input-line: #A9B3A2;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page-bg: #15181B;
+    --page-ink: #E8EBED;
+    --page-muted: #A2A9B1;
+    --page-line: #2C3136;
+    --page-card: #1E2226;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page-bg); color: var(--page-ink); font: 16px/1.5 "Avenir Next", "Segoe UI", system-ui, sans-serif; }
+.page { max-width: 1200px; margin: 0 auto; padding: 40px 20px 80px; }
+.page > header h1 { font-size: 28px; line-height: 1.2; margin: 0 0 8px; font-weight: 600; }
+.page > header p { margin: 0 0 12px; color: var(--page-muted); max-width: 78ch; }
+.page > section { margin-top: 44px; }
+.page > section > h2 { font-size: 20px; margin: 0 0 4px; font-weight: 600; }
+.page > section > p { margin: 0 0 14px; color: var(--page-muted); max-width: 78ch; }
+.lab { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 16px; padding: 14px 16px; background: var(--page-card); border: 1px solid var(--page-line); border-radius: 12px; }
+.lab label { font-weight: 600; }
+.lab input { width: min(360px, 100%); }
+.lab output { font-variant-numeric: tabular-nums; color: var(--page-muted); }
+.screen { border-radius: 14px; overflow: hidden; border: 1px solid var(--page-line); background: var(--wall); color: var(--ink); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; box-shadow: 0 0 0 2px var(--paper); }
+.display { font-family: "Optima", "Candara", "Segoe UI", sans-serif; }
+
+.app { padding: 22px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.app-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { font-size: 26px; letter-spacing: .3px; }
+.nav { display: flex; align-items: center; gap: 14px; font-size: 15px; }
+.lang { appearance: none; font: inherit; font-size: 14px; padding: 6px 30px 6px 14px; border: 1px solid var(--input-line); border-radius: 18px; color: var(--ink); background: var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2322302A'/%3E%3C/svg%3E") no-repeat right 12px center; cursor: pointer; }
+.nav a { color: var(--ink); text-decoration: none; font-weight: 600; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: var(--paper); display: grid; place-items: center; font-size: 14px; font-weight: 600; }
+
+.search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; }
+.search-row input { font: inherit; padding: 12px 18px; border: 1px solid var(--input-line); border-radius: 24px; background: var(--paper); color: var(--ink); min-width: 0; }
+.search-row .or { color: var(--muted); font-size: 14px; }
+.pill { font: inherit; font-size: 15px; padding: 11px 20px; border-radius: 24px; cursor: pointer; white-space: nowrap; }
+.pill.primary { border: 0; background: var(--ink); color: var(--paper); font-weight: 600; }
+.pill.secondary { border: 1px solid var(--ink); background: transparent; color: var(--ink); }
+@media (max-width: 700px) { .search-row { grid-template-columns: 1fr; text-align: center; } }
+
+.rail { position: relative; height: 34px; margin-bottom: 10px; border-radius: 17px; background: linear-gradient(var(--brass-light), var(--brass) 45%, var(--brass-dark)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), 0 2px 4px rgba(0, 0, 0, .2); }
+.rail span { position: absolute; top: 50%; transform: translate(-50%, -50%); font-size: 14px; color: var(--engraving-rail); text-shadow: 0 1px 0 rgba(255, 255, 255, .45); }
+.rail i { position: absolute; top: 8px; bottom: 8px; width: 1px; background: rgba(74, 54, 19, .35); }
+.rail .marker { position: absolute; top: 25px; bottom: -12px; width: 14px; border-radius: 7px; background: var(--mustard); box-shadow: 0 0 0 2px var(--ink); transform: translateX(-50%); transition: left 1s cubic-bezier(.3, .9, .25, 1); }
+
+.body { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .body { grid-template-columns: minmax(0, 1fr); } .app { padding: 14px; } }
+.shelves { display: grid; gap: 22px; }
+.furniture { position: relative; padding: 14px 14px 12px; border-radius: 4px; background: linear-gradient(var(--walnut), var(--walnut-dark)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15); margin-bottom: 34px; }
+.furniture::before, .furniture::after { content: ""; position: absolute; bottom: -32px; width: 12px; height: 34px; background: linear-gradient(90deg, var(--walnut-dark), var(--walnut)); border-radius: 0 0 6px 6px; }
+.furniture::before { left: 26px; transform: skewX(8deg); }
+.furniture::after { right: 26px; transform: skewX(-8deg); }
+.furniture-name { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; color: var(--on-walnut); margin: -4px 2px 10px; }
+.grid { display: grid; gap: 10px; }
+.cell { display: grid; gap: 6px; min-width: 0; }
+.interior { position: relative; aspect-ratio: 1; cursor: pointer; background: linear-gradient(var(--walnut-inside-top), var(--walnut-inside-bottom) 75%); box-shadow: inset 0 10px 16px -8px rgba(0, 0, 0, .55), inset 6px 0 10px -8px rgba(0, 0, 0, .45); }
+.interior svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.count { position: absolute; right: 6px; top: 5px; font-size: 11px; line-height: 1.3; padding: 0 5px; border-radius: 3px; background: rgba(34, 48, 42, .8); color: var(--on-walnut); }
+.cell.tight .count { background: var(--mustard); color: var(--ink); font-weight: 600; }
+.cell.hit .interior { outline: 3px solid var(--mustard); outline-offset: -1px; }
+.cell.blocked .interior { cursor: default; display: grid; place-items: center; font-size: 13px; background: var(--walnut-blocked); color: #E9D7BF; }
+.cell.blocked .plate { visibility: hidden; }
+.plate { justify-self: center; max-width: 92%; padding: 3px 12px; border-radius: 3px; background: linear-gradient(var(--brass-light), var(--brass) 50%, var(--brass-dark)); color: var(--engraving); font-size: 14px; line-height: 1.2; text-align: center; box-shadow: 0 1px 2px rgba(0, 0, 0, .35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plate span { display: block; }
+.rec-found { transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
+.rec-found.pulled { transform: translateY(-9px); }
+@media (prefers-reduced-motion: reduce) { .rec-found, .rail .marker { transition: none !important; } }
+
+.detail { background: var(--paper); border-radius: 4px; padding: 0 0 18px; overflow: hidden; box-shadow: 0 10px 24px -16px rgba(0, 0, 0, .5); display: grid; gap: 14px; }
+.detail > * { margin-left: 18px; margin-right: 18px; }
+.band { margin: 0 !important; padding: 12px 18px; background: linear-gradient(var(--walnut), var(--walnut-dark)); color: var(--on-walnut); }
+.band strong { display: block; font-size: 20px; font-weight: 600; }
+.band span { font-size: 14px; opacity: .85; }
+.record { display: grid; grid-template-columns: 104px 1fr; gap: 14px; align-items: center; }
+.cover { aspect-ratio: 1; border-radius: 2px; box-shadow: 0 8px 16px -8px rgba(0, 0, 0, .55); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 22px; }
+.record h4 { margin: 0; font-size: 24px; line-height: 1.1; font-weight: 600; }
+.record p { margin: 0; color: var(--muted); font-size: 14px; }
+.detail-drawing { position: relative; aspect-ratio: 1.6; background: linear-gradient(var(--walnut-inside-top), var(--walnut-inside-bottom) 75%); border: 8px solid var(--walnut); border-radius: 3px; }
+.detail-drawing svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.neighbors { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; align-items: start; }
+.neighbors figure { margin: 0; font-size: 11px; line-height: 1.25; color: var(--muted); }
+.neighbors .sw { aspect-ratio: 1; border-radius: 2px; margin-bottom: 4px; }
+.neighbors figcaption span { display: block; }
+.neighbors .me { color: var(--ink); font-weight: 600; }
+.neighbors .me .sw { outline: 3px solid var(--mustard); }
+.tracklist h5 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+.tracklist .note { margin: 0 0 8px; font-size: 12px; color: var(--muted); }
+.tracklist h6 { margin: 10px 0 4px; font-size: 13px; font-weight: 600; color: var(--muted); border-bottom: 2px solid var(--brass); padding-bottom: 2px; }
+.tracklist ol { list-style: none; margin: 0; padding: 0; }
+.tracklist li { display: grid; grid-template-columns: 34px 1fr auto; gap: 8px; font-size: 14px; padding: 3px 0; border-bottom: 1px solid #ECE9E1; }
+.tracklist li .pos, .tracklist li .dur { color: var(--muted); font-variant-numeric: tabular-nums; }
+.actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; }
+.actions a { color: var(--ink); }
+
+/* shelf builder */
+.builder { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .builder { grid-template-columns: minmax(0, 1fr); } }
+.form { background: var(--paper); border-radius: 4px; padding: 18px; display: grid; gap: 14px; box-shadow: 0 10px 24px -16px rgba(0, 0, 0, .5); }
+.form h4 { margin: 0; font-size: 20px; font-weight: 600; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.fields label { display: grid; gap: 4px; font-size: 14px; color: var(--muted); }
+.fields input, .fields select { font: inherit; font-size: 15px; padding: 8px 14px; border: 1px solid var(--input-line); border-radius: 18px; background: #fff; color: var(--ink); }
+.holds { margin: 0; padding: 12px 14px; border-radius: 4px; background: linear-gradient(var(--walnut), var(--walnut-dark)); color: var(--on-walnut); }
+.holds strong { display: block; font-size: 22px; font-weight: 600; }
+.holds span { font-size: 13px; opacity: .85; }
+.fill { display: grid; gap: 10px; }
+.fill-row { display: grid; gap: 4px; font-size: 14px; }
+.fill-row .meter { height: 12px; border-radius: 6px; background: #E6E1D6; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .15); }
+.fill-row .meter div { height: 100%; background: linear-gradient(var(--brass-light), var(--brass-dark)); }
+.fill-row.over .meter div { background: var(--mustard); }
+.fill-row .warn { color: #8A4B00; font-weight: 600; }
+.preview .furniture { margin-bottom: 34px; }
+.preview .interior { cursor: pointer; }
+.preview .cell.blocked .interior { cursor: pointer; }
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <h1>Nogal mid-century: reference for v2</h1>
+    <p>Claude Code uses this file as the visual specification. The plan in <code>docs/v2-design-plan.md</code> wins wherever the two disagree. Sample search: <em>Sirope</em>, record 50 of 55 in the first compartment. Plates show letter ranges only; LPs (12″ and 10″) and singles (7″) live on separate shelves.</p>
+    <div class="lab">
+      <label for="lab">Try the lean: records in the bottom-right LP compartment</label>
+      <input id="lab" type="range" min="0" max="80" value="30">
+      <output id="lab-out" for="lab">30 of 80</output>
+    </div>
+  </header>
+
+  <section aria-labelledby="map-title">
+    <h2 id="map-title">Map, search, and record detail</h2>
+    <p>The language selector sits left of "My shelf". Search and "Add a new record" are separated by "or". The record detail shows the tracklist from Discogs.</p>
+    <div class="screen">
+      <div class="app">
+        <div class="app-bar">
+          <span class="brand display">Record Organizer</span>
+          <nav class="nav" aria-label="Main">
+            <label class="sr-only" for="lang">Language</label>
+            <select id="lang" class="lang"><option>English</option><option>Español</option><option>Português</option></select>
+            <a href="#map-title">My shelf</a>
+            <span class="avatar" aria-hidden="true">A</span>
+          </nav>
+        </div>
+        <div class="search-row">
+          <input aria-label="Search for an artist or a title in your collection" placeholder="Search for an artist or a title in your collection" value="sirope">
+          <span class="or">or</span>
+          <button type="button" class="pill secondary">+ Add a new record</button>
+        </div>
+        <div class="rail display" data-rail aria-label="Your collection from A to Z"></div>
+        <div class="body">
+          <div class="shelves">
+            <div class="furniture"><div class="furniture-name display"><span>Kallax 1, LPs (12″ and 10″)</span><span>1,392 of 2,000</span></div><div class="grid" data-grid="lp" style="grid-template-columns: repeat(3, minmax(0, 1fr));"></div></div>
+            <div class="furniture"><div class="furniture-name display"><span>Singles box, 7″</span><span>157 of 300</span></div><div class="grid" data-grid="single" style="grid-template-columns: repeat(3, minmax(0, 1fr));"></div></div>
+          </div>
+          <article class="detail" aria-live="polite">
+            <p class="band display"><strong>Kallax 1, row 1, column 1</strong><span>Record 50 of 55, about 90% in from the left</span></p>
+            <div class="record"><div class="cover" data-cover>AS</div><div><h4 class="display">Sirope</h4><p>Alejandro Sanz, 2019<br>Universal Music Group<br>2 × Vinyl, LP, Album<br>Rock, Ballad, Soft Rock</p></div></div>
+            <div class="detail-drawing" data-detail></div>
+            <div class="neighbors" data-neighbors></div>
+            <div class="tracklist">
+              <h5 class="display">Tracklist</h5>
+              <p class="note">Placeholder rows in this mockup. The app loads the real tracklist from Discogs.</p>
+              <h6>Side A</h6>
+              <ol><li><span class="pos">A1</span><span>Track title</span><span class="dur">4:05</span></li><li><span class="pos">A2</span><span>Track title</span><span class="dur">3:38</span></li><li><span class="pos">A3</span><span>Track title</span><span class="dur">3:52</span></li></ol>
+              <h6>Side B</h6>
+              <ol><li><span class="pos">B1</span><span>Track title</span><span class="dur">4:21</span></li><li><span class="pos">B2</span><span>Track title</span><span class="dur">3:47</span></li></ol>
+            </div>
+            <div class="actions"><a href="#map-title">Data provided by Discogs</a><button type="button" class="pill secondary">Show on the map</button></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="builder-title">
+    <h2 id="builder-title">Shelves &amp; order: building a shelf</h2>
+    <p>While a shelf is being created or edited, how many records it holds and how full each format would be appear right there, and update with every change. Click a compartment in the preview to block it.</p>
+    <div class="screen">
+      <div class="app">
+        <div class="builder">
+          <div class="form">
+            <h4 class="display">New shelf</h4>
+            <div class="fields">
+              <label>Template<select data-b="template"><option value="kallax">Kallax</option><option value="box">Record box</option></select></label>
+              <label>Holds<select data-b="type"><option value="lp">LPs (12″ and 10″)</option><option value="single">Singles (7″)</option></select></label>
+              <label>Rows<input data-b="rows" type="number" min="1" max="6" value="2"></label>
+              <label>Columns<input data-b="cols" type="number" min="1" max="6" value="4"></label>
+              <label>Records per compartment<input data-b="cap" type="number" min="1" max="200" value="80"></label>
+              <label>Free space to leave<input data-b="slack" type="number" min="0" max="50" value="10"></label>
+            </div>
+            <p class="holds" data-holds></p>
+            <div class="fill" data-fill aria-live="polite"></div>
+          </div>
+          <div class="preview"><div class="furniture"><div class="furniture-name display"><span>Preview</span><span data-preview-count></span></div><div class="grid" data-preview></div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var NS = "http://www.w3.org/2000/svg";
+  var pal = ["#2F6F6B", "#C4552D", "#E8DCC2", "#6B7A3A", "#3D3A35", "#9C3D2E", "#5E8C8A", "#D8CBB0", "#1F4E5A"];
+  var FOUND = "#E8A825", FOUND_STROKE = "#22302A", COVER = "linear-gradient(135deg, #2F6F6B 0 50%, #C4552D 50%)";
+  var lpCubes = [
+    { label: "# – Al", full: "5 Seconds of Summer – Almendra", n: 55, found: 49 },
+    { label: "Al – Ba", full: "Almendra – Barbra Streisand", n: 55 },
+    { label: "Ba – Bo", full: "Barbra Streisand – Boney M.", n: 62 },
+    { label: "Bo – Ch", full: "Bonnie Pointer – Charly García", n: 70 },
+    { blocked: "Turntable" },
+    { label: "Ch – Da", full: "Charly García – Daniel Santos", n: 48 },
+    { label: "Da – El", full: "Daniel Santos – El Gran Combo", n: 55 },
+    { label: "El – Fe", full: "El Gran Combo – Fernando Fernández", n: 77 },
+    { label: "Fe – Gl", full: "Fernando Ubiergo – Glenn Medeiros", n: 30, lab: true }
+  ];
+  var singleCubes = [
+    { label: "A – Ca", full: "A-ha – Camilo Sesto", n: 60 },
+    { label: "Ca – Lo", full: "Camilo Sesto – Los Iracundos", n: 72 },
+    { label: "Lo – Z", full: "Los Iracundos – Zoé", n: 25 }
+  ];
+  var neighbors = [
+    { t: "Sanz", s: "Two to the left", i: 47 }, { t: "Si Tú Me Miras", s: "Just to the left", i: 48 },
+    { t: "Sirope", s: "This one", i: 49, me: true }, { t: "Viviendo Deprisa", s: "Just to the right", i: 50 },
+    { t: "¿Y Ahora Qué +?", s: "Two to the right", i: 51 }
+  ];
+  var letters = ["#","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"];
+  var weights = [1,7,6,8,5,4,4,3,3,1,4,1,6,7,2,2,5,0.3,5,6,4,1,3,2,0.2,0.4,0.8];
+  var FOUND_PCT = 3.6;
+
+  function rng(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function smooth(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
+  // Records stand packed from the left wall. When there's free space, the records nearest the
+  // empty side lean: each one's top-left corner rests against the record before it (or the left
+  // wall), and its bottom slides toward the right. Angles never decrease toward the right, so
+  // records touch at most at one point and never overlap.
+  function leanLayout(n, cap, seed, W, H, sizeOf) {
+    var pad = 2.5, floor = H - 1.5, room = H - 7;
+    var slot = (W - 2 * pad) / cap, t = slot * 0.9, gap = slot - t;
+    var free = Math.max(0, cap - n) / cap;
+    if (n <= 0) return [];
+    var k, maxA;
+    if (free <= 0) { k = 0; maxA = 0; }
+    else if (free < 0.02) { k = Math.min(1, n); maxA = 1.2; }
+    else { k = Math.min(n, Math.max(2, Math.round(3 + 14 * free + 0.05 * n))); maxA = Math.min(40, 4 + 42 * free); }
+    var ex = 1.6 - 1.2 * smooth((free - 0.4) / 0.5);
+    var limit = pad + n * slot + 0.65 * Math.max(0, W - 2 * pad - n * slot);
+    function build(scale) {
+      var r = rng(seed), out = [], prev = null, prevA = 0;
+      for (var i = 0; i < n; i++) {
+        var size = sizeOf ? sizeOf(i) : 12;
+        var h = room * (size === 7 ? 0.56 : size === 10 ? 0.8 : 1) * (0.95 + r() * 0.05), jitter = (r() - 0.5) * 1.4, colorPick = r();
+        var j = i - (n - k), a = 0, b;
+        if (j >= 0) {
+          var p = (j + 1) / k;
+          a = Math.max(prevA, (maxA * Math.pow(p, ex) + jitter) * scale, 0);
+        }
+        var th = a * Math.PI / 180, sn = Math.sin(th), cs = Math.cos(th);
+        if (j < 0) {
+          b = pad + i * slot;
+        } else if (!prev) {
+          b = pad + h * sn;
+        } else {
+          // Rest against every earlier record, not only the previous one: a short 10" or 7"
+          // record can sit between two tall ones, and the next tall one must clear both.
+          var cands = [prev.b + t * Math.cos(prev.th) + gap * 0.5, pad + h * sn];
+          for (var q = out.length - 1; q >= 0 && q >= out.length - 12; q--) {
+            var o = out[q], ps = Math.sin(o.th), pc = Math.cos(o.th);
+            var yTop = h * cs, s = (yTop - t * ps) / pc;
+            if (s >= 0 && s <= o.h) cands.push(o.b + t * pc - s * ps + gap + h * sn);
+            var cx = o.b + t * pc - o.h * ps, cy = t * ps + o.h * pc;
+            if (cy <= h * cs + 1e-9) cands.push(cx + gap + cy * sn / cs);
+            else {
+              // o is taller than this record's top: this record's top-left corner must clear o's right face
+              var s2 = (h * cs - t * ps) / pc;
+              if (s2 >= 0) cands.push(o.b + t * pc - s2 * ps + gap + h * sn);
+            }
+          }
+          b = Math.max.apply(null, cands);
+        }
+        var rec = { x: b, w: t, h: h, a: -a, th: th, b: b, t: t, floor: floor, color: colorPick, size: size };
+        out.push(rec); prev = rec; prevA = a;
+      }
+      return out;
+    }
+    var scale = 1, recs = build(scale);
+    for (var tries = 0; tries < 20; tries++) {
+      var last = recs[recs.length - 1];
+      if (last.x + last.w * Math.cos(last.th) <= Math.min(limit + 3, W - pad)) break;
+      scale *= 0.88; recs = build(scale);
+    }
+    return recs;
+  }
+
+  function drawCompartment(container, n, cap, seed, foundIndex, W, H, sizeOf) {
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    svg.setAttribute("aria-hidden", "true");
+    var recs = leanLayout(n, cap, seed, W, H, sizeOf), found = null;
+    recs.forEach(function (rec, i) {
+      var g = document.createElementNS(NS, "g");
+      g.setAttribute("transform", "rotate(" + rec.a.toFixed(2) + " " + rec.x.toFixed(2) + " " + rec.floor + ")");
+      var rect = document.createElementNS(NS, "rect");
+      rect.setAttribute("x", rec.x.toFixed(2));
+      rect.setAttribute("y", (rec.floor - rec.h).toFixed(2));
+      rect.setAttribute("width", rec.w.toFixed(2));
+      rect.setAttribute("height", rec.h.toFixed(2));
+      var isFound = i === foundIndex;
+      rect.setAttribute("fill", isFound ? FOUND : pal[Math.floor(rec.color * pal.length)]);
+      rect.setAttribute("stroke", isFound ? FOUND_STROKE : "rgba(0,0,0,.3)");
+      rect.setAttribute("stroke-width", isFound ? 0.35 : 0.2);
+      if (isFound) { rect.setAttribute("class", "rec-found"); found = rect; }
+      g.appendChild(rect); svg.appendChild(g);
+    });
+    container.querySelectorAll("svg").forEach(function (s) { s.remove(); });
+    container.insertBefore(svg, container.firstChild);
+    return { found: found, recs: recs };
+  }
+  function lpSizes(seed) { return function (i) { return ((i * 53 + seed) % 17 === 0) ? 10 : 12; }; }
+  function singleSizes() { return 7; }
+
+  var foundRects = [], labPaint = null;
+  function buildGrid(el, cubes, cap, sizes) {
+    cubes.forEach(function (cube, idx) {
+      var cell = document.createElement("div");
+      cell.className = "cell";
+      var interior = document.createElement("div");
+      interior.className = "interior";
+      var plate = document.createElement("div");
+      plate.className = "plate display";
+      if (cube.blocked) {
+        cell.classList.add("blocked");
+        interior.textContent = cube.blocked;
+        plate.textContent = " ";
+        cell.appendChild(interior); cell.appendChild(plate); el.appendChild(cell);
+        return;
+      }
+      plate.textContent = cube.label;
+      plate.title = cube.full;
+      interior.tabIndex = 0;
+      interior.setAttribute("role", "button");
+      var count = document.createElement("span");
+      count.className = "count";
+      interior.appendChild(count);
+      cell.appendChild(interior); cell.appendChild(plate); el.appendChild(cell);
+      var seed = (idx + 1) * 7919 + cap;
+      function paint(n) {
+        count.textContent = n + " of " + cap;
+        cell.classList.toggle("tight", n / cap >= 0.9);
+        interior.setAttribute("aria-label", cube.full + ", " + n + " of " + cap + " records. Open compartment");
+        var res = drawCompartment(interior, n, cap, seed, cube.found, 100, 100, sizes(seed));
+        if (cube.found !== undefined) foundRects[0] = res.found;
+      }
+      paint(cube.n);
+      if (cube.found !== undefined) cell.classList.add("hit");
+      if (cube.lab) labPaint = paint;
+    });
+  }
+  buildGrid(document.querySelector('[data-grid="lp"]'), lpCubes, 80, lpSizes);
+  buildGrid(document.querySelector('[data-grid="single"]'), singleCubes, 100, function () { return singleSizes; });
+
+  var detailRes = drawCompartment(document.querySelector("[data-detail]"), 55, 80, 7919 + 80, 49, 160, 100, lpSizes(7919 + 80));
+  foundRects[1] = detailRes.found;
+  document.querySelector("[data-cover]").style.background = COVER;
+  var nb = document.querySelector("[data-neighbors]");
+  neighbors.forEach(function (n) {
+    var f = document.createElement("figure");
+    if (n.me) f.className = "me";
+    var sw = document.createElement("div");
+    sw.className = "sw";
+    sw.style.background = n.me ? COVER : pal[Math.floor(detailRes.recs[n.i].color * pal.length)];
+    var cap = document.createElement("figcaption");
+    cap.innerHTML = "<span></span><span></span>";
+    cap.children[0].textContent = n.t;
+    cap.children[1].textContent = n.s;
+    f.appendChild(sw); f.appendChild(cap); nb.appendChild(f);
+  });
+
+  var rail = document.querySelector("[data-rail]");
+  var total = weights.reduce(function (a, b) { return a + b; }, 0), acc = 0;
+  letters.forEach(function (L, i) {
+    var start = acc / total * 100, mid = (acc + weights[i] / 2) / total * 100;
+    acc += weights[i];
+    if (i > 0) { var t = document.createElement("i"); t.style.left = start + "%"; rail.appendChild(t); }
+    if (weights[i] >= 1) { var s = document.createElement("span"); s.textContent = L; s.style.left = mid + "%"; rail.appendChild(s); }
+  });
+  var marker = document.createElement("div");
+  marker.className = "marker";
+  marker.style.left = "30%";
+  rail.appendChild(marker);
+  function find() {
+    foundRects.forEach(function (r) {
+      if (!r) return;
+      r.classList.remove("pulled");
+      void r.getBoundingClientRect();
+      requestAnimationFrame(function () { r.classList.add("pulled"); });
+    });
+    marker.style.left = "30%";
+    requestAnimationFrame(function () { requestAnimationFrame(function () { marker.style.left = FOUND_PCT + "%"; }); });
+  }
+  setTimeout(find, 350);
+
+  var lab = document.getElementById("lab"), out = document.getElementById("lab-out");
+  lab.addEventListener("input", function () {
+    var n = parseInt(lab.value, 10);
+    out.textContent = n + " of 80";
+    if (labPaint) labPaint(n);
+  });
+
+  // Shelf builder: live capacity and fill for each format
+  var collection = { lp: 1392, single: 157 };
+  var otherShelves = { lp: 2000, single: 300 };
+  var names = { lp: "LPs (12″ and 10″)", single: "Singles (7″)" };
+  var blocked = {};
+  var fmt = new Intl.NumberFormat("en");
+  function val(k) { return document.querySelector('[data-b="' + k + '"]'); }
+  function update() {
+    var rows = Math.max(1, Math.min(6, +val("rows").value || 1));
+    var cols = Math.max(1, Math.min(6, +val("cols").value || 1));
+    var cap = Math.max(1, +val("cap").value || 1);
+    var slack = Math.max(0, Math.min(50, +val("slack").value || 0)) / 100;
+    var type = val("type").value;
+    var open = 0, grid = document.querySelector("[data-preview]");
+    grid.innerHTML = "";
+    grid.style.gridTemplateColumns = "repeat(" + cols + ", minmax(0, 1fr))";
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+      var key = r + "," + c, cell = document.createElement("div");
+      cell.className = "cell" + (blocked[key] ? " blocked" : "");
+      var interior = document.createElement("div");
+      interior.className = "interior";
+      interior.tabIndex = 0;
+      interior.setAttribute("role", "button");
+      interior.setAttribute("aria-pressed", blocked[key] ? "true" : "false");
+      interior.setAttribute("aria-label", "Row " + (r + 1) + ", column " + (c + 1) + (blocked[key] ? ", blocked" : ""));
+      if (blocked[key]) interior.textContent = "Blocked"; else open++;
+      (function (k) {
+        function toggle() { blocked[k] = !blocked[k]; update(); }
+        interior.addEventListener("click", toggle);
+        interior.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+      })(key);
+      cell.appendChild(interior); grid.appendChild(cell);
+    }
+    var holds = open * cap;
+    document.querySelector("[data-holds]").innerHTML = "<strong></strong><span></span>";
+    document.querySelector("[data-holds] strong").textContent = "This shelf holds " + fmt.format(holds) + " " + (type === "lp" ? "LPs" : "singles");
+    document.querySelector("[data-holds] span").textContent = open + " compartments × " + cap + " records" + (rows * cols - open ? ", " + (rows * cols - open) + " blocked" : "");
+    document.querySelector("[data-preview-count]").textContent = fmt.format(holds) + " places";
+    var fill = document.querySelector("[data-fill]");
+    fill.innerHTML = "";
+    ["lp", "single"].forEach(function (g) {
+      var places = otherShelves[g] + (g === type ? holds : 0);
+      var usable = Math.floor(places * (1 - slack));
+      var recs = collection[g], pct = places ? Math.round(recs / places * 100) : 0;
+      var row = document.createElement("div");
+      row.className = "fill-row" + (recs > usable ? " over" : "");
+      var line = document.createElement("div");
+      line.textContent = names[g] + ": your " + fmt.format(recs) + " records would fill " + pct + "% of " + fmt.format(places) + " places" + (g === type ? ", with this shelf" : "");
+      var meter = document.createElement("div");
+      meter.className = "meter";
+      meter.innerHTML = "<div></div>";
+      meter.firstChild.style.width = Math.min(100, pct) + "%";
+      row.appendChild(line); row.appendChild(meter);
+      if (recs > usable) {
+        var w = document.createElement("div");
+        w.className = "warn";
+        w.textContent = fmt.format(recs - usable) + " won't fit with " + Math.round(slack * 100) + "% free space. Add compartments or raise the capacity.";
+        row.appendChild(w);
+      }
+      fill.appendChild(row);
+    });
+  }
+  ["template", "type", "rows", "cols", "cap", "slack"].forEach(function (k) { val(k).addEventListener("input", update); });
+  update();
+})();
+</script>
+</body>
+</html>
