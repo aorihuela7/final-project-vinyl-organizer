@@ -12,7 +12,7 @@ export function CalibrationHint({ capacity, onCalibrate, onDismiss }: { capacity
   const { t } = useI18n();
   return (
     <Banner className="flex flex-wrap items-center justify-between gap-2" role="status">
-      <span className="min-w-0 flex-1">{t("calibration.hint", { capacity })}</span>
+      <span className="min-w-[14rem] flex-1">{t("calibration.hint", { capacity })}</span>
       <span className="flex shrink-0 gap-1">
         <button type="button" onClick={onCalibrate} className={btnPrimarySm}>
           {t("calibration.start")}

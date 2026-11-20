@@ -277,6 +277,8 @@ export function ShelfApp() {
           {tab === "setup" ? (
             <>
               <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} />
+              <h2 className="mt-4 border-t border-input-line/60 pt-6 font-display text-2xl text-ink">{t("app.toolsTitle")}</h2>
+              <p className="-mt-2 text-sm text-muted">{t("app.toolsText")}</p>
               <TagsCard app={app} records={data.records} tags={data.tags ?? []} artistTags={data.artistTags ?? []} />
               <SimulatorCard records={data.records} config={config} />
               <ShareCard signedIn={app.mode === "remote"} />
@@ -284,18 +286,6 @@ export function ShelfApp() {
             </>
           ) : (
             <div className="flex flex-col gap-4">
-              {hasMap && !data.calibrated && !hintDismissed && (
-                <CalibrationHint
-                  capacity={commonCapacity(config)}
-                  onCalibrate={() => {
-                    const first = views.find((v) => v.index.sorted.length > 0)?.index.slots[1] ?? views.find((v) => v.index.sorted.length > 0)?.index.slots[0];
-                    if (!first) return;
-                    setCalibrateOnOpen(true);
-                    setOpenSlot(first);
-                  }}
-                  onDismiss={dismissHint}
-                />
-              )}
               <SearchRow
                 records={data.records}
                 views={views}
@@ -329,6 +319,18 @@ export function ShelfApp() {
                 </ul>
               )}
 
+              {hasMap && !data.calibrated && !hintDismissed && (
+                <CalibrationHint
+                  capacity={commonCapacity(config)}
+                  onCalibrate={() => {
+                    const first = views.find((v) => v.index.sorted.length > 0)?.index.slots[1] ?? views.find((v) => v.index.sorted.length > 0)?.index.slots[0];
+                    if (!first) return;
+                    setCalibrateOnOpen(true);
+                    setOpenSlot(first);
+                  }}
+                  onDismiss={dismissHint}
+                />
+              )}
               <OutOfShelfPanel
                 records={data.records}
                 locations={data.locations ?? []}

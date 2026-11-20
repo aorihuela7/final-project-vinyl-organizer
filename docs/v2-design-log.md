@@ -68,7 +68,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 20. Guest mode (#11) | Done | Migration `20261120111031_v2_guest_mode` (table `share_links` with RLS; `shared_shelf(token)`, a `security definer` function granted to anon that returns only the shelf behind an active token, only the fields the read-only view needs, null otherwise; applied). "Share your shelf" card in Shelves & order (create, copy, renew, turn off; one active link per owner; the accountless demo is told to sign up). Guest page `/s/{token}` (no index): read-only map, rail, search, record card with neighbors and where a record is out, compartment view without calibration; data is shown only if synced in the last 6 hours (Discogs terms), otherwise it explains. New e2e test: an account creates a link, an anonymous browser opens it, searches, sees no editing controls; turning the link off makes it say the link no longer works (passes) |
 | 21. Hardening (#12) | Done, with one step blocked on Ale | Content-Security-Policy tuned for Clerk (its Frontend API decoded from the publishable key, `*.clerk.com` with any port for Clerk Protect, the Cloudflare check), Supabase, and Discogs covers; checked in Playwright with no violations (Clerk sign-up, demo, covers, tracklist). Import routes return generic messages for 5xx and log the details (`src/lib/import/errors.ts`). Migration `20261120111555_v2_hardening`: a nightly `pg_cron` job deletes Discogs records of accounts that haven't synced in 90 days (verified active), and `delete_user_data(user_id, secret)` for the Clerk deletion webhook, guarded by a hashed secret in a schema the Data API doesn't expose. Route `/api/webhooks/clerk` verifies Clerk's signature and calls it; it answers 503 until Ale configures it (see Blocked) |
 | 22. Security pass (#13) | Todo | |
-| 23. Design review at 390 and 1440 px (#14) | Todo | |
+| 23. Design review at 390 and 1440 px (#14) | Done | Every page and view at 390 and 1440 (`p23-*`), with loading, empty, and error states inventoried in `docs/design-review.md`. Fixed: banners that crushed their text on phones, the search below three banners on a phone (the calibration hint moved under it), the hover bubble over the compartment title, and a heading that separates the save-on-their-own tools from "Generate map" in Shelves & order |
 
 ## Plan for phases 15–23 (the remaining v2-plan issues)
 
@@ -200,6 +200,8 @@ Times from the commits (`git log`), CST.
 - 05:09 · Phase 19: tags and sections.
 - 05:13 · Phase 20: guest mode.
 - 05:18 · Phase 21: CSP, generic import errors, nightly purge, deletion webhook (needs Ale's setup).
+- 05:20 · Security pass: anon execute revoked on internal functions, RLS test extended (38 checks pass), independent review started.
+- 05:24 · Phase 23: design review and fixes.
 
 ## Morning summary
 

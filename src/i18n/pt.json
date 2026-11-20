@@ -103,7 +103,9 @@
       "one": "Os compactos (7″) agora vão em estantes próprias. {count} compacto fica fora do mapa até você adicionar uma estante de compactos.",
       "other": "Os compactos (7″) agora vão em estantes próprias. {count} compactos ficam fora do mapa até você adicionar uma estante de compactos."
     },
-    "addSinglesShelf": "Adicionar uma estante de compactos"
+    "addSinglesShelf": "Adicionar uma estante de compactos",
+    "toolsTitle": "Mais para a sua coleção",
+    "toolsText": "Isto se salva sozinho; não precisa de “Gerar o mapa”."
   },
   "levels": {
     "genre": "gênero",

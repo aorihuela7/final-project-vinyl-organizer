@@ -103,7 +103,9 @@
       "one": "Singles (7″) now go on their own shelves. {count} single is off the map until you add a Singles shelf.",
       "other": "Singles (7″) now go on their own shelves. {count} singles are off the map until you add a Singles shelf."
     },
-    "addSinglesShelf": "Add a Singles shelf"
+    "addSinglesShelf": "Add a Singles shelf",
+    "toolsTitle": "More for your collection",
+    "toolsText": "These save on their own; they don't need “Generate map”."
   },
   "levels": {
     "genre": "genre",

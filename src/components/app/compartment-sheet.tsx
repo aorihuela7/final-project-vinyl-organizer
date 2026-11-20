@@ -67,7 +67,8 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
   );
   const shown = hover ? byId.get(hover.id) : undefined;
   const shownIndex = hover ? records.findIndex((r) => r.id === hover.id) : -1;
-  const lastPointer = useRef({ x: 0, y: 0, w: 300 });
+  // Where the pointer is inside the frame; unknown until it moves (the sheet can open under a resting pointer).
+  const lastPointer = useRef<{ x: number; y: number; w: number } | null>(null);
 
   const onMove = (e: MouseEvent) => {
     const box = frame.current?.getBoundingClientRect();
@@ -115,7 +116,7 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
               width={100 * aspect}
               height={100}
               foundId={highlightId && records.some((r) => r.id === highlightId) ? highlightId : null}
-              onHover={(id) => setHover(id ? { id, ...lastPointer.current } : null)}
+              onHover={(id) => setHover(id && lastPointer.current ? { id, ...lastPointer.current } : null)}
               onPick={onPickRecord}
             />
             {shown && hover && (

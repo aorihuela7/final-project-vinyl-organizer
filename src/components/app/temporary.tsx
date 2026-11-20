@@ -70,7 +70,7 @@ export function OutBanner({ location, busy, onPutBack }: { location: TempLocatio
   const { t } = useI18n();
   return (
     <Banner className="mx-[18px] flex flex-wrap items-center justify-between gap-2">
-      <span className="min-w-0 flex-1">
+      <span className="min-w-[12rem] flex-1">
         <strong className="block">{t("temp.outBanner", { location: location.name })}</strong>
         <span className="text-muted">{t("temp.outHint")}</span>
       </span>

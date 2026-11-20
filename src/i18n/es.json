@@ -103,7 +103,9 @@
       "one": "Los singles (7″) ahora van en sus propias repisas. {count} single queda fuera del mapa hasta que agregues una repisa de singles.",
       "other": "Los singles (7″) ahora van en sus propias repisas. {count} singles quedan fuera del mapa hasta que agregues una repisa de singles."
     },
-    "addSinglesShelf": "Agregar una repisa de singles"
+    "addSinglesShelf": "Agregar una repisa de singles",
+    "toolsTitle": "Más para tu colección",
+    "toolsText": "Esto se guarda solo; no necesita “Generar el mapa”."
   },
   "levels": {
     "genre": "género",
