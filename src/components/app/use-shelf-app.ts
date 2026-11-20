@@ -372,9 +372,9 @@ export function useShelfApp(startParam: string | null) {
         const localPositions = new Map(local.placement);
         for (const r of local.records.filter((x) => x.origin === "added")) {
           if (!userId) break;
-          const { id: localId, origin: _origin, synced_at: _synced, ...input } = r;
-          void _origin;
-          void _synced;
+          // Only the Discogs fields go to the database: not the derived tag, nor the demo's local temporary location.
+          const { id: localId, origin: _origin, synced_at: _synced, tag: _tag, tag_rank: _rank, temp_location_id: _loc, taken_out_at: _out, ...input } = r;
+          void [_origin, _synced, _tag, _rank, _loc, _out];
           const stored = await addRecordRemote(client, userId, { ...input, size_inches: sizeOf(r), format_group: groupOf(r) });
           const position = localPositions.get(localId);
           if (position) byPosition.set(stored.id, position);

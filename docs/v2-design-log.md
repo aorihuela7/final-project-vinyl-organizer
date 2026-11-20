@@ -67,7 +67,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 19. Custom sections and tags (#10) | Done | Migration `20261120110319_v2_sections_and_tags` (tables `tags` and `artist_tags` with RLS and grants, `furniture.section`, "tag" allowed in `sort_levels`, `save_setup` saves sections; applied). Layout: `tag` sort level (user's order, untagged last), sections in `src/lib/layout/sections.ts` (each section laid out on its own shelves; insertion, calibration, and the simulator run inside the record's section), 4 tests. App: a Tags card in Shelves & order (create, order with ↑↓, remove, tag an artist from a search, every spelling at once), a Section select per shelf (genres in the collection and tags), the section in the shelf header, plates and rail by tag name, a notice when tags change and the map needs regenerating; demo and signed in. Checked in Playwright: sorting by tag puts "Sunday morning" first; pinning Rock to the Living room places 401 records there and reports the 440 that have no shelf. Screenshots `p19-*` |
 | 20. Guest mode (#11) | Done | Migration `20261120111031_v2_guest_mode` (table `share_links` with RLS; `shared_shelf(token)`, a `security definer` function granted to anon that returns only the shelf behind an active token, only the fields the read-only view needs, null otherwise; applied). "Share your shelf" card in Shelves & order (create, copy, renew, turn off; one active link per owner; the accountless demo is told to sign up). Guest page `/s/{token}` (no index): read-only map, rail, search, record card with neighbors and where a record is out, compartment view without calibration; data is shown only if synced in the last 6 hours (Discogs terms), otherwise it explains. New e2e test: an account creates a link, an anonymous browser opens it, searches, sees no editing controls; turning the link off makes it say the link no longer works (passes) |
 | 21. Hardening (#12) | Done, with one step blocked on Ale | Content-Security-Policy tuned for Clerk (its Frontend API decoded from the publishable key, `*.clerk.com` with any port for Clerk Protect, the Cloudflare check), Supabase, and Discogs covers; checked in Playwright with no violations (Clerk sign-up, demo, covers, tracklist). Import routes return generic messages for 5xx and log the details (`src/lib/import/errors.ts`). Migration `20261120111555_v2_hardening`: a nightly `pg_cron` job deletes Discogs records of accounts that haven't synced in 90 days (verified active), and `delete_user_data(user_id, secret)` for the Clerk deletion webhook, guarded by a hashed secret in a schema the Data API doesn't expose. Route `/api/webhooks/clerk` verifies Clerk's signature and calls it; it answers 503 until Ale configures it (see Blocked) |
-| 22. Security pass (#13) | Todo | |
+| 22. Security pass (#13) | Done, with two settings on Ale | `docs/security-pass.md`: the course checklist (auth on every route, RLS and grants on all 13 tables, one account can't see another's, keys out of the repo, no model calls), every database function and who can call it, and an independent review by a fresh session (no cross-account access, no anonymous writes, no leaked secrets; 2 medium and 5 low findings, all fixed or handed to Ale). Fixes: the shared Discogs budget split between imports (which pace themselves) and interactive calls (refused near the end, never retried), IPv6 /64 keys; quotas and size limits so no account can fill the database; JSON-only, same-origin import routes; import jobs checked by the database and re-validated on the server; only Clerk-shaped user ids can own rows; guest links return no data older than 6 hours; the purge covers unfinished imports; classifier functions revoked from PUBLIC. Migrations `20261120113954_v2_security_review`, `20261120114224_v2_fix_layout_prune`, `20261120114356_v2_clerk_user_ids` applied and verified; RLS test 50/50 against the real database; 177 unit tests. Supabase Auth sign-ups (dashboard) and the Clerk deletion webhook are on Ale's list |
 | 23. Design review at 390 and 1440 px (#14) | Done | Every page and view at 390 and 1440 (`p23-*`), with loading, empty, and error states inventoried in `docs/design-review.md`. Fixed: banners that crushed their text on phones, the search below three banners on a phone (the calibration hint moved under it), the hover bubble over the compartment title, and a heading that separates the save-on-their-own tools from "Generate map" in Shelves & order |
 
 ## Plan for phases 15–23 (the remaining v2-plan issues)
@@ -152,7 +152,15 @@ Rule 4 (several formats, the largest size wins) needs every format, which only t
 - **Guest mode and the 6-hour rule.** Guests see the owner's data straight from the database. Taken: the guest page shows it only if the collection was synced in the last 6 hours (the owner's visits re-sync it); otherwise it explains and shows nothing. Question for Ale: is this the reading of the Discogs terms you want for shared links, or should guest views also be able to trigger a refresh?
 - **No QR code yet.** The link covers "a read-only link or QR"; a QR code needs an encoder, and tonight's rules say no new dependencies (a hand-written encoder is possible later).
 
+- **90 days for the purge.** "Don't store longer than necessary": records of accounts that haven't synced (opened the app) in 90 days are deleted nightly; shelves and settings stay, and the next visit re-imports. Easy to change: one number in the cron command.
+- **Quotas per account.** To keep one account from filling the free database: 25,000 records (and artist tags), 30 shelves, 100 tags, 100 temporary places, 20 guest links, 30 imports started per hour, and a layout log of the newest 500 events (up to 5 MB, always keeping the newest calibration). Question for Ale: is 25,000 records enough? A bigger collection's import would stop with an error at that point. Easy to change: one number per trigger, in a new migration.
+- **Only Clerk-shaped user ids.** Every table now requires `user_id` to look like `user_…`. If Clerk ever changed its id format, writes would fail until the check is relaxed (one migration).
+- **A new guest link deletes the old ones** instead of only revoking them, so guest links don't pile up under the quota. Turning a link off still only revokes it.
+- **The CSP allows inline scripts.** Next.js's inline bootstrap scripts and the language script need them; a nonce-based policy would remove `'unsafe-inline'` but makes every page dynamic. Logged under Ideas.
+
 ## Blocked: needs Ale
+
+**First thing: new sign-ups are blocked on the live app (Clerk's 100-user cap).** Production runs on Clerk's development instance, which allows at most 100 users. The end-to-end suite signs up about 25 per run; tonight's runs filled it: 100 users, 94 of them e2e test users (`e2e-…+clerk_test@example.com`), 6 others. Clerk now answers `user_quota_exceeded` to every sign-up, on the live app too. I didn't delete anything (deleting Clerk users can't be undone, and the instance holds real accounts). To free the space, run `npm run test-users -- --delete`: it touches only users whose every email matches the e2e pattern, deletes their rows through the Data API with their own session (RLS applies), then deletes them in Clerk. `npm run test-users` alone only counts. Longer term: a Clerk production instance (see below), or run the e2e suite against a separate development instance.
 
 **Clerk account deletion webhook (phase 21).** The code and the database function are deployed; three settings are needed:
 
@@ -165,7 +173,19 @@ Rule 4 (several formats, the largest size wins) needs every format, which only t
 
 Until then the route answers 503 and nothing is deleted.
 
+**Supabase Auth sign-ups (phase 22).** Supabase's own email sign-up is enabled and auto-confirmed on the project, so anyone can get an `authenticated` token without Clerk. The database now refuses rows whose `user_id` isn't a Clerk id, so such a token can't write anything, but it's better closed: Supabase dashboard → Authentication → Sign In / Providers → turn off "Allow new users to sign up" and the Email provider (Clerk stays under Third-Party Auth). Then sign in to the app once to check. Verify: `curl "$SUPABASE_URL/auth/v1/settings" -H "apikey: <publishable key>"` should show `"disable_signup": true`.
+
+**Decisions from the independent review (phase 22), not blocking:**
+
+- Production runs on a Clerk development instance (relaxed limits, no email verification, `+clerk_test` emails work). A production instance needs a domain of your own; the e2e tests would then need a separate development instance.
+- Local dev, the e2e tests (about 25 new users per run), and the scripts all use the production Supabase project. A second free project for tests would keep test users out of production.
+- `.claude/settings.json` auto-allows `npx tsx *`, and a script run that way can read `.env.local`, so the `Read(.env*)` deny rule isn't a real barrier for the agent. Whether to keep that convenience is your call; I didn't change the agent's permissions.
+
 ## Ideas for v2
+
+- A nonce-based Content-Security-Policy (no `'unsafe-inline'` scripts).
+- A QR code for guest links (needs an encoder; no new dependencies tonight).
+- Multiple tags per artist for search (one tag per artist is what sorting needs).
 
 - Translate Clerk's sign-in and sign-up screens with `@clerk/localizations` (needs Ale's OK for the dependency).
 
@@ -202,7 +222,21 @@ Times from the commits (`git log`), CST.
 - 05:18 · Phase 21: CSP, generic import errors, nightly purge, deletion webhook (needs Ale's setup).
 - 05:20 · Security pass: anon execute revoked on internal functions, RLS test extended (38 checks pass), independent review started.
 - 05:24 · Phase 23: design review and fixes.
+- 05:35 · Bug found by e2e and fixed: saving the browser demo to a new account sent derived fields (tag, tag rank) and the demo's local temporary place to the database, so the save failed.
+- 05:40 · Independent security review back; migration `v2_security_review` applied. 05:42 · the extended RLS test caught a broken alias in the layout-log trigger (every layout event insert failed for about three minutes); fixed by `v2_fix_layout_prune`. 05:44 · `v2_clerk_user_ids` applied. RLS test 50/50.
 
 ## Morning summary
 
-(written at the end of the run)
+**Everything in the plan is done**, plus the remaining v2-plan issues, on `v2-design` (draft PR #24). One item waits on Ale: the Clerk deletion webhook's secrets (see Blocked).
+
+**Screenshots to look at first** (local, `docs/screenshots/v2-design/`): `p7-record-1280.png` (map, found compartment, record card with tracklist), `p8-compartment-1280.png`, `p8-rail-artist-375.png`, `p6-builder-1280.png`, `p9-landing-1280.png`, `p10-es-1280.png`, `p11-step3-375.png`, `p16-simulator-1280.png`, `p17-out-card-1280.png`, `p19-section-1280.png`, `p23-*` (every page at 390 and 1440).
+
+**Database:** eight new migrations, all additive and applied to the linked project: format groups (with a backfill trigger; singles left LP shelves without moving any LP: 1,678 placements in 37 accounts), user preferences, temporary locations, thickness by format, sections and tags, guest mode, hardening (nightly purge with `pg_cron`, account deletion function), and function grants.
+
+**Classification of Ale's collection (1,704 records):** 1,197 LPs by rule 3, 19 explicit 12″, 6 explicit 10″, 147 explicit 7″ singles, 2 singles by "Single"/"EP", 327 CDs, 6 other.
+
+**Purchase simulator on Ale's real collection:** with the suggested shelves (10% free space spread everywhere), 100 purchases move 0 records with either method; at 98% full, 17.5 (naive) vs 13.4 (minimum moves) records moved, sorted by artist; at 100% full by genre, 89.4 vs 60.6.
+
+**Tests:** 162 unit tests; 22 end-to-end tests on desktop and mobile plus the new v2 tests (tour, language, tracklist, singles, temporary locations, guest mode); RLS test 38/38 against the real database.
+
+**Open questions** are under "Assumptions and questions for Ale"; the ones that most need an answer: guest links and the 6-hour rule, the 90-day purge, and reviewing the Spanish (and finding a Portuguese reviewer).

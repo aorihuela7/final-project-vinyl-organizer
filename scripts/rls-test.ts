@@ -8,6 +8,7 @@
  * Supabase Data API with each user's real session token, exactly like the app.
  * It never prints tokens or keys.
  */
+import { randomBytes } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const CLERK_API = "https://api.clerk.com/v1";
@@ -166,8 +167,15 @@ async function main() {
   const crossTag = await b.from("artist_tags").insert({ artist_key: "rls cross", tag_id: tagA.data?.id });
   check("B can't use A's tag", !!crossTag.error, crossTag.error?.code);
 
+  // The guest link returns data only while A's Discogs data is less than 6 hours old.
+  const before = await a.from("collections").select("id, last_synced_at").maybeSingle();
+  const collection = before.data ?? (await a.from("collections").insert({ source: "manual" }).select("id, last_synced_at").single()).data;
+  await a.from("collections").update({ last_synced_at: new Date().toISOString() }).eq("id", collection!.id);
   const guest = await anon.rpc("shared_shelf", { p_token: linkToken });
-  check("A guest link returns A's shelf to an anonymous caller", !guest.error && !!guest.data, guest.error?.message);
+  check("A guest link returns A's shelf to an anonymous caller", !guest.error && guest.data?.stale === false && Array.isArray(guest.data?.records), guest.error?.message);
+  await a.from("collections").update({ last_synced_at: new Date(Date.now() - 7 * 3600_000).toISOString() }).eq("id", collection!.id);
+  const stale = await anon.rpc("shared_shelf", { p_token: linkToken });
+  check("A guest link returns no Discogs data older than 6 hours", !stale.error && stale.data?.stale === true && !("records" in (stale.data ?? {})), stale.error?.message);
   const wrong = await anon.rpc("shared_shelf", { p_token: "rlstest-not-a-real-token-123" });
   check("A wrong guest token returns nothing", !wrong.error && wrong.data === null, wrong.error?.message);
   await a.from("share_links").update({ revoked_at: new Date().toISOString() }).eq("token", linkToken);
@@ -178,6 +186,56 @@ async function main() {
   check("Anonymous requests can't call save_setup", !!anonSave.error, anonSave.error?.code);
   const anonDelete = await anon.rpc("delete_user_data", { p_user_id: userA, p_secret: "guess" });
   check("delete_user_data refuses without the secret", !!anonDelete.error, anonDelete.error?.code);
+
+  // ------------------------------------------- limits from the security review
+  const bigMoves = Array.from({ length: 60_000 }, () => ({ recordId: randomBytes(18).toString("base64"), from: null, to: null }));
+  const bigEvent = await a.from("layout_events").insert({ kind: "insert", moves: bigMoves, moved_count: 1 });
+  check("A layout event with more than 1 MB of moves is refused", bigEvent.error?.code === "23514", bigEvent.error?.code ?? "accepted");
+
+  await a.from("layout_events").delete().eq("user_id", userA);
+  await a.from("layout_events").insert({ kind: "calibrate", moves: [], moved_count: 0 });
+  const flood = await a.from("layout_events").insert(Array.from({ length: 505 }, () => ({ kind: "insert", moves: [], moved_count: 0 })));
+  const kept = await a.from("layout_events").select("kind").eq("user_id", userA);
+  check(
+    "The layout log keeps an account's newest 500 events and its newest calibration",
+    !flood.error && (kept.data?.length ?? 0) <= 501 && (kept.data ?? []).some((e) => e.kind === "calibrate"),
+    flood.error?.message ?? `kept ${kept.data?.length}`,
+  );
+  await a.from("layout_events").delete().eq("user_id", userA);
+
+  const tooMany = await a
+    .from("furniture")
+    .insert(Array.from({ length: 31 }, (_, i) => ({ name: `RLS test quota ${i}`, template: "custom", rows: 1, cols: 1, default_capacity: 10, sort_index: 9100 + i })));
+  const quotaLeft = await a.from("furniture").select("id").like("name", "RLS test quota%");
+  check("An account can't have more than 30 shelves", tooMany.error?.code === "23514" && quotaLeft.data?.length === 0, tooMany.error?.code ?? "accepted");
+  const outside = await a.from("compartments").insert({ furniture_id: furnitureId, row: 12, col: 0 });
+  check("A compartment can't sit outside the largest shelf", outside.error?.code === "23514", outside.error?.code ?? "accepted");
+
+  await a.from("import_jobs").delete().eq("user_id", userA);
+  const badJob = await a.from("import_jobs").insert({ collection_id: collection!.id, source: "discogs", discogs_username: "../x", sort: "added" });
+  check("The database refuses an import job with an invalid username", badJob.error?.code === "23514", badJob.error?.code ?? "accepted");
+  const job = await a
+    .from("import_jobs")
+    .insert({ collection_id: collection!.id, source: "discogs", discogs_username: "rls-test", sort: "added", next_page: 3 })
+    .select("id")
+    .single();
+  check("A can create a valid import job", !job.error, job.error?.message);
+  const back = await a.from("import_jobs").update({ next_page: 1 }).eq("id", job.data?.id);
+  check("An import job can't go back a page", back.error?.code === "23514", back.error?.code ?? "accepted");
+  const otherUser = await a.from("import_jobs").update({ discogs_username: "someone-else" }).eq("id", job.data?.id);
+  check("An import job can't change what it imports", otherUser.error?.code === "23514", otherUser.error?.code ?? "accepted");
+  await a.from("import_jobs").update({ status: "done" }).eq("id", job.data?.id);
+  const reopen = await a.from("import_jobs").update({ status: "running" }).eq("id", job.data?.id);
+  check("A finished import job can't be reopened", reopen.error?.code === "23514", reopen.error?.code ?? "accepted");
+  await a.from("import_jobs").delete().eq("user_id", userA);
+
+  const classifyA = await a.rpc("classify_vinyl_size", { p_descriptions: ['7"'] });
+  check("Signed-in users can still run the format classifier (the trigger needs it)", !classifyA.error && classifyA.data === 7, classifyA.error?.message);
+  const classifyAnon = await anon.rpc("classify_vinyl_size", { p_descriptions: ['7"'] });
+  check("Anonymous requests can't run the format classifier", !!classifyAnon.error, classifyAnon.error?.code ?? "allowed");
+
+  if (before.data) await a.from("collections").update({ last_synced_at: before.data.last_synced_at }).eq("id", before.data.id);
+  else await a.from("collections").delete().eq("id", collection!.id);
 
   await a.from("tags").delete().eq("id", tagA.data?.id);
   await a.from("temporary_locations").delete().eq("id", locA.data?.id);

@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:rls": "tsx --env-file=.env.local scripts/rls-test.ts",
-    "check:import": "tsx --env-file=.env.local scripts/import-check.ts"
+    "check:import": "tsx --env-file=.env.local scripts/import-check.ts",
+    "test-users": "tsx --env-file=.env.local scripts/clerk-test-users.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.10.0",

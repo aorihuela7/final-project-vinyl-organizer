@@ -3,9 +3,12 @@ import { startImport } from "@/lib/import/service";
 import { publicError } from "@/lib/import/errors";
 import { startImportSchema } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
+import { refuseCrossSite } from "@/lib/same-origin";
 
 /** Starts an import of a public Discogs collection (or the demo), or returns the active one. */
 export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
   const session = await getServerSession();
   if (!session) return Response.json({ error: "Sign in to import a collection." }, { status: 401 });
 

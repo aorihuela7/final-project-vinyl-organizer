@@ -12,9 +12,9 @@ export async function skipTour(target: Page | BrowserContext) {
 }
 
 export const test = base.extend({
-  page: async ({ page }, use) => {
+  page: async ({ page }, provide) => {
     await skipTour(page);
-    await use(page);
+    await provide(page);
   },
 });
 

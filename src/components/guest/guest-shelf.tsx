@@ -36,8 +36,10 @@ export function GuestShelf({ token }: { token: string }) {
     loadSharedShelf(token)
       .then((shelf) => {
         if (!alive) return;
-        if (!shelf || !shelf.config) return setState({ status: "missing" });
-        // Discogs data is shown only if it's no more than six hours old.
+        if (!shelf) return setState({ status: "missing" });
+        // Discogs data is shown only if it's no more than six hours old (the database checks it too).
+        if (shelf.stale) return setState({ status: "stale" });
+        if (!shelf.config) return setState({ status: "missing" });
         const fresh = shelf.lastSyncedAt && Date.now() - new Date(shelf.lastSyncedAt).getTime() <= FRESHNESS_MS;
         setState(fresh ? { status: "ready", shelf } : { status: "stale" });
       })

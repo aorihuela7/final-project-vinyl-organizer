@@ -20,9 +20,30 @@ export function rateLimit(key: string, limit: number, windowMs: number): { ok: b
   return { ok: true, retryAfterMs: 0 };
 }
 
-/** The signed-in user id, or the client IP for visitors without an account. */
+/**
+ * The key a client is limited by. IPv6 addresses count by their /64 network:
+ * one connection usually gets a whole /64, so counting single addresses would
+ * let one visitor rotate through billions of them.
+ */
+export function ipKey(ip: string): string {
+  const address = ip.trim().replace(/^\[|\]$/g, "").replace(/%.*$/, "");
+  if (!address.includes(":")) return address;
+  const last = address.slice(address.lastIndexOf(":") + 1);
+  if (last.includes(".")) return last; // IPv4-mapped (::ffff:1.2.3.4)
+  const [head, tail] = address.includes("::") ? address.split("::") : [address, undefined];
+  const left = head ? head.split(":") : [];
+  const right = tail ? tail.split(":") : [];
+  const groups = tail === undefined ? left : [...left, ...Array(Math.max(0, 8 - left.length - right.length)).fill("0"), ...right];
+  return `${groups
+    .slice(0, 4)
+    .map((g) => (parseInt(g, 16) || 0).toString(16))
+    .join(":")}::/64`;
+}
+
+/** The signed-in user id, or the client's network for visitors without an account. */
 export function clientKey(userId: string | null, request: Request): string {
   if (userId) return `user:${userId}`;
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return `ip:${forwarded || request.headers.get("x-real-ip") || "unknown"}`;
+  const ip = forwarded || request.headers.get("x-real-ip");
+  return `ip:${ip ? ipKey(ip) : "unknown"}`;
 }

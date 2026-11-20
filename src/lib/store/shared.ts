@@ -1,6 +1,8 @@
 /**
  * The shelf behind a guest link, read without an account through the
- * shared_shelf() database function (it returns only that shelf, or null).
+ * shared_shelf() database function (it returns only that shelf, or null). When
+ * the owner's Discogs data is more than 6 hours old, the function returns no
+ * data at all, only that it's stale.
  */
 import { createClient } from "@supabase/supabase-js";
 import type { Placement } from "@/lib/layout";
@@ -15,9 +17,11 @@ export type SharedShelf = {
   placement: Placement;
   locations: TempLocation[];
   lastSyncedAt: string | null;
+  stale: boolean;
 };
 
 type Row = {
+  stale?: boolean;
   last_synced_at: string | null;
   settings: { sort_levels: string[]; ignore_articles: boolean; slack_pct: number; thickness_by_format: boolean } | null;
   furniture: Array<{
@@ -48,6 +52,9 @@ export async function loadSharedShelf(token: string): Promise<SharedShelf | null
   if (error) throw new Error(error.message);
   const row = data as Row | null;
   if (!row) return null;
+  if (row.stale !== false) {
+    return { records: [], config: null, placement: new Map(), locations: [], lastSyncedAt: row.last_synced_at, stale: true };
+  }
   const furniture: FurnitureConfig[] = row.furniture.map((f) => ({
     key: f.id,
     name: f.name,
@@ -76,5 +83,6 @@ export async function loadSharedShelf(token: string): Promise<SharedShelf | null
     placement: new Map(row.placements),
     locations: row.locations,
     lastSyncedAt: row.last_synced_at,
+    stale: false,
   };
 }

@@ -204,9 +204,29 @@ export async function applyPlacementsRemote(supabase: SupabaseClient, placement:
 }
 
 export async function addRecordRemote(supabase: SupabaseClient, userId: string, record: RecordInput): Promise<StoredRecord> {
+  // Only the columns of a record from Discogs (callers may pass objects with extra, derived fields).
+  const row = {
+    discogs_release_id: record.discogs_release_id,
+    artist: record.artist,
+    title: record.title,
+    year: record.year,
+    label: record.label,
+    genre: record.genre,
+    styles: record.styles,
+    format_name: record.format_name,
+    format_qty: record.format_qty,
+    format_descriptions: record.format_descriptions,
+    media: record.media,
+    size_inches: record.size_inches,
+    format_group: record.format_group,
+    cover_url: record.cover_url,
+    thumb_url: record.thumb_url,
+    discogs_url: record.discogs_url,
+    date_added: record.date_added,
+  };
   const { data, error } = await supabase
     .from("records")
-    .insert({ ...record, discogs_instance_id: null, user_id: userId, origin: "added", synced_at: new Date().toISOString() })
+    .insert({ ...row, discogs_instance_id: null, user_id: userId, origin: "added", synced_at: new Date().toISOString() })
     .select(RECORD_COLUMNS)
     .single();
   if (error) throw new Error(error.message);
@@ -288,9 +308,10 @@ export async function revokeShareLinksRemote(supabase: SupabaseClient) {
   if (error) throw new Error(error.message);
 }
 
-/** A new guest link; the previous one stops working. */
+/** A new guest link; the previous ones stop working and are deleted (an account can keep at most 20). */
 export async function createShareLinkRemote(supabase: SupabaseClient, userId: string): Promise<string> {
-  await revokeShareLinksRemote(supabase);
+  const { error: deleteError } = await supabase.from("share_links").delete().eq("user_id", userId);
+  if (deleteError) throw new Error(deleteError.message);
   const token = newToken();
   const { error } = await supabase.from("share_links").insert({ token, user_id: userId });
   if (error) throw new Error(error.message);
