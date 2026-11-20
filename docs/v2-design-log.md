@@ -64,7 +64,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 16. Minimum-move insertion and purchase simulator (#7) | Done | `insertRecord(…, "minimum")`: shift toward the nearest compartment with room in either direction (cost 1 + boundaries crossed), with the proof in `docs/algorithm.md` §6b; 6 tests (brute-force optimality on every small shelf and every gap, more than 100 cases; invariants over 300 random insertions; never worse than naive when naive keeps every record; the simulator is deterministic and wins on nearly full shelves). The app uses it for "Add a new record" and re-syncs; naive stays as the baseline. Simulator in `src/lib/layout/simulate.ts`, in Shelves & order ("How full your shelves end up": as they are, 90%, 95%, 98%, 100%) and as `scripts/simulate.ts`. On Ale's 1,725 records: 0 records moved with either method on the suggested shelves (10% free space spread everywhere); at 98% full, 17.5 vs 13.4 by artist; at 100% full by genre, 89.4 vs 60.6. Screenshot `p16-simulator-1280.png` |
 | 17. Temporary locations and "Put it back" (#8) | Done | Migration `20261120104542_v2_temporary_locations` (table with RLS and grants; `records.temp_location_id` with a same-user composite key that puts records back if a place is deleted; applied and verified). "Take it out…" in the record card with the places already used, five suggestions (next to the turntable, gig bag, discards box, on display, unsorted pile), or a new name; the record keeps its placement (its home spot), drawn hollow with a dashed outline on the map and in the compartment view; the card says "Out of the shelf: in Gig bag" with "Put it back", which highlights its spot and neighbors; search says "In Gig bag. Its spot: Living room, row 3, column 2"; a panel lists every record that's out by place. Works in the browser demo (snapshot) and signed in (Supabase). Checked in Playwright at 1280 and 375, plus a new e2e test; tracklists from vinyl releases with a bonus CD now get a separate "CD" section. Screenshots `p17-*` |
 | 18. Calibration by count and thickness by format (#9) | Done | `calibrateCount` ("there are N records here" moves only the boundary with the next compartment; refuses what needs another boundary; flags over capacity) with 4 tests and a "Count the records here" form in the compartment view. Thickness by format: optional setting in Sort order (migration `20261120105551_v2_thickness_by_format` adds `shelf_settings.thickness_by_format` and teaches `save_setup` to save it; applied), records weigh their number of discs (`format_qty`, 1–12), `distributeWeighted` for the initial layout, insertion and calibration count places, drawings are as wide as their places, badges count places. Off by default, and off reproduces v1 exactly (all v1 tests unchanged, plus a test that weights are ignored when off); 5 weighted tests (spread in places, never over capacity, leftovers, a too-thick record, inserting a double album with both methods). Documented in `docs/algorithm.md` §7b–7c. Checked in Playwright: turning it on recomputes the demo map (98 records change compartment; the first cube goes to 70 of 80 places), and a count of 50 moves 14 records to the next compartment. Screenshots `p18-*` |
-| 19. Custom sections and tags (#10) | Todo | |
+| 19. Custom sections and tags (#10) | Done | Migration `20261120110319_v2_sections_and_tags` (tables `tags` and `artist_tags` with RLS and grants, `furniture.section`, "tag" allowed in `sort_levels`, `save_setup` saves sections; applied). Layout: `tag` sort level (user's order, untagged last), sections in `src/lib/layout/sections.ts` (each section laid out on its own shelves; insertion, calibration, and the simulator run inside the record's section), 4 tests. App: a Tags card in Shelves & order (create, order with ↑↓, remove, tag an artist from a search, every spelling at once), a Section select per shelf (genres in the collection and tags), the section in the shelf header, plates and rail by tag name, a notice when tags change and the map needs regenerating; demo and signed in. Checked in Playwright: sorting by tag puts "Sunday morning" first; pinning Rock to the Living room places 401 records there and reports the 440 that have no shelf. Screenshots `p19-*` |
 | 20. Guest mode (#11) | Todo | |
 | 21. Hardening (#12) | Todo | |
 | 22. Security pass (#13) | Todo | |
@@ -146,6 +146,9 @@ Rule 4 (several formats, the largest size wins) needs every format, which only t
 - **Thickness is discs, not millimeters.** A double LP counts 2 places and a box set its number of discs; gatefolds, heavy pressings, and box packaging aren't measured. It's an option (off by default) because it changes the whole layout when turned on. With weights, minimum moves keep the nearest-room rule, which is provably optimal only for one place per record.
 - **The builder's meters count places when thickness is on**, but the sentence still says "records" ("your 1,392 records would fill…"). Easy to reword.
 
+- **One tag per artist.** Tags sort, so each artist has one (a record can't sort under two tags at once). Multiple labels per artist for search would be a later addition.
+- **Sections are per shelf.** A section is pinned to whole shelves, not to single compartments; a record belongs to the first section it matches in shelf order.
+
 ## Blocked: needs Ale
 
 (none yet)
@@ -162,24 +165,27 @@ If the session stops on a usage limit, a recurring session job (created when the
 
 ## Timeline
 
-- 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
-- 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
-- 2026-11-20 12:20 CST · Phase 18 done: calibration by count, thickness by format.
-- 2026-11-20 11:25 CST · Phase 17 done: temporary locations and Put it back.
-- 2026-11-20 10:50 CST · Phase 13 done: visual QA against the mockup.
-- 2026-11-20 10:40 CST · Phases 15 and 16 done: calibration hint, minimum-move insertion, purchase simulator.
-- 2026-11-20 09:45 CST · Phase 12 done: mobile, accessibility, performance, e2e suite green.
-- 2026-11-20 08:50 CST · Phase 11 done: guided tour.
-- 2026-11-20 08:15 CST · Phase 10 done: language selector, Spanish and Portuguese.
-- 2026-11-20 07:35 CST · Phase 9 done: landing hero, collection panel, Clerk theme.
-- 2026-11-20 07:05 CST · Phase 8 done: compartment view and brass rail.
-- 2026-11-20 06:25 CST · Phase 7 done: record card and tracklists.
-- 2026-11-20 05:50 CST · Phase 6 done: shelf builder with live capacity.
-- 2026-11-20 05:20 CST · Phase 5 done: search row and Add a new record.
-- 2026-11-20 04:55 CST · Phase 4 done: Nogal map with drawings and letter plates.
-- 2026-11-20 04:20 CST · Phase 3 done: format groups end to end, migrations applied.
-- 2026-11-20 03:45 CST · Phase 2 done: lean function and tests.
-- 2026-11-20 03:38 CST · Phase 1 done: tokens, fonts, i18n system, shell strings, ui primitives.
+Times from the commits (`git log`), CST.
+
+- 2026-11-20 02:34 · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
+- 03:26 · Phase 0: 20 GitHub issues (#4–#23), CLAUDE.md updated for v2, draft PR #24, resume job scheduled (every 30 minutes while idle).
+- 03:35 · Phase 1: tokens, fonts, i18n system, shell strings, ui primitives.
+- 03:39 · Phase 2: lean function and tests.
+- 03:49 · Phase 3: format groups end to end, migrations applied.
+- 03:55 · Phase 4: Nogal map with drawings and letter plates.
+- 03:59 · Phase 5: search row and Add a new record.
+- 04:04 · Phase 6: shelf builder with live capacity.
+- 04:08 · Phase 7: record card and tracklists.
+- 04:13 · Phase 8: compartment view and brass rail.
+- 04:17 · Phase 9: landing hero, collection panel, Clerk theme.
+- 04:22 · Phase 10: language selector, Spanish and Portuguese.
+- 04:26 · Phase 11: guided tour.
+- 04:37 · Phase 12: mobile, accessibility, performance; e2e suite green.
+- 04:44 · Phases 15 and 16: calibration hint, minimum-move insertion, purchase simulator.
+- 04:45 · Phase 13: visual QA against the mockup.
+- 04:50 · Phase 17: temporary locations and Put it back.
+- 05:00 · Phase 18: calibration by count, thickness by format.
+- 05:32 · Phase 19: tags and sections.
 
 ## Morning summary
 

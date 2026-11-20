@@ -110,7 +110,8 @@
     "artist": "artista",
     "year": "año",
     "label": "sello",
-    "title": "título"
+    "title": "título",
+    "tag": "etiqueta"
   },
   "landing": {
     "title": "Sabe dónde está cada disco, y dónde va el próximo.",
@@ -218,7 +219,8 @@
     "Reggae": "Reggae",
     "Rock": "Rock",
     "Stage & Screen": "Cine y teatro",
-    "No genre": "Sin género"
+    "No genre": "Sin género",
+    "No tag": "Sin etiqueta"
   },
   "map": {
     "holdsOf": "{count} de {capacity}",
@@ -236,7 +238,12 @@
     "noYear": "Sin año",
     "shelfTitle": "{name}, {media}",
     "groupTitle": "{media}",
-    "legend": "Cada compartimiento muestra sus letras; el rango completo está en la vista del compartimiento."
+    "legend": "Cada compartimiento muestra sus letras; el rango completo está en la vista del compartimiento.",
+    "shelfTitleSection": "{name}, {media}, sección {section}",
+    "tagsCount": {
+      "one": "{count} etiqueta",
+      "other": "{count} etiquetas"
+    }
   },
   "place": {
     "rowCol": "fila {row}, columna {col}",
@@ -295,7 +302,8 @@
     "artist": "Artista",
     "year": "Año",
     "label": "Sello",
-    "title": "Título"
+    "title": "Título",
+    "tag": "Etiqueta"
   },
   "builder": {
     "yourShelves": "Tus repisas",
@@ -380,7 +388,12 @@
     "suggestedLpN": "Kallax {n}",
     "suggestedSingles": "Singles",
     "suggestedCds": "Repisa de CD",
-    "thickness": "Contar los discos dobles y las cajas por su cantidad de discos (un LP doble ocupa dos lugares)"
+    "thickness": "Contar los discos dobles y las cajas por su cantidad de discos (un LP doble ocupa dos lugares)",
+    "section": "Sección",
+    "sectionNone": "Todo lo demás",
+    "sectionGenre": "Género: {name}",
+    "sectionTag": "Etiqueta: {name}",
+    "sectionHint": "Los discos de una sección van solo en las repisas con esa sección, ordenados dentro de ella."
   },
   "record": {
     "offMap": "Fuera del mapa",
@@ -591,5 +604,26 @@
     "show": "Ver",
     "searchOut": "En {location}. Su lugar: {place}",
     "elsewhere": "Otro lugar"
+  },
+  "tags": {
+    "title": "Etiquetas",
+    "text": "Agrupa artistas a tu manera (“Domingo en la mañana”, “house”, “120–125 bpm”). La etiqueta va en el artista, así que todos sus discos la tienen. Usa Etiqueta como nivel de orden, o fija una etiqueta a una repisa.",
+    "newTag": "Etiqueta nueva",
+    "placeholder": "Por ejemplo, Domingo en la mañana",
+    "add": "Agregar etiqueta",
+    "moveUp": "Subir {name}",
+    "moveDown": "Bajar {name}",
+    "remove": "Quitar {name}",
+    "assignLabel": "Etiquetar un artista",
+    "assignPlaceholder": "Busca un artista de tu colección",
+    "none": "Sin etiqueta",
+    "artists": {
+      "one": "{count} artista",
+      "other": "{count} artistas"
+    },
+    "recompute": "Las etiquetas cambiaron. Genera el mapa de nuevo en Repisas y orden para ordenar o fijar por ellas.",
+    "failed": "No se pudieron guardar las etiquetas.",
+    "empty": "Todavía no hay etiquetas.",
+    "tagFor": "Etiqueta de {artist}"
   }
 }

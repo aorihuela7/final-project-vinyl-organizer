@@ -9,6 +9,7 @@ import type { SortLevel, SortSettings } from "./types";
 
 function partOf(key: SortKey, level: SortLevel): string {
   if (level === "year") return key.year === null ? "—" : String(key.year);
+  if (level === "tag") return key.tag;
   return key[level];
 }
 
@@ -45,7 +46,7 @@ export function rangeLabels(index: ShelfIndex, settings: SortSettings): Map<stri
     const sameGroup = !!second && collator.compare(partOf(first, top), partOf(last, top)) === 0;
     // Genres and years are shown whole; names and titles are cut to the shortest distinguishing prefix.
     const short = (level: SortLevel, value: string, neighbor: string | null) =>
-      level === "year" || level === "genre" ? value : abbreviate(value, neighbor);
+      level === "year" || level === "genre" || level === "tag" ? value : abbreviate(value, neighbor);
     const sameTop = (a: SortKey | null, b: SortKey) => !!a && collator.compare(partOf(a, top), partOf(b, top)) === 0;
 
     let start: string;

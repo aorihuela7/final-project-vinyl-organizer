@@ -98,6 +98,8 @@ function describe(record: LayoutRecord, key: SortKey, level: SortLevel, noYear: 
       return key.year === null ? noYear : String(key.year);
     case "genre":
       return key.genre;
+    case "tag":
+      return key.tag;
   }
 }
 
@@ -127,7 +129,8 @@ export function plateLabels(index: ShelfIndex, settings: SortSettings, options: 
 
     let lines: PlateLine[];
     let full: string;
-    if (top !== "genre") {
+    // Genre and tag group the compartment by name; the other levels show letters or years.
+    if (top !== "genre" && top !== "tag") {
       lines = [{ kind: "range", text: rangeOn(top, F, L, P, N, noYear) }];
       const a = describe(firstRecord, F, top, noYear);
       const b = describe(lastRecord, L, top, noYear);
@@ -136,12 +139,12 @@ export function plateLabels(index: ShelfIndex, settings: SortSettings, options: 
       // Runs of consecutive records that share a genre.
       const runs: Array<{ genre: string; first: LayoutRecord; last: LayoutRecord }> = [];
       for (const r of records) {
-        const g = keyOf(r).genre;
+        const g = keyOf(r)[top];
         const run = runs[runs.length - 1];
         if (run && run.genre === g) run.last = r;
         else runs.push({ genre: g, first: r, last: r });
       }
-      const sameGenre = (k: SortKey | null, g: string) => (k && k.genre === g ? k : null);
+      const sameGenre = (k: SortKey | null, g: string) => (k && k[top] === g ? k : null);
       if (runs.length === 1) {
         const run = runs[0]!;
         lines = [{ kind: "genre", genre: run.genre, text: rangeOn(second, F, L, sameGenre(P, run.genre), sameGenre(N, run.genre), noYear) }];
@@ -154,7 +157,7 @@ export function plateLabels(index: ShelfIndex, settings: SortSettings, options: 
       } else {
         lines = [{ kind: "genres", first: runs[0]!.genre, last: runs[runs.length - 1]!.genre, count: runs.length }];
       }
-      const end = (r: LayoutRecord, k: SortKey) => `${genreName(k.genre)}, ${describe(r, k, second, noYear)}`;
+      const end = (r: LayoutRecord, k: SortKey) => `${genreName(k[top])}, ${describe(r, k, second, noYear)}`;
       const a = end(firstRecord, F);
       const b = end(lastRecord, L);
       full = a === b ? a : `${a} – ${b}`;

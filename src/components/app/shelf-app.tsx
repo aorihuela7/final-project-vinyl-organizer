@@ -16,6 +16,7 @@ import { BrassRail } from "./brass-rail";
 import { CalibrationHint } from "./calibration-hint";
 import { SimulatorCard } from "./simulator-card";
 import { OutOfShelfPanel } from "./temporary";
+import { TagsCard } from "./tags-card";
 import { toSortSettings } from "@/lib/shelf/model";
 import { Onboarding } from "./onboarding";
 import { RecordCard, RecordCardEmpty, findLocation } from "./record-details";
@@ -275,6 +276,7 @@ export function ShelfApp() {
           {tab === "setup" ? (
             <>
               <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} />
+              <TagsCard app={app} records={data.records} tags={data.tags ?? []} artistTags={data.artistTags ?? []} />
               <SimulatorCard records={data.records} config={config} />
               <CollectionPanel app={app} />
             </>

@@ -10,6 +10,7 @@ export const DEFAULT_ARTICLES: readonly string[] = ["The", "A", "An", "El", "La"
 
 export const NO_GENRE = "No genre";
 export const NO_LABEL = "No label";
+export const NO_TAG = "No tag";
 
 const SUFFIX = /\s+\(\d+\)$/u;
 const LEADING_PUNCTUATION = /^[^\p{L}\p{N}]+/u;

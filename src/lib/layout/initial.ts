@@ -7,6 +7,7 @@
  * everywhere make later insertions cheap.
  */
 import { sortRecords } from "./sort";
+import { sectionKeyOf, sectionSlots, sectionsOf } from "./sections";
 import { traverse } from "./traversal";
 import { SHELF_MEDIA, placesOf, type LayoutRecord, type Placement, type ShelfMedia, type ShelfSpec, type Slot, type SortSettings } from "./types";
 
@@ -168,13 +169,30 @@ export function initialLayout(
   const groups = {} as Record<ShelfMedia, GroupLayout>;
   // Each format group flows only through shelves of its own group.
   for (const media of SHELF_MEDIA) {
-    groups[media] = layoutGroup(
-      records.filter((r) => r.media === media),
-      traverse(shelves, media),
-      settings,
-      slackPct,
-      placement,
+    const slots = traverse(shelves, media);
+    const group = records.filter((r) => r.media === media);
+    const sections = sectionsOf(slots);
+    if (sections.length === 0) {
+      groups[media] = layoutGroup(group, slots, settings, slackPct, placement);
+      continue;
+    }
+    // Each section on its own shelves; the rest on the shelves without a section.
+    const parts = [...sections, null].map((key) =>
+      layoutGroup(
+        group.filter((r) => sectionKeyOf(r, sections) === key),
+        sectionSlots(slots, key),
+        settings,
+        slackPct,
+        placement,
+      ),
     );
+    groups[media] = {
+      slots,
+      sortedIds: parts.flatMap((p) => p.sortedIds),
+      leftover: parts.flatMap((p) => p.leftover),
+      slackReduced: parts.some((p) => p.slackReduced),
+      counts: new Map(parts.flatMap((p) => [...p.counts])),
+    };
   }
   return { placement, groups, notPlaced: records.filter((r) => r.media === "other").map((r) => r.id) };
 }

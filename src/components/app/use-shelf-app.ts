@@ -18,6 +18,9 @@ import {
   collapseMoves,
   countChanges,
   insertRecord,
+  artistIdentity,
+  restrictToSection,
+  restrictToSlotSection,
   SHELF_MEDIA,
   sortRecords,
   type Move,
@@ -31,6 +34,10 @@ import {
   applyPlacementsRemote,
   ensureLocationRemote,
   setRecordLocationRemote,
+  createTagRemote,
+  deleteTagRemote,
+  reorderTagsRemote,
+  setArtistTagRemote,
   loadRemote,
   saveSetupRemote,
   type CollectionRow,
@@ -52,6 +59,9 @@ import {
   type ShelfConfig,
   type StoredRecord,
   type TempLocation,
+  type Tag,
+  type ArtistTags,
+  decorateRecords,
 } from "@/lib/shelf/model";
 import { useSupabase } from "@/lib/supabase/browser";
 
@@ -66,6 +76,9 @@ export type AppData = {
   calibrated?: boolean;
   /** Temporary locations (records taken out carry temp_location_id). */
   locations?: TempLocation[];
+  /** Tags in the user's order, and which artist has which (records carry the derived tag). */
+  tags?: Tag[];
+  artistTags?: ArtistTags;
 };
 
 export type Status =
@@ -138,7 +151,7 @@ function placeNewRecords(records: StoredRecord[], config: ShelfConfig, placement
     if (view.unplaced.length === 0) continue;
     let group = records.filter((r) => groupOf(r) === view.media && current.has(r.id)).map(toLayoutRecord);
     for (const r of sortRecords(view.unplaced.map(toLayoutRecord), settings)) {
-      const result = insertRecord({ slots: view.index.slots, records: group, placement: current, settings }, r, "minimum");
+      const result = insertRecord({ ...restrictToSection(view.index.slots, group, r), placement: current, settings }, r, "minimum");
       if (result.overflow.length > 0 || !result.target) {
         skipped++;
         continue;
@@ -206,6 +219,8 @@ export function useShelfApp(startParam: string | null) {
       placement: [...next.placement],
       events: [...(previous?.events ?? []), ...(event ? [{ ...event, at: new Date().toISOString() }] : [])].slice(-50),
       locations: next.locations ?? previous?.locations ?? [],
+      tags: next.tags ?? previous?.tags ?? [],
+      artistTags: next.artistTags ?? previous?.artistTags ?? [],
     };
     if (!saveLocal(snapshot)) setNotice({ tone: "warning", msg: msg("notices.localSaveFailed") });
   }, [demoNames]);
@@ -269,7 +284,9 @@ export function useShelfApp(startParam: string | null) {
         const kept = new Map([...new Map(latest.placement)].filter(([id]) => ids.has(id)));
         const placed = placeNewRecords(fresh, latest.config, kept);
         const next: AppData = {
-          records: fresh,
+          records: decorateRecords(fresh, latest.tags ?? [], latest.artistTags ?? []),
+          tags: latest.tags ?? [],
+          artistTags: latest.artistTags ?? [],
           config: latest.config,
           placement: placed.placement,
           collection: null,
@@ -292,7 +309,9 @@ export function useShelfApp(startParam: string | null) {
   const reloadRemote = useCallback(async (client: SupabaseClient) => {
     const state = await loadRemote(client);
     const next: AppData = {
-      records: state.records,
+      records: decorateRecords(state.records, state.tags, state.artistTags),
+      tags: state.tags,
+      artistTags: state.artistTags,
       config: state.config,
       placement: state.placement,
       collection: state.collection,
@@ -463,7 +482,9 @@ export function useShelfApp(startParam: string | null) {
         const snapshot = loaded?.snapshot ?? null;
         if (snapshot) {
           setData({
-            records: snapshot.records,
+            records: decorateRecords(snapshot.records, snapshot.tags ?? [], snapshot.artistTags ?? []),
+            tags: snapshot.tags ?? [],
+            artistTags: snapshot.artistTags ?? [],
             config: snapshot.config,
             placement: new Map(snapshot.placement),
             collection: null,
@@ -676,7 +697,7 @@ export function useShelfApp(startParam: string | null) {
       if (!record || !view) return { ok: false as const, code: "notOnShelf" as const, reason: "That record isn't on a shelf." };
       const settings = toSortSettings(data.config.settings);
       const group = data.records.filter((r) => groupOf(r) === view.media).map(toLayoutRecord);
-      const result = calibrateLayout({ slots: view.index.slots, records: group, placement: data.placement, settings }, recordId, slotId);
+      const result = calibrateLayout({ ...restrictToSlotSection(view.index.slots, group, slotId), placement: data.placement, settings }, recordId, slotId);
       if (!result.ok) return result;
       if (result.movedCount > 0) {
         setBusy(true);
@@ -699,7 +720,7 @@ export function useShelfApp(startParam: string | null) {
       if (!view) return { ok: false as const, code: "unavailable" as const, reason: "That compartment isn't available." };
       const settings = toSortSettings(data.config.settings);
       const group = data.records.filter((r) => groupOf(r) === view.media).map(toLayoutRecord);
-      const result = calibrateCountLayout({ slots: view.index.slots, records: group, placement: data.placement, settings }, slotId, count);
+      const result = calibrateCountLayout({ ...restrictToSlotSection(view.index.slots, group, slotId), placement: data.placement, settings }, slotId, count);
       if (!result.ok) return result;
       if (result.movedCount > 0) {
         setBusy(true);
@@ -725,7 +746,8 @@ export function useShelfApp(startParam: string | null) {
       }
       const settings = toSortSettings(data.config.settings);
       const group = data.records.filter((r) => groupOf(r) === view.media && data.placement.has(r.id)).map(toLayoutRecord);
-      const result = insertRecord({ slots: view.index.slots, records: group, placement: data.placement, settings }, toLayoutRecord(record), "minimum");
+      const layoutRecord = toLayoutRecord(record);
+      const result = insertRecord({ ...restrictToSection(view.index.slots, group, layoutRecord), placement: data.placement, settings }, layoutRecord, "minimum");
       return { record, media: view.media, target: result.target, moves: result.moves, movedCount: result.movedCount, overflow: result.overflow, placement: result.placement };
     },
     [data, views],
@@ -739,6 +761,7 @@ export function useShelfApp(startParam: string | null) {
         let stored: StoredRecord;
         if (mode === "remote" && supabase && userId) stored = await addRecordRemote(supabase, userId, input);
         else stored = { ...input, id: `a${input.discogs_release_id}-${Date.now().toString(36)}`, origin: "added", synced_at: new Date().toISOString() };
+        stored = decorateRecords([stored], data.tags ?? [], data.artistTags ?? [])[0]!;
         const view = views.find((v) => v.media === groupOf(stored));
         if (!view || view.index.slots.length === 0) {
           setData({ ...data, records: [...data.records, stored] });
@@ -746,7 +769,8 @@ export function useShelfApp(startParam: string | null) {
         }
         const settings = toSortSettings(data.config.settings);
         const group = data.records.filter((r) => groupOf(r) === view.media && data.placement.has(r.id)).map(toLayoutRecord);
-        const result = insertRecord({ slots: view.index.slots, records: group, placement: data.placement, settings }, toLayoutRecord(stored), "minimum");
+        const layoutRecord = toLayoutRecord(stored);
+        const result = insertRecord({ ...restrictToSection(view.index.slots, group, layoutRecord), placement: data.placement, settings }, layoutRecord, "minimum");
         try {
           await applyChange(result.placement, result.moves, { kind: "insert", moves: result.moves, movedCount: result.movedCount }, [stored]);
         } catch (err) {
@@ -824,6 +848,85 @@ export function useShelfApp(startParam: string | null) {
     [data, mode, supabase, persistLocal],
   );
 
+  // ------------------------------------------------------------ tags
+  const applyTags = useCallback(
+    (tags: Tag[], artistTags: ArtistTags) => {
+      if (!data) return;
+      const next: AppData = { ...data, tags, artistTags, records: decorateRecords(data.records, tags, artistTags) };
+      if (mode !== "remote") persistLocal(next);
+      setData(next);
+      // Tags change the order only after a new layout.
+      const usesTags = !!next.config && (next.config.settings.sortLevels.includes("tag") || next.config.furniture.some((f) => f.section?.startsWith("tag:")));
+      if (usesTags) setNotice({ tone: "info", msg: msg("tags.recompute") });
+    },
+    [data, mode, persistLocal],
+  );
+
+  const runTagChange = useCallback(
+    async (change: () => Promise<{ tags: Tag[]; artistTags: ArtistTags } | null>) => {
+      setBusy(true);
+      try {
+        const result = await change();
+        if (result) applyTags(result.tags, result.artistTags);
+      } catch (err) {
+        setNotice({ tone: "warning", msg: errorMsg(err, msg("tags.failed")) });
+      } finally {
+        setBusy(false);
+      }
+    },
+    [applyTags],
+  );
+
+  const addTag = useCallback(
+    (name: string) =>
+      runTagChange(async () => {
+        const trimmed = name.trim().slice(0, 40);
+        const tags = data?.tags ?? [];
+        if (!trimmed || tags.some((t) => t.name.toLocaleLowerCase() === trimmed.toLocaleLowerCase())) return null;
+        const sortIndex = tags.reduce((m, t) => Math.max(m, t.sortIndex), -1) + 1;
+        const tag =
+          mode === "remote" && supabase && userId ? await createTagRemote(supabase, userId, trimmed, sortIndex) : { id: `tag-${Date.now().toString(36)}`, name: trimmed, sortIndex };
+        return { tags: [...tags, tag], artistTags: data?.artistTags ?? [] };
+      }),
+    [runTagChange, data, mode, supabase, userId],
+  );
+
+  const deleteTag = useCallback(
+    (tagId: string) =>
+      runTagChange(async () => {
+        if (mode === "remote" && supabase) await deleteTagRemote(supabase, tagId);
+        return { tags: (data?.tags ?? []).filter((t) => t.id !== tagId), artistTags: (data?.artistTags ?? []).filter(([, id]) => id !== tagId) };
+      }),
+    [runTagChange, data, mode, supabase],
+  );
+
+  const moveTag = useCallback(
+    (tagId: string, delta: number) =>
+      runTagChange(async () => {
+        const list = [...(data?.tags ?? [])].sort((a, b) => a.sortIndex - b.sortIndex);
+        const i = list.findIndex((t) => t.id === tagId);
+        const j = i + delta;
+        if (i < 0 || j < 0 || j >= list.length) return null;
+        [list[i], list[j]] = [list[j]!, list[i]!];
+        const tags = list.map((t, k) => ({ ...t, sortIndex: k }));
+        if (mode === "remote" && supabase) await reorderTagsRemote(supabase, tags);
+        return { tags, artistTags: data?.artistTags ?? [] };
+      }),
+    [runTagChange, data, mode, supabase],
+  );
+
+  /** Tags an artist, every spelling of it at once ("The Beatles" and "Beatles"), or untags it. */
+  const setArtistTag = useCallback(
+    (artist: string, tagId: string | null) =>
+      runTagChange(async () => {
+        const key = artistIdentity(artist);
+        if (mode === "remote" && supabase && userId) await setArtistTagRemote(supabase, userId, key, tagId);
+        const rest = (data?.artistTags ?? []).filter(([k]) => k !== key);
+        return { tags: data?.tags ?? [], artistTags: tagId ? [...rest, [key, tagId] as [string, string]] : rest };
+      }),
+    [runTagChange, data, mode, supabase, userId],
+  );
+
   const resetLocal = useCallback(() => {
     clearLocal();
     setData(null);
@@ -850,6 +953,10 @@ export function useShelfApp(startParam: string | null) {
     addRecord,
     takeOut,
     putBack,
+    addTag,
+    deleteTag,
+    moveTag,
+    setArtistTag,
     resetLocal,
   };
 }

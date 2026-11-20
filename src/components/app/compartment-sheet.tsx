@@ -196,7 +196,9 @@ function Calibrate({ slot, view, byId, app, onDone }: { slot: Slot; view: MediaV
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const previous = view.index.slots[slot.index - 1];
+  // The compartment before it in the same section (or among the shelves without one).
+  const sameSection = view.index.slots.filter((s) => (s.section ?? null) === (slot.section ?? null));
+  const previous = sameSection[sameSection.findIndex((s) => s.id === slot.id) - 1];
   // Only records from this compartment and the previous one can become its first record.
   const candidates = useMemo(() => {
     const ids = [...(view.index.bySlot.get(slot.id) ?? []), ...(previous ? (view.index.bySlot.get(previous.id) ?? []) : [])].map((r) => r.id);

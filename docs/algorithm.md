@@ -133,6 +133,11 @@ A setting counts double albums and box sets by their number of discs (`format_qt
 
 Off, everything counts one place per record, exactly as in v1 (the v1 tests run unchanged).
 
+### 7d. Tags and sections (v2)
+
+- **Tags** are the user's own groups, in their own order, assigned per artist (by the artist's identity, so "The Beatles" and "Beatles" share one). "Tag" is a sort level: records sort by their tag's position in the user's order, untagged last, then by the next level.
+- **Sections** pin a genre or a tag to a shelf ("genre:Jazz", "tag:Sunday morning"). Within a format group, each section is laid out on its own shelves (sorted inside it, with its own proportional free space), and records that match no section flow through the shelves without one. A record belongs to the first section it matches, in shelf order. Insertion and calibration run inside the record's (or the compartment's) section, so contiguity and capacity hold per section (`sections.ts`, tested in `sections.test.ts`).
+
 ## 8. Finding a record (`query.ts`)
 
 - **Position inside the compartment:** if the record is the i-th of n (counting from 0), it sits at (i + 0.5) / n from the left. The 1st of 5 is at 10%, the 3rd of 5 at 50%. Shown as "40% from the left".

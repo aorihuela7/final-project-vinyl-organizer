@@ -9,6 +9,7 @@
  */
 import { initialLayout } from "./initial";
 import { insertRecord, type InsertStrategy } from "./insert";
+import { restrictToSection } from "./sections";
 import { traverse } from "./traversal";
 import { SHELF_MEDIA, type LayoutRecord, type Placement, type ShelfMedia, type ShelfSpec, type SortSettings } from "./types";
 
@@ -103,7 +104,8 @@ export function simulatePurchases(records: readonly LayoutRecord[], inputShelves
     for (const record of purchases) {
       const media = record.media as ShelfMedia;
       const group = onShelf.get(media)!;
-      const step = insertRecord({ slots: slotsOf.get(media)!, records: group, placement: current, settings }, record, strategy);
+      const section = restrictToSection(slotsOf.get(media)!, group, record);
+      const step = insertRecord({ ...section, placement: current, settings }, record, strategy);
       current = step.placement;
       group.push(record);
       for (const id of step.overflow) {

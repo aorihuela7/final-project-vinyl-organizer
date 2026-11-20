@@ -7,6 +7,7 @@ import { slotPlace } from "@/lib/shelf/describe";
 import { groupFills, shelfHolds } from "@/lib/shelf/capacity";
 import { TEMPLATES, defaultCapacity, isBoxTemplate, template, type TemplateId } from "@/lib/shelf/templates";
 import { useI18n } from "@/i18n/client";
+import { genreName } from "@/i18n/core";
 import { Banner, btnPrimary, btnSecondary, btnSecondarySm, card } from "../ui";
 import { Compartment, Furniture } from "./furniture";
 import { Sheet } from "./sheet";
@@ -37,6 +38,12 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
   }, [records, thickness]);
 
   const furniture = [...draft.furniture].sort((a, b) => a.sortIndex - b.sortIndex);
+  // Sections a shelf can hold: the genres in the collection and the user's tags.
+  const sectionOptions = useMemo(() => {
+    const genres = [...new Set(records.map((r) => r.genre).filter((g): g is string => !!g))].sort((a, b) => a.localeCompare(b));
+    const tagNames = [...(app.data?.tags ?? [])].sort((a, b) => a.sortIndex - b.sortIndex).map((tg) => tg.name);
+    return { genres, tags: tagNames };
+  }, [records, app.data?.tags]);
 
   const update = (key: string, change: (f: FurnitureConfig) => FurnitureConfig) =>
     setDraft((d) => ({ ...d, furniture: d.furniture.map((f) => (f.key === key ? change(f) : f)) }));
@@ -94,6 +101,7 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
             <ShelfBuilder
               key={f.key}
               furniture={f}
+              sectionOptions={sectionOptions}
               all={draft.furniture}
               counts={counts}
               slackPct={draft.settings.slackPct}
@@ -225,6 +233,7 @@ function ShelfCard({
 /** The shelf being created or edited: the form, what it holds (live), and a preview to tap. */
 function ShelfBuilder({
   furniture: f,
+  sectionOptions,
   all,
   counts,
   slackPct,
@@ -234,6 +243,7 @@ function ShelfBuilder({
   onClose,
 }: {
   furniture: FurnitureConfig;
+  sectionOptions: { genres: string[]; tags: string[] };
   all: FurnitureConfig[];
   counts: Counts;
   slackPct: number;
@@ -242,7 +252,7 @@ function ShelfBuilder({
   onChange: (change: (f: FurnitureConfig) => FurnitureConfig) => void;
   onClose: () => void;
 }) {
-  const { t, n } = useI18n();
+  const { t, n, locale } = useI18n();
   const [tapMode, setTapMode] = useState<"block" | "capacity">("block");
   const [editing, setEditing] = useState<{ row: number; col: number } | null>(null);
   const id = `shelf-${f.key}`;
@@ -359,6 +369,23 @@ function ShelfBuilder({
               <input type="number" inputMode="numeric" min={0} max={50} value={slackPct} onChange={(e) => onSlack(Number(e.target.value))} className={`${control} w-full`} />
               <span aria-hidden>%</span>
             </span>
+          </label>
+          <label className={`${field} col-span-2`}>
+            {t("builder.section")}
+            <select value={f.section ?? ""} onChange={(e) => onChange((x) => ({ ...x, section: e.target.value || null }))} className={control}>
+              <option value="">{t("builder.sectionNone")}</option>
+              {sectionOptions.genres.map((g) => (
+                <option key={`genre:${g}`} value={`genre:${g}`}>
+                  {t("builder.sectionGenre", { name: genreName(locale, g) })}
+                </option>
+              ))}
+              {sectionOptions.tags.map((tg) => (
+                <option key={`tag:${tg}`} value={`tag:${tg}`}>
+                  {t("builder.sectionTag", { name: tg })}
+                </option>
+              ))}
+            </select>
+            {f.section && <span className="text-xs">{t("builder.sectionHint")}</span>}
           </label>
           <fieldset className={`${field} col-span-2`}>
             <legend className="mb-1">{t("builder.readIt")}</legend>

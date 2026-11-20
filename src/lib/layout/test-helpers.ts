@@ -14,6 +14,7 @@ export function rec(artist: string, extra: Partial<LayoutRecord> = {}): LayoutRe
     genre: "genre" in extra ? (extra.genre ?? null) : "Rock",
     media: extra.media ?? "lp",
     ...(extra.weight !== undefined ? { weight: extra.weight } : {}),
+    ...(extra.tag !== undefined ? { tag: extra.tag, tagRank: extra.tagRank ?? null } : {}),
   };
 }
 
@@ -26,6 +27,7 @@ export function shelf(partial: Partial<ShelfSpec> & { rows: number; cols: number
     defaultCapacity: partial.defaultCapacity ?? 10,
     sortIndex: partial.sortIndex ?? 0,
     compartments: partial.compartments ?? [],
+    section: partial.section ?? null,
     rows: partial.rows,
     cols: partial.cols,
   };

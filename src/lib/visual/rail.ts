@@ -25,8 +25,8 @@ export function railSegments(index: ShelfIndex, settings: SortSettings): RailSeg
     const k = index.keys.get(r.id)!;
     let key: string;
     let kind: RailSegment["kind"];
-    if (top === "genre") {
-      key = k.genre;
+    if (top === "genre" || top === "tag") {
+      key = top === "genre" ? k.genre : k.tag;
       kind = "genre";
     } else if (top === "year") {
       key = k.year === null ? "" : String(Math.floor(k.year / 10) * 10);

@@ -11,7 +11,9 @@ import {
   toSortSettings,
   type FurnitureConfig,
   type ShelfConfig,
+  type ArtistTags,
   type StoredRecord,
+  type Tag,
   type TempLocation,
 } from "@/lib/shelf/model";
 
@@ -28,6 +30,8 @@ export type LocalSnapshot = {
   events: Array<{ kind: string; movedCount: number; at: string }>;
   /** Temporary locations (the records carry temp_location_id). */
   locations?: TempLocation[];
+  tags?: Tag[];
+  artistTags?: ArtistTags;
 };
 
 type SnapshotV1 = Omit<LocalSnapshot, "version" | "config"> & {

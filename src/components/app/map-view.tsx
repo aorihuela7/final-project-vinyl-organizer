@@ -81,7 +81,7 @@ export function MapView({ config, views, byId, foundId, foundSlot, lifted, onOpe
   const furniture = [...config.furniture].sort((a, b) => a.sortIndex - b.sortIndex);
   const multipleGroups = groups.filter((g) => furniture.some((f) => f.media === g.view.media)).length > 1;
   const genre = (g: string) => genreName(locale, g);
-  const genresCount = (count: number) => t("map.genresCount", { count });
+  const genresCount = (count: number) => (config.settings.sortLevels[0] === "tag" ? t("map.tagsCount", { count }) : t("map.genresCount", { count }));
 
   return (
     <div className="flex flex-col gap-2" data-map>
@@ -107,6 +107,7 @@ export function MapView({ config, views, byId, foundId, foundSlot, lifted, onOpe
                   plateLines={(p) => plateLines(p, genre, genresCount)}
                   t={t}
                   n={n}
+                  locale={locale}
                 />
               ))}
             </div>
@@ -130,6 +131,7 @@ function ShelfFurniture({
   plateLines,
   t,
   n,
+  locale,
 }: {
   furniture: FurnitureConfig;
   media: ShelfMedia;
@@ -142,6 +144,7 @@ function ShelfFurniture({
   plateLines: (p: PlateData) => PlateLineText[];
   t: ReturnType<typeof useI18n>["t"];
   n: ReturnType<typeof useI18n>["n"];
+  locale: ReturnType<typeof useI18n>["locale"];
 }) {
   let total = 0;
   let capacity = 0;
@@ -159,7 +162,11 @@ function ShelfFurniture({
     <Furniture
       cols={f.cols}
       label={f.name}
-      title={t("map.shelfTitle", { name: f.name, media: t(`mediaHeader.${media}`) })}
+      title={
+        f.section
+          ? t("map.shelfTitleSection", { name: f.name, media: t(`mediaHeader.${media}`), section: sectionLabel(f.section, (g) => genreName(locale, g)) })
+          : t("map.shelfTitle", { name: f.name, media: t(`mediaHeader.${media}`) })
+      }
       aside={t("map.holdsOf", { count: total, capacity })}
     >
       {Array.from({ length: f.rows * f.cols }, (_, i) => {
@@ -201,4 +208,12 @@ function ShelfFurniture({
       })}
     </Furniture>
   );
+}
+
+/** "Jazz" for "genre:Jazz", "Sunday morning" for "tag:Sunday morning". */
+function sectionLabel(section: string, genre: (g: string) => string): string {
+  const i = section.indexOf(":");
+  const kind = section.slice(0, i);
+  const value = section.slice(i + 1);
+  return kind === "genre" ? genre(value) : value;
 }

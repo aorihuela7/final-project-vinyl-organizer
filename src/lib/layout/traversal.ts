@@ -30,6 +30,7 @@ export function traverse(shelves: readonly ShelfSpec[], media: ShelfMedia): Slot
         capacity: Math.max(0, c?.capacity ?? shelf.defaultCapacity),
         media,
         index: slots.length,
+        section: shelf.section ?? null,
       });
     };
     if (shelf.traversal === "columns") {
