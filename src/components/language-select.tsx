@@ -14,7 +14,7 @@ const CHEVRON =
 export function LanguageSelect() {
   const { locale, setLocale, t } = useI18n();
   return (
-    <span data-tour="language" className="inline-flex">
+    <span className="inline-flex">
       <label htmlFor="language-select" className="sr-only">
         {t("common.language")}
       </label>

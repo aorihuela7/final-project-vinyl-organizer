@@ -4,21 +4,27 @@ import { ensureTestUser } from "../scripts/lib/clerk-test";
 import { recordCard, skipTour } from "./fixtures";
 
 /** v2: the guided tour, the language selector, tracklists, and singles on their own shelf. */
-test("the tour is offered on the first demo visit and walks through eight steps", async ({ page }) => {
+test("the tour is offered on the first demo visit and walks through seven steps", async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto("/app?start=demo");
   const offer = page.getByRole("dialog", { name: "Want a quick tour?" });
   await expect(offer).toBeVisible({ timeout: 60_000 });
   await offer.getByRole("button", { name: "Show me around" }).click();
-  for (let i = 1; i <= 8; i++) {
-    const step = page.getByRole("dialog").filter({ hasText: `${i} of 8` });
+  for (let i = 1; i <= 7; i++) {
+    const step = page.getByRole("dialog").filter({ hasText: `${i} of 7` });
     await expect(step).toBeVisible();
-    await expect(step.getByRole("button", { name: i === 8 ? "Done" : "Next" })).toBeFocused();
-    await step.getByRole("button", { name: i === 8 ? "Done" : "Next" }).click();
+    await expect(step.getByRole("button", { name: i === 7 ? "Done" : "Next" })).toBeFocused();
+    await step.getByRole("button", { name: i === 7 ? "Done" : "Next" }).click();
   }
   await page.reload();
   await expect(page.locator("[data-map]")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole("dialog", { name: "Want a quick tour?" })).toHaveCount(0);
+
+  // Help in the header shows it again, without an account.
+  await page.getByRole("button", { name: /^Help/ }).click();
+  await expect(page.getByRole("dialog").filter({ hasText: "1 of 7" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog").filter({ hasText: "1 of 7" })).toHaveCount(0);
 });
 
 test("changing the language keeps the open record and translates the app", async ({ page }) => {

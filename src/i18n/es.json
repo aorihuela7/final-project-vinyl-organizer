@@ -24,7 +24,8 @@
     "signIn": "Iniciar sesión",
     "signUp": "Crear cuenta",
     "account": "Cuenta",
-    "takeTour": "Hacer el recorrido"
+    "help": "Ayuda",
+    "helpLabel": "Ayuda: un recorrido rápido por la app"
   },
   "importForm": {
     "label": "Tu usuario de Discogs",
@@ -532,13 +533,9 @@
         "title": "Repisas y orden",
         "text": "Arma tus muebles. Los LP y los singles van en repisas separadas, y vas viendo cuántos discos caben mientras armas."
       },
-      "language": {
-        "title": "Idioma",
-        "text": "Cambia el idioma aquí."
-      },
       "done": {
         "title": "Listo",
-        "text": "Eso es todo. Puedes hacer el recorrido de nuevo desde el menú."
+        "text": "Eso es todo. Puedes ver este recorrido de nuevo desde Ayuda, arriba en la página."
       }
     }
   },

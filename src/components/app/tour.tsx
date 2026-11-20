@@ -10,7 +10,7 @@ import { Sheet } from "./sheet";
 const LOCAL_KEY = "ro:tour";
 export const START_TOUR_EVENT = "ro:start-tour";
 
-export type TourStepId = "search" | "rail" | "compartment" | "record" | "add" | "setup" | "language" | "done";
+export type TourStepId = "search" | "rail" | "compartment" | "record" | "add" | "setup" | "done";
 export type TourStep = {
   id: TourStepId;
   /** CSS selector of the element to point at; none for the closing step. */
@@ -105,16 +105,19 @@ export function useTourState({
     }
   }, [status, hasMap, ready, active]);
 
+  // Stable, so callers can use it in effects.
+  const accept = useCallback(() => {
+    if (hasMap) {
+      setStatus("offered");
+      setActive(true);
+    } else setStatus("accepted_pending");
+  }, [hasMap, setStatus]);
+
   return {
     offer,
     waiting,
     active,
-    accept: () => {
-      if (hasMap) {
-        setStatus("offered");
-        setActive(true);
-      } else setStatus("accepted_pending");
-    },
+    accept,
     decline: () => setStatus("dismissed"),
     start,
     end: (finished: boolean) => {
@@ -211,18 +214,14 @@ export function TourOverlay({ steps, onEnd }: { steps: TourStep[]; onEnd: (finis
     };
   }, [index]);
 
+  // Ending is decided here, not inside a state updater (that would update the parent while rendering).
   const go = useCallback(
     (delta: number) => {
-      setIndex((i) => {
-        const next = i + delta;
-        if (next >= steps.length) {
-          onEnd(true);
-          return i;
-        }
-        return Math.max(0, next);
-      });
+      const next = index + delta;
+      if (next >= steps.length) onEnd(true);
+      else setIndex(Math.max(0, next));
     },
-    [steps.length, onEnd],
+    [index, steps.length, onEnd],
   );
 
   // Keys in the capture phase, so an open sheet underneath doesn't also react to Esc.

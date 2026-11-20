@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useSupabase } from "@/lib/supabase/browser";
 import { START_TOUR_EVENT, TourOffer, TourOverlay, TourWaiting, useTourState, type TourStep } from "./tour";
@@ -107,26 +107,33 @@ export function ShelfApp() {
     ready: app.status.kind === "ready" || (app.mode === "remote" && app.status.kind === "onboarding"),
     hasMap,
   });
-  const startTour = tour.start;
+  const { start: startTour, accept: acceptTour } = tour;
   const startTourOnMap = useCallback(() => {
+    // Before the first map (onboarding, an import): start as soon as the shelf is ready.
+    if (!hasMap) return acceptTour();
     setTab("map");
     setOpenSlot(null);
     setAdding(false);
     startTour();
-  }, [startTour]);
-  // "Take the tour" from the account menu, or /app?tour=1 from another page.
+  }, [hasMap, startTour, acceptTour]);
+  // "Help" in the header, or /app?tour=1 from another page.
   useEffect(() => {
     const onStart = () => startTourOnMap();
     window.addEventListener(START_TOUR_EVENT, onStart);
     return () => window.removeEventListener(START_TOUR_EVENT, onStart);
   }, [startTourOnMap]);
   const wantsTour = params.get("tour") === "1";
+  const tourReady = app.status.kind !== "loading";
+  // Once per visit with ?tour=1, not again each time the map changes.
+  const tourParamHandled = useRef(false);
   useEffect(() => {
-    if (wantsTour && hasMap) {
-      const timer = setTimeout(startTourOnMap, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [wantsTour, hasMap, startTourOnMap]);
+    if (!wantsTour || !tourReady || tourParamHandled.current) return;
+    const timer = setTimeout(() => {
+      tourParamHandled.current = true;
+      startTourOnMap();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [wantsTour, tourReady, startTourOnMap]);
   const sample = app.views.find((v) => v.index.sorted.length > 0)?.index.sorted[0]?.id ?? null;
   const tourSteps: TourStep[] = [
     { id: "search", target: '[data-tour="search"]' },
@@ -145,7 +152,6 @@ export function ShelfApp() {
     },
     { id: "add", target: '[data-tour="add"]' },
     { id: "setup", target: '[data-tour="setup"]' },
-    { id: "language", target: '[data-tour="language"]' },
     { id: "done" },
   ];
   const tourOffer = tour.offer ? <TourOffer onAccept={tour.accept} onDecline={tour.decline} /> : null;
@@ -267,11 +273,6 @@ export function ShelfApp() {
               </button>
             ))}
           </div>
-          {hasMap && (
-            <button type="button" onClick={startTourOnMap} className="rounded-pill px-2 py-1 text-sm font-semibold text-ink underline-offset-2 hover:underline">
-              {t("header.takeTour")}
-            </button>
-          )}
           </div>
 
           {tab === "setup" ? (

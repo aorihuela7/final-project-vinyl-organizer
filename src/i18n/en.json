@@ -24,7 +24,8 @@
     "signIn": "Sign in",
     "signUp": "Sign up",
     "account": "Account",
-    "takeTour": "Take the tour"
+    "help": "Help",
+    "helpLabel": "Help: a quick tour of the app"
   },
   "importForm": {
     "label": "Your Discogs username",
@@ -532,13 +533,9 @@
         "title": "Shelves & order",
         "text": "Set up your furniture. LPs and singles go on separate shelves, and you'll see how many records fit as you build."
       },
-      "language": {
-        "title": "Language",
-        "text": "Change the language here."
-      },
       "done": {
         "title": "Done",
-        "text": "That's it. You can take the tour again from the menu."
+        "text": "That's it. You can see this tour again from Help, at the top of the page."
       }
     }
   },

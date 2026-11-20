@@ -24,7 +24,8 @@
     "signIn": "Entrar",
     "signUp": "Criar conta",
     "account": "Conta",
-    "takeTour": "Fazer o tour"
+    "help": "Ajuda",
+    "helpLabel": "Ajuda: um tour rápido pelo app"
   },
   "importForm": {
     "label": "Seu usuário do Discogs",
@@ -532,13 +533,9 @@
         "title": "Estantes e ordem",
         "text": "Monte seus móveis. LPs e compactos vão em estantes separadas, e você vê quantos discos cabem enquanto monta."
       },
-      "language": {
-        "title": "Idioma",
-        "text": "Mude o idioma aqui."
-      },
       "done": {
         "title": "Pronto",
-        "text": "É isso. Você pode fazer o tour de novo pelo menu."
+        "text": "É isso. Você pode ver este tour de novo em Ajuda, no alto da página."
       }
     }
   },
