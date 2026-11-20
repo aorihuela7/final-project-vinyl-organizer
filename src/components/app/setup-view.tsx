@@ -259,6 +259,7 @@ function ShelfEditor({
   onRemove: () => void;
 }) {
   const { t: tl } = useI18n();
+  const t = tl;
   const [tapMode, setTapMode] = useState<"block" | "capacity">("block");
   const [editing, setEditing] = useState<{ row: number; col: number } | null>(null);
   const id = `shelf-${f.key}`;
@@ -418,7 +419,7 @@ function ShelfEditor({
         {editing && editingCell && (
           <div className="flex flex-wrap items-end gap-2 rounded-card bg-sunken p-2 text-sm">
             <label className="flex flex-col gap-1">
-              <span className="font-medium text-ink">Capacity of {slotPlace(editing, f)}</span>
+              <span className="font-medium text-ink">Capacity of {slotPlace(editing, f, t)}</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -450,6 +451,7 @@ function ShelfEditor({
 
 /** The grid with the traversal order numbered, so you can check it matches how you read your shelf. */
 function TraversalPreview({ furniture: f, onTap, editing }: { furniture: FurnitureConfig; onTap: (row: number, col: number) => void; editing: { row: number; col: number } | null }) {
+  const { t } = useI18n();
   const order = new Map<string, number>();
   let n = 0;
   const visit = (row: number, col: number) => {
@@ -470,7 +472,7 @@ function TraversalPreview({ furniture: f, onTap, editing }: { furniture: Furnitu
             type="button"
             onClick={() => onTap(c.row, c.col)}
             aria-pressed={blocked}
-            aria-label={`${slotPlace(c, f)}: ${blocked ? "blocked" : "available"}${c.capacity ? `, capacity ${c.capacity}` : ""}`}
+            aria-label={`${slotPlace(c, f, t)}: ${blocked ? "blocked" : "available"}${c.capacity ? `, capacity ${c.capacity}` : ""}`}
             className={`relative flex aspect-square flex-col items-center justify-center rounded-cell border text-xs ${
               blocked ? "border-transparent bg-blocked text-ink-faint" : "border-line-strong bg-canvas text-ink"
             } ${isEditing ? "ring-2 ring-accent" : ""}`}

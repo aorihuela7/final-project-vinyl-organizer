@@ -11,7 +11,7 @@ import { ImportProgress } from "./import-progress";
 import { MapView } from "./map-view";
 import { Onboarding } from "./onboarding";
 import { RecordDetails, findLocation } from "./record-details";
-import { SearchPanel } from "./search-panel";
+import { SearchRow } from "./search-panel";
 import { SetupView } from "./setup-view";
 import { Sheet } from "./sheet";
 import { AddRecord } from "./add-record";
@@ -97,7 +97,7 @@ export function ShelfApp() {
     if (id === null) return t("app.offTheShelf");
     for (const v of views) {
       const slot = v.index.slotById.get(id);
-      if (slot) return slotTitle(slot, config?.furniture.find((f) => f.key === slot.shelfKey));
+      if (slot) return slotTitle(slot, config?.furniture.find((f) => f.key === slot.shelfKey), t);
     }
     return t("app.anotherCompartment");
   };
@@ -160,22 +160,16 @@ export function ShelfApp() {
             </>
           ) : (
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <div className="flex-1">
-                  <SearchPanel
-                    records={data.records}
-                    views={views}
-                    config={config}
-                    onPick={(id) => {
-                      setOpenRecord(id);
-                      showFound(id);
-                    }}
-                  />
-                </div>
-                <button type="button" onClick={() => setAdding(true)} className={btnSecondary}>
-                  Where does this record go?
-                </button>
-              </div>
+              <SearchRow
+                records={data.records}
+                views={views}
+                config={config}
+                onPick={(id) => {
+                  setOpenRecord(id);
+                  showFound(id);
+                }}
+                onAdd={() => setAdding(true)}
+              />
 
               <p className="text-sm text-muted">{collectionSummary(t, data.records.length, config.settings)}</p>
               {singlesWithoutShelf > 0 && (

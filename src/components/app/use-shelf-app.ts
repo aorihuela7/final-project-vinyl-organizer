@@ -651,7 +651,7 @@ export function useShelfApp(startParam: string | null) {
     [data, views, applyChange],
   );
 
-  /** "Where does this record go?": the naive insertion, computed without saving. */
+  /** "Add a new record": the naive insertion, computed without saving. */
   const previewInsert = useCallback(
     (input: RecordInput): InsertPreview | null => {
       if (!data?.config) return null;

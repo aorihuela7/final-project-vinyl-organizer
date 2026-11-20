@@ -8,6 +8,7 @@ import { toSortSettings, type MediaView, type ShelfConfig, type StoredRecord } f
 import { searchRecords } from "@/lib/search";
 import { DiscogsAttribution } from "./discogs-attribution";
 import { Sheet } from "./sheet";
+import { useI18n } from "@/i18n/client";
 import { SpineShelf } from "./spines";
 import type { ShelfApp } from "./use-shelf-app";
 
@@ -29,6 +30,7 @@ type Props = {
  * typographic strips on phones for now.
  */
 export function CompartmentSheet({ slot, view, config, byId, app, highlightId, onClose, onPickRecord }: Props) {
+  const { t } = useI18n();
   const [calibrating, setCalibrating] = useState(false);
   const settings = toSortSettings(config.settings);
   const records = view.index.bySlot.get(slot.id) ?? [];
@@ -38,7 +40,7 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
   const over = records.length > slot.capacity;
 
   return (
-    <Sheet title={slotTitle(slot, furniture)} onClose={onClose} wide>
+    <Sheet title={slotTitle(slot, furniture, t)} onClose={onClose} wide>
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="text-sm font-medium text-ink">{label ?? "Empty compartment"}</p>

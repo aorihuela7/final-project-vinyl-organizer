@@ -56,8 +56,8 @@ test("signs up, imports a Discogs collection by username, builds a shelf, and fi
   await page.screenshot({ path: `docs/screenshots/map-${testInfo.project.name}.png`, fullPage: true });
 
   // 5. Search a record and see shelf, row, column, how far in, and its neighbors.
-  await page.getByLabel("Search your records").fill("Faith George Michael");
-  await page.getByRole("list", { name: "Search results" }).getByRole("button").first().click();
+  await page.getByLabel("Search for an artist or a title in your collection").fill("Faith George Michael");
+  await page.getByRole("listbox", { name: "Search results" }).getByRole("option").first().click();
   const card = page.getByRole("dialog");
   await expect(card.getByText(/Kallax \d · row \d, column \d/)).toBeVisible();
   await expect(card.getByText(/\d+% from the left/)).toBeVisible();
@@ -100,20 +100,20 @@ test("signs up, loads the demo into the account, calibrates, and adds a new purc
   await expect(sheet.getByText(new RegExp(`^${before + 1} of \\d+ records`))).toBeVisible({ timeout: 30_000 });
   await sheet.getByRole("button", { name: "Close" }).click();
 
-  // "Where does this record go?" with Discogs search, then Add.
-  await page.getByRole("button", { name: "Where does this record go?" }).click();
+  // "Add a new record" with Discogs search, then Add record.
+  await page.getByRole("button", { name: "+ Add a new record" }).click();
   const add = page.getByRole("dialog");
   await add.getByRole("searchbox").fill("Kind of Blue Miles Davis");
   await add.getByRole("button", { name: /Miles Davis/ }).first().click({ timeout: 30_000 });
   await expect(add.getByText(/from the left/)).toBeVisible({ timeout: 30_000 });
   await expect(add.getByText(/It fits|moves\./)).toBeVisible();
   await page.screenshot({ path: `docs/screenshots/add-${testInfo.project.name}.png` });
-  await add.getByRole("button", { name: "Add to my shelf" }).click();
+  await add.getByRole("button", { name: "Add record" }).click();
   await expect(page.getByText(/^Added\./)).toBeVisible({ timeout: 30_000 });
 
   // It's saved: after a reload, search finds it on the shelf.
   await page.reload();
   await expect(page.getByRole("region", { name: "Living room" })).toBeVisible({ timeout: 60_000 });
-  await page.getByLabel("Search your records").fill("Kind of Blue");
-  await expect(page.getByRole("list", { name: "Search results" }).getByText(/% from the left/).first()).toBeVisible();
+  await page.getByLabel("Search for an artist or a title in your collection").fill("Kind of Blue");
+  await expect(page.getByRole("listbox", { name: "Search results" }).getByText(/% from the left/).first()).toBeVisible();
 });

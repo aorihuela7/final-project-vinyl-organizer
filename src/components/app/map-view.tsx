@@ -161,7 +161,7 @@ function ShelfFurniture({
         const plate = group.plates.get(slot.id);
         const count = records.length;
         const isFound = foundSlot === slot.id;
-        const place = slotPlace(slot, f);
+        const place = slotPlace(slot, f, t);
         const label = plate
           ? `${place}: ${t("map.openCompartment", { range: plate.full, count, capacity: slot.capacity })}${count > slot.capacity ? `, ${t("map.overCapacity")}` : ""}`
           : t("map.openEmpty", { place });

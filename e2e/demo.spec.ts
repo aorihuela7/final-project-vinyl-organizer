@@ -15,8 +15,8 @@ test("a visitor tries the demo without signing up and finds a record", async ({ 
   await page.screenshot({ path: `docs/screenshots/demo-map-${testInfo.project.name}.png`, fullPage: true });
 
   // Search a record and see where it is and its neighbors.
-  await page.getByLabel("Search your records").fill(target.title);
-  const result = page.getByRole("list", { name: "Search results" }).getByRole("button").first();
+  await page.getByLabel("Search for an artist or a title in your collection").fill(target.title);
+  const result = page.getByRole("listbox", { name: "Search results" }).getByRole("option").first();
   await expect(result).toBeVisible();
   await result.click();
   const dialog = page.getByRole("dialog");

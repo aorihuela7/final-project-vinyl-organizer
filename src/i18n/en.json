@@ -234,5 +234,57 @@
     "shelfTitle": "{name}, {media}",
     "groupTitle": "{media}",
     "legend": "Each compartment shows its letters; the full range is in the compartment view."
+  },
+  "place": {
+    "rowCol": "row {row}, column {col}",
+    "crate": "crate {n}",
+    "box": "box {n}",
+    "column": "column {n}",
+    "fromTop": "shelf {n} from the top",
+    "title": "{shelf}, {place}"
+  },
+  "search": {
+    "placeholder": "Search for an artist or a title in your collection",
+    "results": "Search results",
+    "noMatch": "No records match “{query}”.",
+    "where": "{place}, about {pct}% in from the left",
+    "notPlaced": "{format}: this format doesn't go on a shelf",
+    "noSinglesShelf": "Off the map until you add a Singles shelf",
+    "noCdShelf": "Off the map until you add a CD shelf",
+    "noLpShelf": "Off the map until you add an LP shelf",
+    "notOnShelf": "Not on the shelf: it doesn't fit",
+    "or": "or",
+    "addNew": "+ Add a new record"
+  },
+  "add": {
+    "title": "Add a new record",
+    "step1": "Find it on Discogs",
+    "step2": "See where it goes",
+    "step3": "Add record",
+    "searchLabel": "Search Discogs for the record you just bought.",
+    "searchPlaceholder": "Artist and title, for example Kind of Blue Miles Davis",
+    "searching": "Searching Discogs…",
+    "searchFailed": "Search failed.",
+    "releaseFailed": "Couldn't load that release.",
+    "noResults": "No releases match. Try the artist and the title.",
+    "change": "Pick another",
+    "goesBetween": "It goes in {place}, between {left} and {right}",
+    "goesAfter": "It goes in {place}, right after {left}",
+    "goesBefore": "It goes in {place}, right before {right}",
+    "goesIn": "It goes in {place}",
+    "notPlaced": "This is a {format} release, so it doesn't go on a shelf.",
+    "noShelf": "You don't have a shelf for {group} yet. Add one in Shelves & order.",
+    "full": "Your shelves are full: there's no room for it anywhere.",
+    "fits": "It fits. Just put it in: 1 move.",
+    "moves": {
+      "one": "That compartment is full: {count} move.",
+      "other": "That compartment is full: {count} moves."
+    },
+    "putItIn": "put it in",
+    "overflow": "The last record no longer fits on your shelves.",
+    "fallback": "({error} Showing the search result's data.)",
+    "add": "Add record",
+    "adding": "Adding…",
+    "discogsUnchanged": "Adding saves it here only; your Discogs collection doesn't change."
   }
 }

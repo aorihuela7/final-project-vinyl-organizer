@@ -15,7 +15,7 @@ Project for Design, Build, Ship (MPCS 51238, UChicago, Autumn 2026). Focus: **Sy
 5. **See the map:** every compartment with its range ("A – Bea") and how full it is. Open a compartment to see its records as spines, left to right, with the free space on the right; point at a spine for the artist and title, click it for the details and the cover.
 6. **Search a record:** shelf, row, column, how far into the compartment ("40% from the left"), and the two records on each side.
 7. **Calibrate:** "This is the first record in this compartment" moves one boundary so the map matches the real shelf.
-8. **Where does this record go?** Search Discogs for a new purchase, see where it goes and how many records must move, and add it.
+8. **Add a new record.** Search Discogs for a new purchase, see where it goes and how many records must move, and add it.
 
 Signing up is only needed to save your shelf or to import your own collection.
 

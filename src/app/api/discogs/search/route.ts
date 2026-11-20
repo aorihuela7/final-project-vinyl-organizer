@@ -4,7 +4,7 @@ import { mapSearchResult } from "@/lib/discogs/map";
 import { clientKey, rateLimit } from "@/lib/rate-limit";
 import { searchQuerySchema } from "@/lib/validation";
 
-/** Discogs database search for "Where does this record go?". Rate-limited per user (or per IP without an account). */
+/** Discogs database search for "Add a new record". Rate-limited per user (or per IP without an account). */
 export async function GET(request: Request) {
   const { userId } = await auth();
   const parsed = searchQuerySchema.safeParse({ q: new URL(request.url).searchParams.get("q") ?? "" });

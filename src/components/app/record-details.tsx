@@ -7,6 +7,7 @@ import { releaseUrl } from "@/lib/discogs/map";
 import { groupOf, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { Cover } from "./cover";
 import { DiscogsAttribution } from "./discogs-attribution";
+import { useI18n } from "@/i18n/client";
 
 export function findLocation(views: MediaView[], recordId: string): Location | null {
   for (const v of views) {
@@ -18,12 +19,13 @@ export function findLocation(views: MediaView[], recordId: string): Location | n
 
 /** Where a record is: shelf, row, column, how far in, and the two records on each side. */
 export function LocationSummary({ location, config, byId }: { location: Location; config: ShelfConfig; byId: Map<string, StoredRecord> }) {
+  const { t } = useI18n();
   const furniture = config.furniture.find((f) => f.key === location.slot.shelfKey);
   const pct = percent(location.fraction);
   return (
     <div className="flex flex-col gap-3">
       <div className="rounded-card bg-accent-soft p-3">
-        <p className="text-sm font-semibold text-ink">{slotTitle(location.slot, furniture)}</p>
+        <p className="text-sm font-semibold text-ink">{slotTitle(location.slot, furniture, t)}</p>
         <p className="text-sm text-ink">
           {pct}% from the left · record {location.indexInSlot + 1} of {location.totalInSlot}
         </p>
@@ -39,6 +41,7 @@ export function LocationSummary({ location, config, byId }: { location: Location
 }
 
 export function Neighbors({ location, config, byId }: { location: Location; config: ShelfConfig; byId: Map<string, StoredRecord> }) {
+  const { t } = useI18n();
   const sameSlot = (slotId: string) => slotId === location.slot.id;
   const item = (id: string, slotId: string, side: string) => {
     const r = byId.get(id);
@@ -53,7 +56,7 @@ export function Neighbors({ location, config, byId }: { location: Location; conf
           <p className="truncate text-sm text-ink-muted">{r.title}</p>
           <p className="text-xs text-ink-faint">
             {side}
-            {sameSlot(slotId) ? "" : ` · in ${slotTitle(slot, furniture)}`}
+            {sameSlot(slotId) ? "" : ` · in ${slotTitle(slot, furniture, t)}`}
           </p>
         </div>
       </li>
