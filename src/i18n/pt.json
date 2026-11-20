@@ -625,5 +625,28 @@
     "failed": "Não foi possível salvar as etiquetas.",
     "empty": "Ainda não há etiquetas.",
     "tagFor": "Etiqueta de {artist}"
+  },
+  "guest": {
+    "title": "Uma estante compartilhada",
+    "intro": "Busque um disco para ver onde ele está e para onde ele volta.",
+    "readOnly": "Esta é uma visualização só de leitura compartilhada pelo dono da estante. Daqui não dá para mudar nada.",
+    "loading": "Carregando a estante…",
+    "missing": "Este link não funciona mais. Peça um novo ao dono.",
+    "stale": "Esta estante não foi atualizada nas últimas seis horas, então não pode ser mostrada agora. Ela volta a aparecer quando o dono abrir o Record Organizer.",
+    "error": "Não foi possível carregar a estante. Tente de novo em um minuto."
+  },
+  "share": {
+    "title": "Compartilhe sua estante",
+    "text": "Um link só de leitura para convidados: eles podem buscar e ver onde está um disco e para onde ele volta, sem conta. Não podem mudar nada.",
+    "create": "Criar um link",
+    "new": "Criar um link novo",
+    "copy": "Copiar o link",
+    "copied": "Copiado",
+    "revoke": "Desativar o link",
+    "revoked": "O link está desativado.",
+    "signUp": "Crie uma conta para compartilhar sua estante com um link.",
+    "failed": "Não foi possível mudar o link. Tente de novo.",
+    "label": "Link para convidados",
+    "freshness": "Os convidados veem a estante enquanto os dados do Discogs tiverem menos de seis horas; abrir o app os atualiza."
   }
 }

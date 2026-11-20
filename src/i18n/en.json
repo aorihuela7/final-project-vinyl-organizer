@@ -625,5 +625,28 @@
     "failed": "Couldn't save the tags.",
     "empty": "No tags yet.",
     "tagFor": "Tag for {artist}"
+  },
+  "guest": {
+    "title": "A shared shelf",
+    "intro": "Search for a record to see where it is and where it goes back.",
+    "readOnly": "This is a read-only view shared by the shelf's owner. Nothing can be changed from here.",
+    "loading": "Loading the shelf…",
+    "missing": "This link doesn't work anymore. Ask the owner for a new one.",
+    "stale": "This shelf hasn't been updated in the last six hours, so it can't be shown right now. It shows again once its owner opens Record Organizer.",
+    "error": "Couldn't load the shelf. Try again in a minute."
+  },
+  "share": {
+    "title": "Share your shelf",
+    "text": "A read-only link for guests: they can search and see where a record is and where it goes back, without an account. They can't change anything.",
+    "create": "Create a link",
+    "new": "Make a new link",
+    "copy": "Copy the link",
+    "copied": "Copied",
+    "revoke": "Turn off the link",
+    "revoked": "The link is off.",
+    "signUp": "Sign up to share your shelf with a link.",
+    "failed": "Couldn't change the link. Try again.",
+    "label": "Guest link",
+    "freshness": "Guests see the shelf while its Discogs data is less than six hours old; opening the app refreshes it."
   }
 }

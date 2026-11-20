@@ -65,7 +65,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 17. Temporary locations and "Put it back" (#8) | Done | Migration `20261120104542_v2_temporary_locations` (table with RLS and grants; `records.temp_location_id` with a same-user composite key that puts records back if a place is deleted; applied and verified). "Take it out…" in the record card with the places already used, five suggestions (next to the turntable, gig bag, discards box, on display, unsorted pile), or a new name; the record keeps its placement (its home spot), drawn hollow with a dashed outline on the map and in the compartment view; the card says "Out of the shelf: in Gig bag" with "Put it back", which highlights its spot and neighbors; search says "In Gig bag. Its spot: Living room, row 3, column 2"; a panel lists every record that's out by place. Works in the browser demo (snapshot) and signed in (Supabase). Checked in Playwright at 1280 and 375, plus a new e2e test; tracklists from vinyl releases with a bonus CD now get a separate "CD" section. Screenshots `p17-*` |
 | 18. Calibration by count and thickness by format (#9) | Done | `calibrateCount` ("there are N records here" moves only the boundary with the next compartment; refuses what needs another boundary; flags over capacity) with 4 tests and a "Count the records here" form in the compartment view. Thickness by format: optional setting in Sort order (migration `20261120105551_v2_thickness_by_format` adds `shelf_settings.thickness_by_format` and teaches `save_setup` to save it; applied), records weigh their number of discs (`format_qty`, 1–12), `distributeWeighted` for the initial layout, insertion and calibration count places, drawings are as wide as their places, badges count places. Off by default, and off reproduces v1 exactly (all v1 tests unchanged, plus a test that weights are ignored when off); 5 weighted tests (spread in places, never over capacity, leftovers, a too-thick record, inserting a double album with both methods). Documented in `docs/algorithm.md` §7b–7c. Checked in Playwright: turning it on recomputes the demo map (98 records change compartment; the first cube goes to 70 of 80 places), and a count of 50 moves 14 records to the next compartment. Screenshots `p18-*` |
 | 19. Custom sections and tags (#10) | Done | Migration `20261120110319_v2_sections_and_tags` (tables `tags` and `artist_tags` with RLS and grants, `furniture.section`, "tag" allowed in `sort_levels`, `save_setup` saves sections; applied). Layout: `tag` sort level (user's order, untagged last), sections in `src/lib/layout/sections.ts` (each section laid out on its own shelves; insertion, calibration, and the simulator run inside the record's section), 4 tests. App: a Tags card in Shelves & order (create, order with ↑↓, remove, tag an artist from a search, every spelling at once), a Section select per shelf (genres in the collection and tags), the section in the shelf header, plates and rail by tag name, a notice when tags change and the map needs regenerating; demo and signed in. Checked in Playwright: sorting by tag puts "Sunday morning" first; pinning Rock to the Living room places 401 records there and reports the 440 that have no shelf. Screenshots `p19-*` |
-| 20. Guest mode (#11) | Todo | |
+| 20. Guest mode (#11) | Done | Migration `20261120111031_v2_guest_mode` (table `share_links` with RLS; `shared_shelf(token)`, a `security definer` function granted to anon that returns only the shelf behind an active token, only the fields the read-only view needs, null otherwise; applied). "Share your shelf" card in Shelves & order (create, copy, renew, turn off; one active link per owner; the accountless demo is told to sign up). Guest page `/s/{token}` (no index): read-only map, rail, search, record card with neighbors and where a record is out, compartment view without calibration; data is shown only if synced in the last 6 hours (Discogs terms), otherwise it explains. New e2e test: an account creates a link, an anonymous browser opens it, searches, sees no editing controls; turning the link off makes it say the link no longer works (passes) |
 | 21. Hardening (#12) | Todo | |
 | 22. Security pass (#13) | Todo | |
 | 23. Design review at 390 and 1440 px (#14) | Todo | |
@@ -149,6 +149,9 @@ Rule 4 (several formats, the largest size wins) needs every format, which only t
 - **One tag per artist.** Tags sort, so each artist has one (a record can't sort under two tags at once). Multiple labels per artist for search would be a later addition.
 - **Sections are per shelf.** A section is pinned to whole shelves, not to single compartments; a record belongs to the first section it matches in shelf order.
 
+- **Guest mode and the 6-hour rule.** Guests see the owner's data straight from the database. Taken: the guest page shows it only if the collection was synced in the last 6 hours (the owner's visits re-sync it); otherwise it explains and shows nothing. Question for Ale: is this the reading of the Discogs terms you want for shared links, or should guest views also be able to trigger a refresh?
+- **No QR code yet.** The link covers "a read-only link or QR"; a QR code needs an encoder, and tonight's rules say no new dependencies (a hand-written encoder is possible later).
+
 ## Blocked: needs Ale
 
 (none yet)
@@ -185,7 +188,8 @@ Times from the commits (`git log`), CST.
 - 04:45 · Phase 13: visual QA against the mockup.
 - 04:50 · Phase 17: temporary locations and Put it back.
 - 05:00 · Phase 18: calibration by count, thickness by format.
-- 05:32 · Phase 19: tags and sections.
+- 05:09 · Phase 19: tags and sections.
+- 05:13 · Phase 20: guest mode.
 
 ## Morning summary
 

@@ -103,7 +103,7 @@ export function RecordCard({
         )}
       </header>
 
-      {outside && onPutBack && <OutBanner location={outside} busy={busy} onPutBack={onPutBack} />}
+      {outside && <OutBanner location={outside} busy={busy} onPutBack={onPutBack} />}
 
       <div className="mx-[18px] grid grid-cols-[104px_1fr] items-center gap-3.5">
         <Cover src={record.cover_url ?? record.thumb_url} artist={record.artist} title={record.title} size="detail" />

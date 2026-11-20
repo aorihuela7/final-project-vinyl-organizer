@@ -17,6 +17,7 @@ import { CalibrationHint } from "./calibration-hint";
 import { SimulatorCard } from "./simulator-card";
 import { OutOfShelfPanel } from "./temporary";
 import { TagsCard } from "./tags-card";
+import { ShareCard } from "./share-card";
 import { toSortSettings } from "@/lib/shelf/model";
 import { Onboarding } from "./onboarding";
 import { RecordCard, RecordCardEmpty, findLocation } from "./record-details";
@@ -278,6 +279,7 @@ export function ShelfApp() {
               <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} />
               <TagsCard app={app} records={data.records} tags={data.tags ?? []} artistTags={data.artistTags ?? []} />
               <SimulatorCard records={data.records} config={config} />
+              <ShareCard signedIn={app.mode === "remote"} />
               <CollectionPanel app={app} />
             </>
           ) : (

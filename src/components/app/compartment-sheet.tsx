@@ -21,7 +21,8 @@ type Props = {
   view: MediaView;
   config: ShelfConfig;
   byId: Map<string, StoredRecord>;
-  app: ShelfApp;
+  /** Missing in the read-only guest view: no calibration. */
+  app?: ShelfApp;
   /** The record the user last looked at: drawn in mustard. */
   highlightId: string | null;
   onClose: () => void;
@@ -138,7 +139,7 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
         <div className="flex flex-col gap-3 px-4">
           {over && <Banner tone="warning">{t("compartment.over")}</Banner>}
 
-          {calibrating ? (
+          {!app ? null : calibrating ? (
             <Calibrate slot={slot} view={view} byId={byId} app={app} onDone={() => setCalibrating(false)} />
           ) : counting ? (
             <CalibrateCount slot={slot} app={app} current={records.length} onDone={() => setCounting(false)} />

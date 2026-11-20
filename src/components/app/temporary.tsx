@@ -66,7 +66,7 @@ export function TakeOutChooser({
 }
 
 /** Shown in the record card while the record is out. */
-export function OutBanner({ location, busy, onPutBack }: { location: TempLocation; busy: boolean; onPutBack: () => void }) {
+export function OutBanner({ location, busy, onPutBack }: { location: TempLocation; busy: boolean; onPutBack?: () => void }) {
   const { t } = useI18n();
   return (
     <Banner className="mx-[18px] flex flex-wrap items-center justify-between gap-2">
@@ -74,9 +74,11 @@ export function OutBanner({ location, busy, onPutBack }: { location: TempLocatio
         <strong className="block">{t("temp.outBanner", { location: location.name })}</strong>
         <span className="text-muted">{t("temp.outHint")}</span>
       </span>
-      <button type="button" disabled={busy} onClick={onPutBack} className={btnPrimarySm}>
-        {t("temp.putBackButton")}
-      </button>
+      {onPutBack && (
+        <button type="button" disabled={busy} onClick={onPutBack} className={btnPrimarySm}>
+          {t("temp.putBackButton")}
+        </button>
+      )}
     </Banner>
   );
 }

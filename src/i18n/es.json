@@ -625,5 +625,28 @@
     "failed": "No se pudieron guardar las etiquetas.",
     "empty": "Todavía no hay etiquetas.",
     "tagFor": "Etiqueta de {artist}"
+  },
+  "guest": {
+    "title": "Una repisa compartida",
+    "intro": "Busca un disco para ver dónde está y dónde se devuelve.",
+    "readOnly": "Esta es una vista de solo lectura que compartió el dueño de la repisa. Desde aquí no se puede cambiar nada.",
+    "loading": "Cargando la repisa…",
+    "missing": "Este enlace ya no funciona. Pídele uno nuevo al dueño.",
+    "stale": "Esta repisa no se actualizó en las últimas seis horas, así que no se puede mostrar ahora. Vuelve a verse cuando su dueño abra Record Organizer.",
+    "error": "No se pudo cargar la repisa. Intenta de nuevo en un minuto."
+  },
+  "share": {
+    "title": "Comparte tu repisa",
+    "text": "Un enlace de solo lectura para invitados: pueden buscar y ver dónde está un disco y dónde se devuelve, sin cuenta. No pueden cambiar nada.",
+    "create": "Crear un enlace",
+    "new": "Crear un enlace nuevo",
+    "copy": "Copiar el enlace",
+    "copied": "Copiado",
+    "revoke": "Desactivar el enlace",
+    "revoked": "El enlace está desactivado.",
+    "signUp": "Crea una cuenta para compartir tu repisa con un enlace.",
+    "failed": "No se pudo cambiar el enlace. Intenta de nuevo.",
+    "label": "Enlace para invitados",
+    "freshness": "Los invitados ven la repisa mientras sus datos de Discogs tengan menos de seis horas; abrir la app los actualiza."
   }
 }

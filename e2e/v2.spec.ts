@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { clerk } from "@clerk/testing/playwright";
+import { ensureTestUser } from "../scripts/lib/clerk-test";
 import { recordCard, skipTour } from "./fixtures";
 
 /** v2: the guided tour, the language selector, tracklists, and singles on their own shelf. */
@@ -69,4 +71,39 @@ test("a record taken out to a temporary location shows where it is, and goes bac
   await page.getByRole("button", { name: "Put it back" }).first().click();
   await expect(page.getByText(/Back on the shelf/)).toBeVisible();
   await expect(page.getByText("1 record out of the shelf")).toHaveCount(0);
+});
+
+test("guest mode: a read-only link shows the shelf without an account, until it's turned off", async ({ page, browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "Runs once.");
+  test.setTimeout(240_000);
+  await skipTour(page);
+  const email = `e2e-guest-${Date.now().toString(36)}+clerk_test@example.com`;
+  await ensureTestUser(email);
+  await page.goto("/");
+  await clerk.signIn({ page, emailAddress: email });
+  await page.goto("/app?start=demo");
+  await expect(page.getByRole("region", { name: "Living room" })).toBeVisible({ timeout: 120_000 });
+  await page.getByRole("button", { name: "Shelves & order" }).click();
+  await page.getByRole("button", { name: "Create a link" }).click();
+  const url = await page.getByLabel("Guest link").inputValue();
+  expect(url).toMatch(/\/s\/[A-Za-z0-9_-]{20,}$/);
+
+  const guestContext = await browser.newContext();
+  await skipTour(guestContext);
+  const guest = await guestContext.newPage();
+  await guest.goto(url);
+  await expect(guest.getByRole("heading", { name: "A shared shelf" })).toBeVisible({ timeout: 60_000 });
+  await expect(guest.getByRole("region", { name: "Living room" })).toBeVisible();
+  await guest.getByLabel("Search for an artist or a title in your collection").fill("a");
+  await guest.getByRole("listbox", { name: "Search results" }).getByRole("option").first().click();
+  await expect(recordCard(guest)).toBeVisible();
+  // Read-only: no taking out, no calibrating, no adding.
+  await expect(guest.getByRole("button", { name: "Take it out…" })).toHaveCount(0);
+  await expect(guest.getByRole("button", { name: "+ Add a new record" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Turn off the link" }).click();
+  await expect(page.getByText("The link is off.")).toBeVisible();
+  await guest.reload();
+  await expect(guest.getByText("This link doesn't work anymore")).toBeVisible({ timeout: 60_000 });
+  await guestContext.close();
 });

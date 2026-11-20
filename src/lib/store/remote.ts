@@ -267,3 +267,32 @@ export async function setArtistTagRemote(supabase: SupabaseClient, userId: strin
   const { error } = await supabase.from("artist_tags").upsert({ user_id: userId, artist_key: artistKey, tag_id: tagId }, { onConflict: "user_id,artist_key" });
   if (error) throw new Error(error.message);
 }
+
+/** A random, unguessable token (16 bytes, base64url). */
+function newToken(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+/** The owner's active guest link, if any. */
+export async function activeShareTokenRemote(supabase: SupabaseClient): Promise<string | null> {
+  const { data, error } = await supabase.from("share_links").select("token").is("revoked_at", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as { token: string } | null)?.token ?? null;
+}
+
+/** Turns off every active guest link. */
+export async function revokeShareLinksRemote(supabase: SupabaseClient) {
+  const { error } = await supabase.from("share_links").update({ revoked_at: new Date().toISOString() }).is("revoked_at", null);
+  if (error) throw new Error(error.message);
+}
+
+/** A new guest link; the previous one stops working. */
+export async function createShareLinkRemote(supabase: SupabaseClient, userId: string): Promise<string> {
+  await revokeShareLinksRemote(supabase);
+  const token = newToken();
+  const { error } = await supabase.from("share_links").insert({ token, user_id: userId });
+  if (error) throw new Error(error.message);
+  return token;
+}
