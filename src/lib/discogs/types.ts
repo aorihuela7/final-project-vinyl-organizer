@@ -53,4 +53,14 @@ export type DiscogsRelease = {
   formats?: DiscogsFormat[];
   images?: Array<{ type: string; uri: string; uri150: string }>;
   thumb?: string;
+  tracklist?: DiscogsTrack[];
+};
+
+/** One entry of a release's tracklist. Index tracks group their parts in sub_tracks. */
+export type DiscogsTrack = {
+  position?: string;
+  type_?: "track" | "heading" | "index" | string;
+  title?: string;
+  duration?: string;
+  sub_tracks?: DiscogsTrack[];
 };

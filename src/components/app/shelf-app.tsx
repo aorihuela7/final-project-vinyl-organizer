@@ -10,7 +10,8 @@ import { CompartmentSheet } from "./compartment-sheet";
 import { ImportProgress } from "./import-progress";
 import { MapView } from "./map-view";
 import { Onboarding } from "./onboarding";
-import { RecordDetails, findLocation } from "./record-details";
+import { RecordCard, RecordCardEmpty, findLocation } from "./record-details";
+import { useMediaQuery } from "./use-media-query";
 import { SearchRow } from "./search-panel";
 import { SetupView } from "./setup-view";
 import { Sheet } from "./sheet";
@@ -26,6 +27,8 @@ export function ShelfApp() {
   const params = useSearchParams();
   const app = useShelfApp(params.get("start"));
   const { t } = useI18n();
+  // Larger screens show the record card in a column next to the shelves; phones open it as a bottom sheet.
+  const wide = useMediaQuery("(min-width: 900px)");
   const [tab, setTab] = useState<"map" | "setup">("map");
   const [openSlot, setOpenSlot] = useState<Slot | null>(null);
   const [openRecord, setOpenRecordState] = useState<string | null>(null);
@@ -192,18 +195,38 @@ export function ShelfApp() {
                 </ul>
               )}
 
-              <MapView
-                config={config}
-                views={views}
-                byId={byId}
-                foundId={found}
-                foundSlot={found ? (findLocation(views, found)?.slot.id ?? null) : null}
-                lifted={lifted}
-                onOpen={(slot) => {
-                  setOpenSlot(slot);
-
-                }}
-              />
+              <div className={wide ? "grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-start gap-[22px]" : ""}>
+                <MapView
+                  config={config}
+                  views={views}
+                  byId={byId}
+                  foundId={found}
+                  foundSlot={found ? (findLocation(views, found)?.slot.id ?? null) : null}
+                  lifted={lifted}
+                  onOpen={(slot) => setOpenSlot(slot)}
+                />
+                {wide && (
+                  <aside className="sticky top-4 max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-card" aria-live="polite" data-tour="record">
+                    {recordInSheet ? (
+                      <RecordCard
+                        key={recordInSheet.id}
+                        record={recordInSheet}
+                        location={sheetLocation}
+                        views={views}
+                        config={config}
+                        byId={byId}
+                        onPickRecord={(id) => {
+                          setOpenRecord(id);
+                          showFound(id);
+                        }}
+                        onShowOnMap={() => showFound(recordInSheet.id)}
+                      />
+                    ) : (
+                      <RecordCardEmpty />
+                    )}
+                  </aside>
+                )}
+              </div>
             </div>
           )}
         </>
@@ -225,20 +248,21 @@ export function ShelfApp() {
         />
       )}
 
-      {recordInSheet && config && (
-        <Sheet
-          title={
-            <>
-              {displayArtist(recordInSheet.artist)} <span className="font-normal text-ink-muted">· {recordInSheet.title}</span>
-            </>
-          }
-          onClose={() => setOpenRecord(null)}
-        >
-          <RecordDetails
+      {recordInSheet && config && (!wide || tab !== "map") && (
+        <Sheet bare title={recordInSheet.title} labelledBy="record-sheet-title" onClose={() => setOpenRecord(null)}>
+          <RecordCard
+            key={recordInSheet.id}
+            headingId="record-sheet-title"
             record={recordInSheet}
             location={sheetLocation}
+            views={views}
             config={config}
             byId={byId}
+            onClose={() => setOpenRecord(null)}
+            onPickRecord={(id) => {
+              setOpenRecord(id);
+              showFound(id);
+            }}
             onShowOnMap={() => {
               setOpenRecord(null);
               setTab("map");

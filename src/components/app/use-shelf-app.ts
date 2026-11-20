@@ -164,7 +164,9 @@ export function useShelfApp(startParam: string | null) {
   const { isLoaded, isSignedIn, userId } = useAuth();
   const { t } = useI18n();
   const tRef = useRef(t);
-  tRef.current = t;
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
   /** Shelf names for the demo, in the language at the moment they're created. */
   const demoNames = useCallback(() => ({ living: tRef.current("demo.living"), studio: tRef.current("demo.studio"), singles: tRef.current("demo.singles") }), []);
   const clerk = useClerk();
@@ -197,7 +199,7 @@ export function useShelfApp(startParam: string | null) {
       events: [...(previous?.events ?? []), ...(event ? [{ ...event, at: new Date().toISOString() }] : [])].slice(-50),
     };
     if (!saveLocal(snapshot)) setNotice({ tone: "warning", msg: msg("notices.localSaveFailed") });
-  }, []);
+  }, [demoNames]);
 
   const startLocalDemo = useCallback(async () => {
     setStatus({ kind: "loading", message: msg("app.loadingDemo") });
@@ -523,7 +525,7 @@ export function useShelfApp(startParam: string | null) {
         if (alive.current) setStatus({ kind: "error", message: errorMsg(err, msg("notices.loadFailed")) });
       }
     })();
-  }, [mode, userId, supabase, startParam, startLocalDemo, refreshLocalDemo, reloadRemote, startRemoteImport, runJob, afterImport, failReplacement]);
+  }, [mode, userId, supabase, startParam, startLocalDemo, refreshLocalDemo, reloadRemote, startRemoteImport, runJob, afterImport, failReplacement, demoNames]);
 
   // ------------------------------------------------------------ actions
   const startDemo = useCallback(() => {

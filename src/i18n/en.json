@@ -377,5 +377,29 @@
     "suggestedLpN": "Kallax {n}",
     "suggestedSingles": "Singles",
     "suggestedCds": "CD shelf"
+  },
+  "record": {
+    "offMap": "Not on the map",
+    "otherFormat": "A {format} release: this format doesn't go on a shelf",
+    "doesntFit": "It doesn't fit on your shelves. Add a shelf or raise the capacity.",
+    "position": "Record {index} of {total}, about {pct}% in from the left",
+    "yearUnknown": "year unknown",
+    "formatUnknown": "Format unknown",
+    "drawingLabel": "The compartment, with this record highlighted: record {index} of {total}",
+    "showOnMap": "Show on the map",
+    "twoLeft": "Two to the left",
+    "justLeft": "Just to the left",
+    "thisOne": "This one",
+    "justRight": "Just to the right",
+    "twoRight": "Two to the right",
+    "inPlace": "in {place}",
+    "neighbors": "The records on each side",
+    "tracklist": "Tracklist",
+    "tracklistFailed": "Couldn't load the tracklist.",
+    "noTracklist": "Discogs has no tracklist for this release.",
+    "side": "Side {side}",
+    "disc": "Disc {n}",
+    "emptyTitle": "Find a record",
+    "emptyText": "Search for an artist or a title to see where a record is, the records on each side, and its tracklist. Click a compartment to see what's inside."
   }
 }
