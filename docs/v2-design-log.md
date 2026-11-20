@@ -47,7 +47,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | --- | --- | --- |
 | 0. Issues, CLAUDE.md, branch | Done | Branch `v2-design`; issues #4–#14 (v2 plan: fix-first #4–#6, add #7–#11, hardening #12, security pass #13, design review #14) and #15–#23 (Nogal parts); CLAUDE.md has a v2 scope section, format groups, Nogal design, multilingual UI |
 | 1. Foundations | Done | Nogal tokens in `src/styles/tokens.css` (+ `surface-*` utilities in globals.css), Belleza and Nunito Sans via `next/font`, type scale 11–26, i18n in `src/i18n/` (core, server, client, `en.json`, 7 tests), app bar, banners, buttons, and inputs in `src/components/ui.tsx`; screenshots `p1-landing-*`, `p1-app-demo-*`; build and 76 tests pass |
-| 2. Lean function | Todo | |
+| 2. Lean function | Done | `src/lib/visual/lean.ts` (port of `leanLayout`, widths per record, sizes 12/10/7) and 15 Vitest tests: every n from 1 to 80 × 20 seeds × square and 1.6:1 × three size mixes, 0 overlaps by separating-axis test (~10 million pairs), corners inside, tops left of bases, angles non-decreasing, determinism, monotonic maximum angle, 25 × 80 records in under 16 ms; preview `p2-lean-preview.png` |
 | 3. Format groups | Todo | |
 | 4. Map | Todo | |
 | 5. Search row and "Add a new record" | Todo | |
@@ -80,6 +80,9 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 - **Messages in the app state.** Notices and statuses were stored as finished English sentences. They're now message descriptors (key + variables) rendered at display time, so changing the language updates them. Errors that come from servers (Discogs, Supabase) stay as raw English text.
 - **String conversion order.** Phase 1 converted the shell (header, footer, landing, onboarding, import progress, notices, banners). Each later phase converts the components it rebuilds; phase 9 sweeps whatever is left.
 
+- **Lean jitter and the nearly-full case.** With the mockup's ±0.7° jitter, a nearly full compartment (maximum 1.2°) can reach 1.9°, above the plan's 1.5° test, and the jitter of the outermost record made the maximum angle non-monotonic. Taken: jitter shrinks with the maximum angle (full ±0.7° from 4° up), the outermost record takes the maximum exactly, and no record goes past it. Visually the same.
+- **Over-capacity compartments.** A calibrated compartment can hold more records than its capacity. Taken: the drawing squeezes records to fit the width instead of overflowing, and all stand upright.
+
 ## Blocked: needs Ale
 
 (none yet)
@@ -96,6 +99,7 @@ If the session stops on a usage limit, a recurring session job (created when the
 
 - 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
 - 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
+- 2026-11-20 03:45 CST · Phase 2 done: lean function and tests.
 - 2026-11-20 03:38 CST · Phase 1 done: tokens, fonts, i18n system, shell strings, ui primitives.
 
 ## Morning summary
