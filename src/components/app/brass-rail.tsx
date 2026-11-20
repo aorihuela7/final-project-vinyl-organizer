@@ -25,6 +25,37 @@ export const BrassRail = memo(function BrassRail({ view, settings, foundId, onJu
   const { t, locale } = useI18n();
   const segments = useMemo(() => railSegments(view.index, settings), [view.index, settings]);
   const marker = foundId ? railPosition(view.index, foundId) : null;
+  if (segments.length === 0) return null;
+
+  const label = (s: RailSegment) => {
+    if (s.kind === "genre") return genreName(locale, s.key);
+    if (s.kind === "decade") return s.key ? t("rail.decade", { decade: s.key }) : t("map.noYear");
+    return s.key;
+  };
+  const items: RailItem[] = segments.map((s) => {
+    const text = label(s);
+    return {
+      key: `${s.key}-${s.start}`,
+      label: text,
+      count: s.count,
+      title: t("rail.segment", { label: text, count: s.count }),
+      ariaLabel: t("rail.segmentGo", { label: text, count: s.count }),
+      onClick: () => onJump(s.firstSlotId),
+    };
+  });
+  return (
+    <RailBar
+      items={items}
+      marker={marker}
+      ariaLabel={t("rail.label", { media: t(`mediaShort.${view.media}`), first: items[0]!.label, last: items[items.length - 1]!.label })}
+    />
+  );
+});
+
+export type RailItem = { key: string; label: string; count: number; title: string; ariaLabel: string; onClick?: () => void };
+
+/** The rail itself: segments sized by count, engraved separators, labels only where they fit, and the marker. */
+export function RailBar({ items, marker, ariaLabel }: { items: RailItem[]; marker: number | null; ariaLabel: string }) {
   const rail = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   useEffect(() => {
@@ -33,41 +64,32 @@ export const BrassRail = memo(function BrassRail({ view, settings, foundId, onJu
     const observer = new ResizeObserver(([entry]) => setWidth(entry?.contentRect.width ?? 0));
     observer.observe(el);
     return () => observer.disconnect();
-  }, [segments.length]);
-  if (segments.length === 0) return null;
-  const total = segments.reduce((n, s) => n + s.count, 0);
+  }, []);
+  const total = items.reduce((n, s) => n + s.count, 0) || 1;
   /** A label shows only where it fits whole (at least about 16 px); the tooltip and aria-label always stay. */
   const fits = (text: string, count: number) => width === 0 || (count / total) * width >= Math.max(16, Array.from(text).length * 7.4 + 8);
 
-  const label = (s: RailSegment) => {
-    if (s.kind === "genre") return genreName(locale, s.key);
-    if (s.kind === "decade") return s.key ? t("rail.decade", { decade: s.key }) : t("map.noYear");
-    return s.key;
-  };
-  const first = label(segments[0]!);
-  const last = label(segments[segments.length - 1]!);
-
   return (
-    <nav aria-label={t("rail.label", { media: t(`mediaShort.${view.media}`), first, last })} className="relative mb-3.5" data-tour="rail">
+    <nav aria-label={ariaLabel} className="relative mb-3.5" data-tour="rail">
       <div ref={rail} className="surface-rail relative flex h-[34px] overflow-hidden rounded-[17px] font-display text-sm">
-        {segments.map((s, i) => {
-          const text = label(s);
+        {items.map((s, i) => {
+          const Tag = s.onClick ? "button" : "span";
           return (
-            <button
-              key={`${s.key}-${s.start}`}
-              type="button"
-              onClick={() => onJump(s.firstSlotId)}
-              title={t("rail.segment", { label: text, count: s.count })}
-              aria-label={t("rail.segmentGo", { label: text, count: s.count })}
-              className={`relative h-full min-w-0 basis-0 hover:bg-white/15 focus-visible:z-10 ${
+            <Tag
+              key={s.key}
+              type={s.onClick ? "button" : undefined}
+              onClick={s.onClick}
+              title={s.title}
+              aria-label={s.ariaLabel}
+              className={`relative flex h-full min-w-0 basis-0 items-center justify-center hover:bg-white/15 focus-visible:z-10 ${
                 i > 0 ? "before:absolute before:top-2 before:bottom-2 before:left-0 before:w-px before:bg-(--color-rail-line)" : ""
               }`}
               style={{ flexGrow: s.count }}
             >
-              <span aria-hidden className={`block overflow-hidden px-0.5 text-center whitespace-nowrap [text-shadow:0_1px_0_rgb(255_255_255/0.45)] ${fits(text, s.count) ? "" : "invisible"}`}>
-                {text}
+              <span aria-hidden className={`block overflow-hidden px-0.5 text-center whitespace-nowrap [text-shadow:0_1px_0_rgb(255_255_255/0.45)] ${fits(s.label, s.count) ? "" : "invisible"}`}>
+                {s.label}
               </span>
-            </button>
+            </Tag>
           );
         })}
       </div>
@@ -80,4 +102,4 @@ export const BrassRail = memo(function BrassRail({ view, settings, foundId, onJu
       )}
     </nav>
   );
-});
+}

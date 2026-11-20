@@ -54,7 +54,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 6. Shelf builder with live capacity | Done | Shelves & order rebuilt: shelves as cards with "Holds 1,280" and a mini walnut drawing, one open in the builder (form, walnut box "This shelf holds 910 LPs / 13 compartments × 70 records, 3 blocked", one meter per format group with "won't fit" warnings in mustard, the preview as walnut furniture with "910 places"), template picker drawn as small furniture, sort order card; pure `src/lib/shelf/capacity.ts` with 3 tests; checked live in Playwright (capacity 80 → 70 and one more blocked compartment); screenshots `p6-builder-*` |
 | 7. Record detail card and tracklist | Done | `RecordCard`: walnut band ("Living room, row 3, column 2" / "Record 28 of 60, about 46% in from the left"), 104 px cover, title in Belleza, artist and year, label, format, genres with commas, the compartment drawn at 1.6:1 in an 8 px walnut frame with the record lifted in mustard, five neighbors in physical order (third line when in another compartment), tracklist, Discogs link and "Show on the map". Side column from 900 px (with an empty state), bottom sheet with the band as handle below. Tracklist route `/api/discogs/release/[id]` ("use cache", expires within 6 h, 15/min per IP or 30/min per user, works without an account) and parser `src/lib/discogs/tracklist.ts` with 5 tests (sides, headings, index tracks, missing durations, "1", "A", "CD1-1"); loading skeleton, error with "Try again"; screenshots `p7-record-*`, `p7-record-sheet-375.png` (real tracklist for Sirope) |
 | 8. Compartment view and brass rail | Done | Compartment view rebuilt: walnut frame with the full range on a brass plate, the same drawing as the map (same viewBox and seed, so it looks identical), hover bubble with artist, title, and position, click opens the card, an accessible list of the records, calibration as a secondary pill with translated refusals. Brass rail per format group (`brass-rail.tsx`, segments from `src/lib/visual/rail.ts` with 4 tests): letters, genres, or decades sized by records, engraved separators, labels only where they fit whole, mustard marker hanging below that slides in 1 s, segments jump to their first compartment and flash it. Checked with genre, artist, and year first in Playwright; fixed a bug where an open record showed as a modal over Shelves & order on desktop. Old `spines.tsx` removed. Screenshots `p8-*` |
-| 9. Other screens | Todo | |
+| 9. Other screens | Done | Landing with a walnut hero (Kallax slice 2 × 3 with legs, plates, lean, a found record, and the brass rail, built with the map's own components through a shared `RailBar`), CTAs and Discogs form kept; Collection panel translated and in Nogal; Clerk screens themed (ink primary, paper background, Nunito Sans, 4 px radius); cover placeholders translated; old cream and terracotta tokens are gone (the semantic names map onto Nogal); every component except the Discogs attribution and notice goes through the dictionaries; screenshots `p9-landing-*`, `p9-sign-up-*`, `p9-onboarding-*` |
 | 10. Language selector and translations | Todo | |
 | 11. Guided tour | Todo | |
 | 12. Mobile, accessibility, and performance pass | Todo | |
@@ -118,11 +118,16 @@ Rule 4 (several formats, the largest size wins) needs every format, which only t
 - **Rail labels.** The plan hides labels under about 16 px; genre and decade labels are longer than one letter, so a label shows only where it fits whole (measured with a ResizeObserver), never truncated.
 - **Keyboard access to records in the compartment view.** The drawing is for pointing; the list under it (on every screen size, not only phones) is the keyboard and screen reader path.
 
+- **Clerk's own screens stay in English.** Translating them needs `@clerk/localizations`, a new dependency, which tonight's constraints rule out. They're themed in Nogal colors and type. Logged under Ideas.
+- **Page titles stay in English** ("My shelf · Record Organizer"). Translating them means reading the cookie in `generateMetadata`, which would block the prerendered shell under Cache Components.
+
 ## Blocked: needs Ale
 
 (none yet)
 
 ## Ideas for v2
+
+- Translate Clerk's sign-in and sign-up screens with `@clerk/localizations` (needs Ale's OK for the dependency).
 
 - A reason for each blocked compartment ("Turntable", "Speakers"), shown on the map as in the mockup. Needs a column and a field in the builder.
 
@@ -134,6 +139,7 @@ If the session stops on a usage limit, a recurring session job (created when the
 
 - 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
 - 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
+- 2026-11-20 07:35 CST · Phase 9 done: landing hero, collection panel, Clerk theme.
 - 2026-11-20 07:05 CST · Phase 8 done: compartment view and brass rail.
 - 2026-11-20 06:25 CST · Phase 7 done: record card and tracklists.
 - 2026-11-20 05:50 CST · Phase 6 done: shelf builder with live capacity.

@@ -25,6 +25,18 @@ export const viewport: Viewport = {
   themeColor: "#d3dbcd",
 };
 
+/** Clerk's sign-in, sign-up, and account screens in Nogal colors and type. */
+const CLERK_APPEARANCE = {
+  variables: {
+    colorPrimary: "#22302a",
+    colorBackground: "#fbfaf6",
+    colorText: "#22302a",
+    colorInputBackground: "#ffffff",
+    fontFamily: "var(--font-nunito), 'Avenir Next', system-ui, sans-serif",
+    borderRadius: "4px",
+  },
+};
+
 /** Sets <html lang> from the locale cookie before the first paint (the shell is prerendered in English). */
 const LANG_SCRIPT = `try{var m=document.cookie.match(/(?:^|; )${LOCALE_COOKIE}=(en|es|pt)(?:;|$)/);if(m)document.documentElement.lang=m[1]==="pt"?"pt-BR":m[1]}catch(e){}`;
 
@@ -41,7 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <InlineScript html={LANG_SCRIPT} />
       </head>
       <body className="flex min-h-full flex-col">
-        <ClerkProvider>
+        <ClerkProvider appearance={CLERK_APPEARANCE}>
           <Suspense fallback={<SiteHeaderFallback />}>
             <LocaleRoot>
               <SiteHeader />

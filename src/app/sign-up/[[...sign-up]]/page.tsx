@@ -6,7 +6,7 @@ export const metadata = { title: "Sign up" };
 export default function SignUpPage() {
   return (
     <main className="flex flex-1 items-start justify-center px-4 py-10">
-      <Suspense fallback={<p className="text-ink-muted">Loading…</p>}>
+      <Suspense fallback={<p className="text-muted" role="status">…</p>}>
         <SignUp fallbackRedirectUrl="/app" signInUrl="/sign-in" />
       </Suspense>
     </main>

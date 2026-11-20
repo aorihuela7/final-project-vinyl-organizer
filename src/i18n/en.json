@@ -119,7 +119,10 @@
     "noAccount": "No account needed for the demo. Sign up only when you want to save.",
     "importTitle": "Import your collection from Discogs",
     "heroLabel": "An example shelf",
-    "heroCaption": "Every compartment shows its letters and how full it is. Search for a record and see the exact compartment, how far in, and the records on each side."
+    "heroCaption": "Every compartment shows its letters and how full it is. Search for a record and the app shows the compartment, how far in it is, and the records on each side.",
+    "heroRail": "An example collection from # to Z",
+    "heroShelf": "Kallax, LPs (12″ and 10″)",
+    "turntable": "Turntable"
   },
   "notFound": {
     "title": "This page doesn't exist",
@@ -437,5 +440,35 @@
       "firstCompartment": "This is the first compartment, so the records before it have nowhere to go.",
       "notAdjacent": "Pick a record from this compartment or the one right before it: calibration only moves the boundary between them."
     }
+  },
+  "collection": {
+    "title": "Collection",
+    "demoLocal": {
+      "one": "The demo collection: {count} record, kept in this browser.",
+      "other": "The demo collection: {count} records, kept in this browser."
+    },
+    "demo": {
+      "one": "The demo collection: {count} record.",
+      "other": "The demo collection: {count} records."
+    },
+    "discogs": {
+      "one": "The Discogs collection of “{username}”: {count} record.",
+      "other": "The Discogs collection of “{username}”: {count} records."
+    },
+    "already": "That's already your collection. It updates from Discogs on its own.",
+    "importOwn": "Import your own collection from Discogs instead",
+    "importOther": "Import a different Discogs collection",
+    "placeholder": "Discogs username",
+    "waitSync": "Wait for the update from Discogs to finish.",
+    "confirmTitle": "Replace your collection with the one of “{username}”?",
+    "confirmText": {
+      "one": "Your {count} record and your shelves are replaced, including records you added by hand. You'll set up your shelves again for the new collection. Nothing changes on Discogs.",
+      "other": "Your {count} records and your shelves are replaced, including records you added by hand. You'll set up your shelves again for the new collection. Nothing changes on Discogs."
+    },
+    "accountFirst": "You'll create a free account first.",
+    "replace": "Replace my collection"
+  },
+  "cover": {
+    "none": "{artist}, {title} (no cover)"
   }
 }

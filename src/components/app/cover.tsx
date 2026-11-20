@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { hashIndex, initials, onSpineColor, spineColor } from "@/lib/design";
+import { useI18n } from "@/i18n/client";
 
 /**
  * A record cover, straight from the Discogs URL (never downloaded or proxied,
@@ -21,6 +22,7 @@ export function Cover({
   size?: "sm" | "md" | "lg" | "detail" | "fill";
   className?: string;
 }) {
+  const { t } = useI18n();
   const [failed, setFailed] = useState(false);
   const box = { sm: "size-12", md: "size-20", lg: "w-full max-w-64", detail: "size-[104px]", fill: "w-full" }[size];
   const text = { sm: "text-sm", md: "text-xl", lg: "text-5xl", detail: "text-[22px]", fill: "text-base" }[size];
@@ -29,7 +31,7 @@ export function Cover({
     return (
       <div
         role="img"
-        aria-label={`${artist} – ${title} (no cover)`}
+        aria-label={t("cover.none", { artist, title })}
         className={`${box} flex aspect-square shrink-0 items-center justify-center rounded-cover font-semibold shadow-cover ${text} ${className}`}
         style={{ background: spineColor(hashIndex(artist)), color: onSpineColor(hashIndex(artist)) }}
       >
@@ -41,7 +43,7 @@ export function Cover({
     // eslint-disable-next-line @next/next/no-img-element -- covers come straight from Discogs, without next/image optimization.
     <img
       src={src}
-      alt={`${artist} – ${title}`}
+      alt={`${artist}, ${title}`}
       loading="lazy"
       decoding="async"
       referrerPolicy="no-referrer"
