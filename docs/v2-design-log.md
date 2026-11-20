@@ -59,7 +59,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 11. Guided tour | Done | `tour.tsx`, local (no library): offer dialog ("Want a quick tour? It takes about a minute.", "Show me around" / "Not now"), waiting banner for new accounts without a map, 8 steps anchored to real elements with a spotlight (a hole in a shadow) and a Nogal popover (walnut strip, progress "2 of 8", Back, Next, Skip tour); step 4 opens a sample record (side column on desktop, bottom sheet on phones) and closes it after. Keyboard: focus moves into the popover and returns after, Esc closes (captured, so an open sheet doesn't also close), arrows move, Tab stays inside. Reduced motion respected. State in localStorage (demo) or `user_preferences.tour_status`; a demo answer carries over on sign-up. "Take the tour" in the Clerk account menu and next to the view tabs. Walked through all 8 steps at 1280 and 375 in Playwright (focus on Next each step, `completed` saved, not offered again after reload, Esc closes); screenshots `p11-*` |
 | 12. Mobile, accessibility, and performance pass | Done | 375 px: compartments keep their grid, search row stacks, record detail and compartment view are bottom sheets, tour popovers fit (screens `p4`–`p11` at 375). Contrast measured for every text pair on brass, walnut, sage, paper, mustard, and translucent text (all ≥ 4.5:1 for body text; the one failure, mustard text on walnut at 3.5:1, became ink on a mustard badge). Keyboard: compartments, rail segments, neighbors, tour, sheets with focus trap and return; visible ink-and-paper focus ring; reduced motion stops the lift, the marker slide, and smooth scrolling. Drawings are memoized with stable props (the search keeps its query inside `SearchRow`, so typing doesn't re-render the map). E2E suite updated for v2 (fixtures that pre-answer the tour, the record card as a column or sheet, new copy) plus a new `e2e/v2.spec.ts` (tour, language, tracklist, singles box): 22 of 22 pass on desktop and mobile (16 in the full run, the 6 that failed on test selectors fixed and re-run). Fixed a real bug found by e2e: Next 16 keeps the previous page hidden in the DOM, so the landing hero's found compartment and rail matched app selectors; app and tour selectors are now scoped to the map |
 | 13. Visual QA | Done | Compared `p4`–`p11` with `docs/design/nogal.html` at 1280 and 375. Matches: tokens, walnut frame and legs, interiors and inset shadows, lean drawings, plates, count badges (mustard from 90%), found outline and lift, the rail with the hanging marker, the two-column body with the record card, the card's band, drawing, neighbors, tracklist, and actions, the builder with the walnut "holds" box and meters. Fixed: the singles shelf header now reads "Singles box, 7″" as in the mockup. Remaining differences, kept on purpose: the app has a view switch (Map / Shelves & order) and banners the mockup doesn't show; blocked compartments say "Blocked" (no reason is stored); display text is never semibold (Belleza has one weight); brass-dark and engraving are slightly adjusted for AA contrast |
-| 14. Morning summary | Todo | |
+| 14. Morning summary | Done | "Morning summary" below and the final message of the run; draft PR #24 updated with the final status |
 | 15. Easier calibration (#4) | Done | A banner on the map until the first calibration ("The map assumes about 80 records per compartment, an estimate…") with "Match a compartment", which opens the second compartment with calibration already showing, and "Not now" (remembered); the app knows whether you've calibrated (a `calibrate` layout event, or the demo's events). Defaults stay in `CAPACITY`, documented as unmeasured. Screenshots `p15-hint-1280.png`, `p15-calibrate-1280.png` |
 | 16. Minimum-move insertion and purchase simulator (#7) | Done | `insertRecord(…, "minimum")`: shift toward the nearest compartment with room in either direction (cost 1 + boundaries crossed), with the proof in `docs/algorithm.md` §6b; 6 tests (brute-force optimality on every small shelf and every gap, more than 100 cases; invariants over 300 random insertions; never worse than naive when naive keeps every record; the simulator is deterministic and wins on nearly full shelves). The app uses it for "Add a new record" and re-syncs; naive stays as the baseline. Simulator in `src/lib/layout/simulate.ts`, in Shelves & order ("How full your shelves end up": as they are, 90%, 95%, 98%, 100%) and as `scripts/simulate.ts`. On Ale's 1,725 records: 0 records moved with either method on the suggested shelves (10% free space spread everywhere); at 98% full, 17.5 vs 13.4 by artist; at 100% full by genre, 89.4 vs 60.6. Screenshot `p16-simulator-1280.png` |
 | 17. Temporary locations and "Put it back" (#8) | Done | Migration `20261120104542_v2_temporary_locations` (table with RLS and grants; `records.temp_location_id` with a same-user composite key that puts records back if a place is deleted; applied and verified). "Take it out…" in the record card with the places already used, five suggestions (next to the turntable, gig bag, discards box, on display, unsorted pile), or a new name; the record keeps its placement (its home spot), drawn hollow with a dashed outline on the map and in the compartment view; the card says "Out of the shelf: in Gig bag" with "Put it back", which highlights its spot and neighbors; search says "In Gig bag. Its spot: Living room, row 3, column 2"; a panel lists every record that's out by place. Works in the browser demo (snapshot) and signed in (Supabase). Checked in Playwright at 1280 and 375, plus a new e2e test; tracklists from vinyl releases with a bonus CD now get a separate "CD" section. Screenshots `p17-*` |
@@ -224,19 +224,60 @@ Times from the commits (`git log`), CST.
 - 05:24 · Phase 23: design review and fixes.
 - 05:35 · Bug found by e2e and fixed: saving the browser demo to a new account sent derived fields (tag, tag rank) and the demo's local temporary place to the database, so the save failed.
 - 05:40 · Independent security review back; migration `v2_security_review` applied. 05:42 · the extended RLS test caught a broken alias in the layout-log trigger (every layout event insert failed for about three minutes); fixed by `v2_fix_layout_prune`. 05:44 · `v2_clerk_user_ids` applied. RLS test 50/50.
+- 05:46–06:00 · Full e2e runs under parallel imports showed the first Discogs budget split starved searches; reworked twice (imports pace themselves, searches estimate the refill and wait up to 5 s). Last full run: 24 passed, 1 blocked by Clerk's 100-user cap (found in the trace: `user_quota_exceeded`), which also blocks sign-ups on the live app; `npm run test-users` added, deletion left to Ale.
+- 06:02 · Security review fixes committed (`56f1a89`).
 
 ## Morning summary
 
-**Everything in the plan is done**, plus the remaining v2-plan issues, on `v2-design` (draft PR #24). One item waits on Ale: the Clerk deletion webhook's secrets (see Blocked).
+**Every phase of the plan is done, and so are the remaining v2-plan issues,** on `v2-design` (draft PR #24, https://github.com/aorihuela7/final-project-vinyl-organizer/pull/24). Nothing was deployed and `main` wasn't touched. Two phases are done with a step left for Ale (21 and 22).
+
+**Needs Ale, in this order** (details under "Blocked: needs Ale"):
+
+1. **New sign-ups are blocked on the live app right now.** Clerk's development instance allows 100 users; tonight's e2e runs filled it (94 test users). Run `npm run test-users -- --delete` (it touches only `e2e-…+clerk_test@example.com` users and their rows).
+2. Turn off Supabase Auth's own sign-ups in the dashboard (the database already refuses non-Clerk ids).
+3. The Clerk deletion webhook: two environment variables, the secret's hash, and the endpoint.
+4. Decisions: a Clerk production instance, a separate database for tests, and the agent's `npx tsx` permission.
 
 **Screenshots to look at first** (local, `docs/screenshots/v2-design/`): `p7-record-1280.png` (map, found compartment, record card with tracklist), `p8-compartment-1280.png`, `p8-rail-artist-375.png`, `p6-builder-1280.png`, `p9-landing-1280.png`, `p10-es-1280.png`, `p11-step3-375.png`, `p16-simulator-1280.png`, `p17-out-card-1280.png`, `p19-section-1280.png`, `p23-*` (every page at 390 and 1440).
 
-**Database:** eight new migrations, all additive and applied to the linked project: format groups (with a backfill trigger; singles left LP shelves without moving any LP: 1,678 placements in 37 accounts), user preferences, temporary locations, thickness by format, sections and tags, guest mode, hardening (nightly purge with `pg_cron`, account deletion function), and function grants.
+**Database:** eleven new migrations, all additive, applied to the linked project and in sync:
+- format groups (with a backfill trigger; singles left LP shelves without moving any LP: 1,678 placements in 37 accounts);
+- user preferences, temporary locations, thickness by format, sections and tags, guest mode;
+- hardening (nightly purge with `pg_cron`, the account deletion function) and function grants;
+- three from the security pass.
 
-**Classification of Ale's collection (1,704 records):** 1,197 LPs by rule 3, 19 explicit 12″, 6 explicit 10″, 147 explicit 7″ singles, 2 singles by "Single"/"EP", 327 CDs, 6 other.
+They also work with the deployed v1, which uses the same database. One slip: a new trigger broke layout-event inserts for about three minutes (v1 and v2) until a follow-up migration fixed it. Failed writes rolled back whole, so no partial data was saved.
 
-**Purchase simulator on Ale's real collection:** with the suggested shelves (10% free space spread everywhere), 100 purchases move 0 records with either method; at 98% full, 17.5 (naive) vs 13.4 (minimum moves) records moved, sorted by artist; at 100% full by genre, 89.4 vs 60.6.
+**Security pass:** the course checklist and an independent review. The review found no cross-account access, no anonymous writes, and no leaked secrets. Its 2 medium and 5 low findings are fixed or on Ale's list (`docs/security-pass.md`).
 
-**Tests:** 162 unit tests; 22 end-to-end tests on desktop and mobile plus the new v2 tests (tour, language, tracklist, singles, temporary locations, guest mode); RLS test 38/38 against the real database.
+**Classification of Ale's collection (1,704 records):**
 
-**Open questions** are under "Assumptions and questions for Ale"; the ones that most need an answer: guest links and the 6-hour rule, the 90-day purge, and reviewing the Spanish (and finding a Portuguese reviewer).
+| Group | Records | Rule |
+| --- | --- | --- |
+| LPs | 1,197 | rule 3 |
+| LPs | 19 | explicit 12″ |
+| LPs | 6 | explicit 10″ |
+| Singles | 147 | explicit 7″ |
+| Singles | 2 | "Single" or "EP" |
+| CDs | 327 | |
+| Other | 6 | |
+
+**Purchase simulator on Ale's real collection (records moved by 100 purchases):**
+
+| Shelves | Sort order | Naive | Minimum moves |
+| --- | --- | --- | --- |
+| Suggested (10% free space spread everywhere) | | 0 | 0 |
+| 98% full | Artist | 17.5 | 13.4 |
+| 100% full | Genre | 89.4 | 60.6 |
+
+**Tests on the last commit:**
+- `npm run test`: exit 0, 180 unit tests.
+- `npm run build`: exit 0.
+- `npm run test:rls`: 50/50 against the real database.
+- End-to-end: the last full run passed 24. The remaining test couldn't sign up because of Clerk's user cap, not the code; it passed earlier tonight on the same import path. Seven tests are skipped by design (they run on one screen size only).
+
+**Open questions** are under "Assumptions and questions for Ale". The ones that most need an answer:
+- Guest links and the 6-hour rule: the database now enforces it. Should guests be able to trigger a refresh?
+- The 90-day purge.
+- The 25,000-record quota.
+- Reviewing the Spanish, and finding a Portuguese reviewer.
