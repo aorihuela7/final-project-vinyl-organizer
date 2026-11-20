@@ -551,5 +551,10 @@
     "fullPct": "{pct}% cheias depois das compras",
     "scenarioNow": "Com suas estantes como estão",
     "scenarioFull": "Com estantes {pct}% cheias depois das compras"
+  },
+  "mediaHeader": {
+    "lp": "LPs (12″ e 10″)",
+    "single": "7″",
+    "cd": "CDs"
   }
 }

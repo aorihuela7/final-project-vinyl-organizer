@@ -551,5 +551,10 @@
     "fullPct": "{pct}% full after the purchases",
     "scenarioNow": "With your shelves as they are",
     "scenarioFull": "With shelves {pct}% full after the purchases"
+  },
+  "mediaHeader": {
+    "lp": "LPs (12″ and 10″)",
+    "single": "7″",
+    "cd": "CDs"
   }
 }

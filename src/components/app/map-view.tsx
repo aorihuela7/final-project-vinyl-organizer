@@ -154,7 +154,7 @@ function ShelfFurniture({
     <Furniture
       cols={f.cols}
       label={f.name}
-      title={t("map.shelfTitle", { name: f.name, media: t(`media.${media}`) })}
+      title={t("map.shelfTitle", { name: f.name, media: t(`mediaHeader.${media}`) })}
       aside={t("map.holdsOf", { count: total, capacity })}
     >
       {Array.from({ length: f.rows * f.cols }, (_, i) => {

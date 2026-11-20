@@ -551,5 +551,10 @@
     "fullPct": "Llenas al {pct}% después de las compras",
     "scenarioNow": "Con tus repisas como están",
     "scenarioFull": "Con repisas llenas al {pct}% después de las compras"
+  },
+  "mediaHeader": {
+    "lp": "LP (12″ y 10″)",
+    "single": "7″",
+    "cd": "CD"
   }
 }
