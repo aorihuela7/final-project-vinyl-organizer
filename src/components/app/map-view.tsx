@@ -21,6 +21,8 @@ type Props = {
   foundSlot: string | null;
   lifted: boolean;
   onOpen: (slot: Slot) => void;
+  /** A compartment to highlight briefly (after jumping to it from the rail). */
+  flashSlot?: string | null;
   /** Rendered above the shelves of each format group (the brass rail). */
   railFor?: (view: MediaView) => ReactNode;
 };
@@ -68,7 +70,7 @@ const EMPTY: DrawingRecord[] = [];
  * furniture. Every compartment shows a drawing of its records, its letters on
  * a brass plate, and how full it is.
  */
-export function MapView({ config, views, byId, foundId, foundSlot, lifted, onOpen, railFor }: Props) {
+export function MapView({ config, views, byId, foundId, foundSlot, lifted, onOpen, flashSlot = null, railFor }: Props) {
   const { t, n, locale } = useI18n();
   const groups = useGroupData(views, config, byId);
   const furniture = [...config.furniture].sort((a, b) => a.sortIndex - b.sortIndex);
@@ -95,6 +97,7 @@ export function MapView({ config, views, byId, foundId, foundSlot, lifted, onOpe
                   foundId={foundId}
                   foundSlot={foundSlot}
                   lifted={lifted}
+                  flashSlot={flashSlot}
                   onOpen={onOpen}
                   plateLines={(p) => plateLines(p, genre, genresCount)}
                   t={t}
@@ -117,6 +120,7 @@ function ShelfFurniture({
   foundId,
   foundSlot,
   lifted,
+  flashSlot,
   onOpen,
   plateLines,
   t,
@@ -128,6 +132,7 @@ function ShelfFurniture({
   foundId: string | null;
   foundSlot: string | null;
   lifted: boolean;
+  flashSlot: string | null;
   onOpen: (slot: Slot) => void;
   plateLines: (p: PlateData) => PlateLineText[];
   t: ReturnType<typeof useI18n>["t"];
@@ -170,7 +175,7 @@ function ShelfFurniture({
             key={i}
             aspect={aspect}
             interactive
-            found={isFound}
+            found={isFound || flashSlot === slot.id}
             ariaLabel={label}
             onActivate={() => onOpen(slot)}
             dataSlot={slot.id}

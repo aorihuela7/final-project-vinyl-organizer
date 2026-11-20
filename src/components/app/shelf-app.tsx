@@ -9,6 +9,8 @@ import { slotTitle } from "@/lib/shelf/describe";
 import { CompartmentSheet } from "./compartment-sheet";
 import { ImportProgress } from "./import-progress";
 import { MapView } from "./map-view";
+import { BrassRail } from "./brass-rail";
+import { toSortSettings } from "@/lib/shelf/model";
 import { Onboarding } from "./onboarding";
 import { RecordCard, RecordCardEmpty, findLocation } from "./record-details";
 import { useMediaQuery } from "./use-media-query";
@@ -41,6 +43,13 @@ export function ShelfApp() {
   // The found record: its compartment gets the mustard outline and the record lifts (the "found moment").
   const [found, setFound] = useState<string | null>(null);
   const [lifted, setLifted] = useState(false);
+  // A compartment highlighted briefly after jumping to it from the rail.
+  const [flashSlot, setFlashSlot] = useState<string | null>(null);
+  const jumpTo = useCallback((slotId: string) => {
+    document.querySelector(`[data-slot="${CSS.escape(slotId)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    setFlashSlot(slotId);
+    setTimeout(() => setFlashSlot((s) => (s === slotId ? null : s)), 1600);
+  }, []);
   const showFound = useCallback((id: string | null) => {
     setFound(id);
     setLifted(false);
@@ -105,6 +114,7 @@ export function ShelfApp() {
     return t("app.anotherCompartment");
   };
   const sheetLocation = openRecord ? findLocation(views, openRecord) : null;
+  const sortSettings = toSortSettings(config?.settings ?? { sortLevels: ["artist"], ignoreArticles: false, slackPct: 10 });
 
   return (
     <div className="flex flex-col gap-4">
@@ -204,6 +214,15 @@ export function ShelfApp() {
                   foundSlot={found ? (findLocation(views, found)?.slot.id ?? null) : null}
                   lifted={lifted}
                   onOpen={(slot) => setOpenSlot(slot)}
+                  flashSlot={flashSlot}
+                  railFor={(view) => (
+                    <BrassRail
+                      view={view}
+                      settings={sortSettings}
+                      foundId={found && view.index.positionOf.has(found) ? found : null}
+                      onJump={jumpTo}
+                    />
+                  )}
                 />
                 {wide && (
                   <aside className="sticky top-4 max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-card" aria-live="polite" data-tour="record">
@@ -248,7 +267,7 @@ export function ShelfApp() {
         />
       )}
 
-      {recordInSheet && config && (!wide || tab !== "map") && (
+      {recordInSheet && config && !wide && (
         <Sheet bare title={recordInSheet.title} labelledBy="record-sheet-title" onClose={() => setOpenRecord(null)}>
           <RecordCard
             key={recordInSheet.id}

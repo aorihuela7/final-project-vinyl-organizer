@@ -53,7 +53,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 5. Search row and "Add a new record" | Done | `SearchRow` (search, "or", "+ Add a new record"; one row from 700 px, stacked and centered below), search as an accessible combobox (arrows, Enter, Escape), "Add a new record" everywhere (button, dialog, README, comments, e2e selectors) with the three steps "Find it on Discogs" / "It goes in …, between … and …" (with the target compartment drawn and the new record in mustard) / "Add record" → "Record added"; groups decide the shelves; screenshots `p5-search-row-*`, `p5-add-*`, `p5-added-*` |
 | 6. Shelf builder with live capacity | Done | Shelves & order rebuilt: shelves as cards with "Holds 1,280" and a mini walnut drawing, one open in the builder (form, walnut box "This shelf holds 910 LPs / 13 compartments × 70 records, 3 blocked", one meter per format group with "won't fit" warnings in mustard, the preview as walnut furniture with "910 places"), template picker drawn as small furniture, sort order card; pure `src/lib/shelf/capacity.ts` with 3 tests; checked live in Playwright (capacity 80 → 70 and one more blocked compartment); screenshots `p6-builder-*` |
 | 7. Record detail card and tracklist | Done | `RecordCard`: walnut band ("Living room, row 3, column 2" / "Record 28 of 60, about 46% in from the left"), 104 px cover, title in Belleza, artist and year, label, format, genres with commas, the compartment drawn at 1.6:1 in an 8 px walnut frame with the record lifted in mustard, five neighbors in physical order (third line when in another compartment), tracklist, Discogs link and "Show on the map". Side column from 900 px (with an empty state), bottom sheet with the band as handle below. Tracklist route `/api/discogs/release/[id]` ("use cache", expires within 6 h, 15/min per IP or 30/min per user, works without an account) and parser `src/lib/discogs/tracklist.ts` with 5 tests (sides, headings, index tracks, missing durations, "1", "A", "CD1-1"); loading skeleton, error with "Try again"; screenshots `p7-record-*`, `p7-record-sheet-375.png` (real tracklist for Sirope) |
-| 8. Compartment view and brass rail | Todo | |
+| 8. Compartment view and brass rail | Done | Compartment view rebuilt: walnut frame with the full range on a brass plate, the same drawing as the map (same viewBox and seed, so it looks identical), hover bubble with artist, title, and position, click opens the card, an accessible list of the records, calibration as a secondary pill with translated refusals. Brass rail per format group (`brass-rail.tsx`, segments from `src/lib/visual/rail.ts` with 4 tests): letters, genres, or decades sized by records, engraved separators, labels only where they fit whole, mustard marker hanging below that slides in 1 s, segments jump to their first compartment and flash it. Checked with genre, artist, and year first in Playwright; fixed a bug where an open record showed as a modal over Shelves & order on desktop. Old `spines.tsx` removed. Screenshots `p8-*` |
 | 9. Other screens | Todo | |
 | 10. Language selector and translations | Todo | |
 | 11. Guided tour | Todo | |
@@ -115,6 +115,9 @@ Rule 4 (several formats, the largest size wins) needs every format, which only t
 - **One shelf open at a time.** The mockup shows a single "New shelf" builder. Taken: saved shelves are cards with Edit, and only one is open in the builder; a new shelf from the template picker opens right away. On first setup (no map yet) the first suggested shelf starts open.
 - **Changing "Holds" keeps a hand-set capacity.** Switching a shelf between LPs, singles, and CDs updates the records per compartment to the new default only if it was still the old default.
 
+- **Rail labels.** The plan hides labels under about 16 px; genre and decade labels are longer than one letter, so a label shows only where it fits whole (measured with a ResizeObserver), never truncated.
+- **Keyboard access to records in the compartment view.** The drawing is for pointing; the list under it (on every screen size, not only phones) is the keyboard and screen reader path.
+
 ## Blocked: needs Ale
 
 (none yet)
@@ -131,6 +134,7 @@ If the session stops on a usage limit, a recurring session job (created when the
 
 - 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
 - 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
+- 2026-11-20 07:05 CST · Phase 8 done: compartment view and brass rail.
 - 2026-11-20 06:25 CST · Phase 7 done: record card and tracklists.
 - 2026-11-20 05:50 CST · Phase 6 done: shelf builder with live capacity.
 - 2026-11-20 05:20 CST · Phase 5 done: search row and Add a new record.

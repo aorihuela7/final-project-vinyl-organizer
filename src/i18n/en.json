@@ -401,5 +401,41 @@
     "disc": "Disc {n}",
     "emptyTitle": "Find a record",
     "emptyText": "Search for an artist or a title to see where a record is, the records on each side, and its tracklist. Click a compartment to see what's inside."
+  },
+  "rail": {
+    "label": "Your {media} from {first} to {last}",
+    "decade": "{decade}s",
+    "segment": {
+      "one": "{label}: {count} record",
+      "other": "{label}: {count} records"
+    },
+    "segmentGo": {
+      "one": "{label}: {count} record. Go to where it starts",
+      "other": "{label}: {count} records. Go to where they start"
+    }
+  },
+  "compartment": {
+    "count": {
+      "one": "{count} of {capacity} records",
+      "other": "{count} of {capacity} records"
+    },
+    "over": "You marked this compartment as fuller than its capacity. That's fine: the map follows your real shelf.",
+    "calibrate": "The first record here is different…",
+    "drawingHint": "Point at a record to see it; click it for the details and the cover.",
+    "list": "Records in this compartment, left to right",
+    "empty": "This compartment is empty.",
+    "added": "added by you",
+    "position": "{index} of {total}",
+    "calibrateLabel": "Which record is really the first one in this compartment?",
+    "calibratePlaceholder": "Search this compartment and the one before",
+    "calibrateNoMatch": "No match in this compartment or the previous one.",
+    "calibrateHint": "Only the boundary with the previous compartment moves. Everything else stays where it is.",
+    "calibrateFailed": "Couldn't save the calibration.",
+    "refusal": {
+      "unavailable": "That compartment isn't available.",
+      "notOnShelf": "That record isn't on this shelf.",
+      "firstCompartment": "This is the first compartment, so the records before it have nowhere to go.",
+      "notAdjacent": "Pick a record from this compartment or the one right before it: calibration only moves the boundary between them."
+    }
   }
 }
