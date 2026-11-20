@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SignUpButton } from "@clerk/nextjs";
 import { displayArtist, type Slot } from "@/lib/layout";
@@ -35,7 +35,22 @@ export function ShelfApp() {
     setOpenRecordState(id);
     if (id) setLastRecord(id);
   };
-  const [highlight, setHighlight] = useState<string | null>(null);
+  // The found record: its compartment gets the mustard outline and the record lifts (the "found moment").
+  const [found, setFound] = useState<string | null>(null);
+  const [lifted, setLifted] = useState(false);
+  const showFound = useCallback((id: string | null) => {
+    setFound(id);
+    setLifted(false);
+    if (!id) return;
+    // Two frames later, so the lift and the outline animate from the resting state.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        setLifted(true);
+        document.querySelector('[data-found="true"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
+      }),
+    );
+  }, []);
+
   const [adding, setAdding] = useState(false);
 
   const byId = useMemo(() => new Map((app.data?.records ?? []).map((r) => [r.id, r])), [app.data?.records]);
@@ -153,7 +168,7 @@ export function ShelfApp() {
                     config={config}
                     onPick={(id) => {
                       setOpenRecord(id);
-                      setHighlight(findLocation(views, id)?.slot.id ?? null);
+                      showFound(id);
                     }}
                   />
                 </div>
@@ -186,10 +201,13 @@ export function ShelfApp() {
               <MapView
                 config={config}
                 views={views}
-                highlight={highlight}
+                byId={byId}
+                foundId={found}
+                foundSlot={found ? (findLocation(views, found)?.slot.id ?? null) : null}
+                lifted={lifted}
                 onOpen={(slot) => {
                   setOpenSlot(slot);
-                  setHighlight(slot.id);
+
                 }}
               />
             </div>
@@ -230,8 +248,7 @@ export function ShelfApp() {
             onShowOnMap={() => {
               setOpenRecord(null);
               setTab("map");
-              setHighlight(sheetLocation?.slot.id ?? null);
-              requestAnimationFrame(() => document.querySelector("[class*='ring-accent']")?.scrollIntoView({ block: "center", behavior: "smooth" }));
+              showFound(recordInSheet.id);
             }}
           />
         </Sheet>
@@ -245,7 +262,8 @@ export function ShelfApp() {
           onClose={() => setAdding(false)}
           onShowRecord={(id, slotId) => {
             setAdding(false);
-            setHighlight(slotId);
+            void slotId;
+            showFound(id);
             setOpenRecord(id);
           }}
         />

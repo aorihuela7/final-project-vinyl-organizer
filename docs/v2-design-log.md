@@ -49,7 +49,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 1. Foundations | Done | Nogal tokens in `src/styles/tokens.css` (+ `surface-*` utilities in globals.css), Belleza and Nunito Sans via `next/font`, type scale 11–26, i18n in `src/i18n/` (core, server, client, `en.json`, 7 tests), app bar, banners, buttons, and inputs in `src/components/ui.tsx`; screenshots `p1-landing-*`, `p1-app-demo-*`; build and 76 tests pass |
 | 2. Lean function | Done | `src/lib/visual/lean.ts` (port of `leanLayout`, widths per record, sizes 12/10/7) and 15 Vitest tests: every n from 1 to 80 × 20 seeds × square and 1.6:1 × three size mixes, 0 overlaps by separating-axis test (~10 million pairs), corners inside, tops left of bases, angles non-decreasing, determinism, monotonic maximum angle, 25 × 80 records in under 16 ms; preview `p2-lean-preview.png` |
 | 3. Format groups | Done | Classifier `src/lib/discogs/format.ts` (17 tests with real description arrays); migrations `20261120094123_v2_format_groups` and `20261120094124_v2_user_preferences` applied with `supabase db push --remote --yes` and verified read-only (0 records without a group, 0 singles on LP shelves, 37 `format_split` events with 1,678 moves); layout groups `lp`/`single`/`cd` with tests (a 7″ never on an LP shelf, invariants per group); browser demo snapshot v2 with migration test (no LP moves); Record box template; demo Singles box; banner for singles without a shelf; screenshot `p3-demo-groups-*` (13 singles in the Singles box, none on Living room) |
-| 4. Map | Todo | |
+| 4. Map | Done | Walnut furniture with legs (`furniture.tsx`), one memoized SVG drawing per compartment with sizes (`compartment-drawing.tsx`), letter plates (`src/lib/visual/plates.ts`, 17 tests with every plan example), count badge (mustard from 90%), found outline and lift, keyboard access (`role=button`, full range in `aria-label`), one section per format group; screenshots `p4-map-*` (1280 and 375). The found outline is checked again in phase 7, once the record detail stops covering the map |
 | 5. Search row and "Add a new record" | Todo | |
 | 6. Shelf builder with live capacity | Todo | |
 | 7. Record detail card and tracklist | Todo | |
@@ -105,13 +105,17 @@ Rule 4 (several formats, the largest size wins) needs every format, which only t
 - **Singles capacity on the Record box for LPs.** The Record box template holds 100 singles or 70 LPs per box; the Crates template still exists for LPs. Easy to change in `CAPACITY`.
 - **`supabase db push` needs `--yes` in agent mode.** The CLI refused without it ("ask the user before re-running with --yes"). Ale authorized `--yes` for new migrations tonight, so it was re-run with `--remote --yes`.
 
+- **Blocked compartments say "Blocked".** The mockup shows a reason ("Turntable"), but compartments don't store one. Taken: "Blocked", translated. Logged under Ideas.
+- **Narrow genre plates.** Under 80 px a single-genre plate breaks into the genre over its range ("Rock" / "Gu – Lo") instead of truncating; two-genre plates still truncate (the full range is in the aria-label and the compartment view).
+- **Furniture width.** A compartment is at most 190 px wide on the map, and pieces of the same group sit side by side when they fit, so a tower doesn't fill the screen.
+
 ## Blocked: needs Ale
 
 (none yet)
 
 ## Ideas for v2
 
-(none yet)
+- A reason for each blocked compartment ("Turntable", "Speakers"), shown on the map as in the mockup. Needs a column and a field in the builder.
 
 ## Resuming
 
@@ -121,6 +125,7 @@ If the session stops on a usage limit, a recurring session job (created when the
 
 - 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
 - 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
+- 2026-11-20 04:55 CST · Phase 4 done: Nogal map with drawings and letter plates.
 - 2026-11-20 04:20 CST · Phase 3 done: format groups end to end, migrations applied.
 - 2026-11-20 03:45 CST · Phase 2 done: lean function and tests.
 - 2026-11-20 03:38 CST · Phase 1 done: tokens, fonts, i18n system, shell strings, ui primitives.

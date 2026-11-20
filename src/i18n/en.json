@@ -198,5 +198,41 @@
     "lp": "LPs",
     "single": "singles",
     "cd": "CDs"
+  },
+  "genres": {
+    "Blues": "Blues",
+    "Brass & Military": "Brass & Military",
+    "Children's": "Children's",
+    "Classical": "Classical",
+    "Electronic": "Electronic",
+    "Folk, World, & Country": "Folk, World, & Country",
+    "Funk / Soul": "Funk / Soul",
+    "Hip Hop": "Hip Hop",
+    "Jazz": "Jazz",
+    "Latin": "Latin",
+    "Non-Music": "Non-Music",
+    "Pop": "Pop",
+    "Reggae": "Reggae",
+    "Rock": "Rock",
+    "Stage & Screen": "Stage & Screen",
+    "No genre": "No genre"
+  },
+  "map": {
+    "holdsOf": "{count} of {capacity}",
+    "places": "{count} places",
+    "blocked": "Blocked",
+    "empty": "Empty",
+    "badge": "{count} of {capacity}",
+    "openCompartment": "{range}, {count} of {capacity} records. Open the compartment",
+    "openEmpty": "{place}, empty. Open the compartment",
+    "overCapacity": "over capacity",
+    "genresCount": {
+      "one": "{count} genre",
+      "other": "{count} genres"
+    },
+    "noYear": "No year",
+    "shelfTitle": "{name}, {media}",
+    "groupTitle": "{media}",
+    "legend": "Each compartment shows its letters; the full range is in the compartment view."
   }
 }

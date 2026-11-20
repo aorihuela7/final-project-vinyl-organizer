@@ -141,3 +141,9 @@ export function renderMsg(t: Translator["t"], m: Msg): string {
   for (const [k, v] of Object.entries(m.vars)) vars[k] = typeof v === "object" ? renderMsg(t, v) : v;
   return t(m.key, vars);
 }
+
+/** A Discogs genre in the current language (the canonical name when there's no translation). Sorting always uses the canonical name. */
+export function genreName(locale: Locale, canonical: string): string {
+  const table = (DICTIONARIES[locale] as { genres?: Record<string, string> }).genres;
+  return table?.[canonical] ?? (DICTIONARIES.en as { genres?: Record<string, string> }).genres?.[canonical] ?? canonical;
+}
