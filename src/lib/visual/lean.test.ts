@@ -92,11 +92,33 @@ describe("leanLayout", () => {
     expect(records[2]!.height).toBeLessThan(records[1]!.height * 0.75);
   });
 
+  it("stands the first records upright even when there are only a few", () => {
+    for (const seed of SEEDS) {
+      for (let n = 1; n <= 12; n++) {
+        const { records } = leanLayout(inputs(n, seed, MIXES[2]!), { capacity: 100, width: 125, height: 100, seed });
+        // At least the first half stands at exactly 0°, starting with the one against the wall.
+        const upright = records.filter((r) => r.angle === 0).length;
+        expect(upright).toBeGreaterThanOrEqual(Math.ceil(n / 2));
+        expect(records[0]!.angle).toBe(0);
+        for (let i = 0; i < Math.ceil(n / 2); i++) expect(records[i]!.angle).toBe(0);
+        // With room to spare, the last one leans (one record alone stands).
+        if (n >= 2) expect(records[n - 1]!.angle).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("leans four singles in a box of 100 as two upright and two leaning, the last one the most", () => {
+    const { records } = leanLayout(inputs(4, 1, MIXES[2]!), { capacity: 100, width: 125, height: 100, seed: 1 });
+    expect(records.map((r) => r.angle > 0)).toEqual([false, false, true, true]);
+    expect(records[3]!.angle).toBeGreaterThan(records[2]!.angle);
+  });
+
   it("gives a larger or equal maximum angle with more free space", () => {
     for (const drawing of DRAWINGS) {
       for (const seed of SEEDS.slice(0, 5)) {
         let previous = Infinity;
-        for (let n = 1; n <= 80; n++) {
+        // From two records: one record alone stands upright.
+        for (let n = 2; n <= 80; n++) {
           const { records } = leanLayout(inputs(n, seed, MIXES[0]!), { capacity: CAPACITY, ...drawing, seed });
           const max = Math.max(...records.map((r) => r.angle));
           // n grows, so free space shrinks: the maximum angle must not grow.

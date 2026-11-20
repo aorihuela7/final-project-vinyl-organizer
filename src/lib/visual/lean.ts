@@ -3,9 +3,11 @@
  *
  * Records stand packed against the left wall. When a compartment has free
  * space, the records nearest the empty side lean the way real records do:
- * each one's top rests against the record before it (or the left wall), and
- * its bottom slides toward the right. Angles never decrease toward the right,
- * so records touch at most at a point and never overlap.
+ * the first ones stand upright against the wall (at least half of them, so
+ * even two or three records never all recline on a smooth floor), and each
+ * leaning one's top rests against the record before it while its bottom
+ * slides toward the right. Angles grow toward the right, so records touch at
+ * most at a point and never overlap.
  *
  * Ported from leanLayout in docs/design/nogal.html, generalized to a width per
  * record (so thickness by format can replace "inner width ÷ capacity" later).
@@ -97,7 +99,11 @@ export function heightJitter(id: string): number {
   return (hash(id, 0x9e37) % 1000) / 1000;
 }
 
-/** How many of the last records lean and how far, from the free share of the compartment. */
+/**
+ * How many of the last records lean and how far, from the free share of the
+ * compartment. At most the last half leans: the first records always stand
+ * upright, so the leaning ones have something to rest on.
+ */
 export function leanParams(n: number, capacity: number): { free: number; k: number; maxAngle: number; exponent: number } {
   const free = capacity > 0 ? Math.max(0, capacity - n) / capacity : 0;
   let k: number;
@@ -112,8 +118,10 @@ export function leanParams(n: number, capacity: number): { free: number; k: numb
     k = Math.min(n, Math.max(2, Math.round(3 + 14 * free + 0.05 * n)));
     maxAngle = Math.min(40, 4 + 42 * free);
   }
-  // With little space only the last few lean, progressively; with a lot, the small group reclines together.
-  const exponent = 1.6 - 1.2 * smooth((free - 0.4) / 0.5);
+  k = Math.min(k, Math.floor(n / 2));
+  if (k === 0) maxAngle = 0;
+  // Each leaning record leans further than the one before: steeply progressive with little space, closer to even with a lot.
+  const exponent = 1.6 - 0.6 * smooth((free - 0.4) / 0.5);
   return { free, k, maxAngle, exponent };
 }
 
@@ -138,7 +146,8 @@ export function leanLayout(inputs: readonly LeanInput[], options: LeanOptions): 
   // How far records lean depends on the free share of the compartment (in places).
   const placesUsed = Math.round(totalPlaces);
   const { k: kPlaces, maxAngle, exponent } = leanParams(placesUsed, options.capacity);
-  const k = Math.min(n, kPlaces);
+  // In records, not places: a double album is still one record to rest on.
+  const k = Math.min(Math.floor(n / 2), kPlaces);
   // The bases never use more than 65% of the free width.
   const limit = Math.min(pad + usedWidth + 0.65 * Math.max(0, inner - usedWidth) + 3, W - pad);
 
