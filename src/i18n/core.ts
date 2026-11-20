@@ -67,7 +67,8 @@ function interpolate(template: string, locale: Locale, vars: Vars | undefined): 
 }
 
 function pickPlural(forms: PluralForms, locale: Locale, count: number): string {
-  if (count === 0 && forms.zero) return forms.zero;
+  // Zero reads as plural in all three languages ("0 discos"), even where CLDR calls it "one" (pt-BR).
+  if (count === 0) return forms.zero ?? forms.other;
   const category = new Intl.PluralRules(LOCALE_TAGS[locale]).select(count) as keyof PluralForms;
   return forms[category] ?? forms.other;
 }

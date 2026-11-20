@@ -470,5 +470,52 @@
   },
   "cover": {
     "none": "{artist}, {title} (no cover)"
+  },
+  "tour": {
+    "offerTitle": "Want a quick tour?",
+    "offerText": "It takes about a minute.",
+    "showMe": "Show me around",
+    "notNow": "Not now",
+    "waiting": "We'll show you around as soon as your shelf is ready.",
+    "back": "Back",
+    "next": "Next",
+    "skip": "Skip tour",
+    "finish": "Done",
+    "progress": "{n} of {total}",
+    "label": "Tour",
+    "steps": {
+      "search": {
+        "title": "Search",
+        "text": "Type an artist or a title to find where a record is."
+      },
+      "rail": {
+        "title": "The brass rail",
+        "text": "Your whole collection from start to end. The mustard marker shows where a record falls."
+      },
+      "compartment": {
+        "title": "A compartment",
+        "text": "Each compartment shows its range. Click one to see the records inside."
+      },
+      "record": {
+        "title": "The record detail",
+        "text": "Where it is, the records on each side, and its tracklist."
+      },
+      "add": {
+        "title": "Add a new record",
+        "text": "Bought something new? Find it on Discogs and see where it goes."
+      },
+      "setup": {
+        "title": "Shelves & order",
+        "text": "Set up your furniture. LPs and singles go on separate shelves, and you'll see how many records fit as you build."
+      },
+      "language": {
+        "title": "Language",
+        "text": "Change the language here."
+      },
+      "done": {
+        "title": "Done",
+        "text": "That's it. You can take the tour again from the menu."
+      }
+    }
   }
 }

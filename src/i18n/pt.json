@@ -1,1 +1,521 @@
-{}
+{
+  "meta": {
+    "pitch": "Monte a sua estante de discos real, nicho por nicho, e saiba sempre onde está cada disco e onde vai o próximo.",
+    "myShelf": "Minha estante"
+  },
+  "common": {
+    "close": "Fechar",
+    "cancel": "Cancelar",
+    "back": "Voltar",
+    "done": "Pronto",
+    "dismiss": "Dispensar",
+    "tryAgain": "Tentar de novo",
+    "import": "Importar",
+    "saving": "Salvando…",
+    "loading": "Carregando…",
+    "records": {
+      "one": "{count} disco",
+      "other": "{count} discos"
+    },
+    "language": "Idioma"
+  },
+  "header": {
+    "myShelf": "Minha estante",
+    "signIn": "Entrar",
+    "signUp": "Criar conta",
+    "account": "Conta",
+    "takeTour": "Fazer o tour"
+  },
+  "importForm": {
+    "label": "Seu usuário do Discogs",
+    "placeholder": "Por exemplo, colecionadordevinil",
+    "help": "Sua coleção precisa ser pública no Discogs. Você vai criar uma conta grátis para salvá-la.",
+    "checkUsername": "Confira o usuário."
+  },
+  "validation": {
+    "usernameEmpty": "Digite seu usuário do Discogs.",
+    "usernameLong": "É longo demais para um usuário do Discogs.",
+    "usernameChars": "Os usuários do Discogs só usam letras, números, pontos, hífens e sublinhados."
+  },
+  "onboarding": {
+    "title": "Vamos mapear a sua estante",
+    "demoTitle": "Experimente a coleção de demonstração",
+    "demoText": "1.000 discos reais em estantes já montadas.",
+    "demoNoAccount": "Não precisa de conta.",
+    "demoButton": "Carregar a demonstração",
+    "importTitle": "Importe sua coleção do Discogs",
+    "importLabel": "Seu usuário do Discogs (a coleção precisa ser pública)",
+    "importAccount": "Primeiro você vai criar uma conta grátis, assim sua estante fica salva."
+  },
+  "importing": {
+    "demoTitle": "Carregando a coleção de demonstração",
+    "importing": "Importando sua coleção…",
+    "starting": "Começando a importação…",
+    "loadingDemo": "Carregando a coleção de demonstração…",
+    "progress": "{done} de {total} discos",
+    "progressPages": "{done} de {total} discos, página {page} de {pages}",
+    "talking": "Conectando ao Discogs…",
+    "closeTab": "Você pode fechar esta aba: a importação continua daqui quando você voltar."
+  },
+  "app": {
+    "loadingShelf": "Carregando sua estante…",
+    "loadingDemo": "Carregando a coleção de demonstração do Discogs…",
+    "errorTitle": "Algo deu errado",
+    "nothingYet": "Ainda não há nada para mostrar.",
+    "startOver": "Começar de novo",
+    "demoBanner": "Esta demonstração vive só neste navegador. Crie uma conta para salvá-la e importar sua própria coleção.",
+    "signUpToSave": "Criar conta para salvar",
+    "updating": "Atualizando do Discogs…",
+    "updatingCount": "Atualizando do Discogs: {done} de {total}",
+    "buildTitle": "Monte sua estante",
+    "buildText": "{count} discos importados. Escolha seus móveis e sua ordem, e o app calcula onde vai cada disco.",
+    "views": "Visualizações",
+    "tabMap": "Mapa",
+    "tabSetup": "Estantes e ordem",
+    "summary": {
+      "one": "{count} disco, ordenado por {levels}, com {slack}% de espaço livre",
+      "other": "{count} discos, ordenados por {levels}, com {slack}% de espaço livre"
+    },
+    "summaryArticles": "{summary}, ignorando os artigos iniciais",
+    "levelJoin": "{first}, depois {rest}",
+    "leftover": {
+      "one": "{count} disco não está na estante porque não cabe. Adicione uma estante ou aumente a capacidade em Estantes e ordem.",
+      "other": "{count} discos não estão na estante porque não cabem. Adicione uma estante ou aumente a capacidade em Estantes e ordem."
+    },
+    "cdsWithoutShelf": {
+      "one": "{count} CD ainda não tem estante de CD.",
+      "other": "{count} CDs ainda não têm estante de CD."
+    },
+    "others": {
+      "one": "{count} fita cassete ou outro formato fica fora das estantes.",
+      "other": "{count} fitas cassete ou outros formatos ficam fora das estantes."
+    },
+    "seeMoves": "Ver as mudanças",
+    "hideMoves": "Esconder as mudanças",
+    "moveLine": "{record}: de {from} para {to}",
+    "moveNew": "novo",
+    "offTheShelf": "fora da estante",
+    "anotherCompartment": "outro nicho",
+    "recordFallback": "Disco",
+    "levelThen": ", depois ",
+    "crashText": "Sua estante está segura. Tente de novo e, se continuar acontecendo, recarregue a página.",
+    "singlesOff": {
+      "one": "Os compactos (7″) agora vão em estantes próprias. {count} compacto fica fora do mapa até você adicionar uma estante de compactos.",
+      "other": "Os compactos (7″) agora vão em estantes próprias. {count} compactos ficam fora do mapa até você adicionar uma estante de compactos."
+    },
+    "addSinglesShelf": "Adicionar uma estante de compactos"
+  },
+  "levels": {
+    "genre": "gênero",
+    "artist": "artista",
+    "year": "ano",
+    "label": "gravadora",
+    "title": "título"
+  },
+  "landing": {
+    "title": "Saiba onde está cada disco, e onde vai o próximo.",
+    "tryDemo": "Experimentar a coleção de demonstração",
+    "signUp": "Criar conta",
+    "noAccount": "Não precisa de conta para a demonstração. Crie uma só quando quiser salvar.",
+    "importTitle": "Importe sua coleção do Discogs",
+    "heroLabel": "Uma estante de exemplo",
+    "heroCaption": "Cada nicho mostra suas letras e o quanto está cheio. Busque um disco e o app mostra o nicho, a que altura ele está e os discos de cada lado.",
+    "heroRail": "Uma coleção de exemplo de # a Z",
+    "heroShelf": "Kallax, LPs (12″ e 10″)",
+    "turntable": "Toca-discos"
+  },
+  "notFound": {
+    "title": "Esta página não existe",
+    "text": "O link pode ser antigo, ou o endereço tem um erro.",
+    "home": "Ir para o início"
+  },
+  "notices": {
+    "replaced": "A coleção do Discogs de “{username}” substituiu a anterior. Monte sua estante para ela.",
+    "localSaveFailed": "Este navegador não conseguiu salvar a demonstração. Ela vai reiniciar quando você sair.",
+    "demoReady": "Demonstração pronta: {lps} LPs e {cds} CDs em estantes já montadas, ordenados por gênero, depois artista.",
+    "demoFailed": "Não foi possível carregar a coleção de demonstração. Tente de novo em um minuto.",
+    "demoSaved": "Sua estante de demonstração está salva na sua conta.",
+    "relaidOut": "A maioria dos discos era nova, então a estante inteira foi organizada de novo com suas configurações.",
+    "placeFailed": "Não foi possível colocar os discos novos ({message}). Gere o mapa de novo para incluí-los.",
+    "newPlaced": {
+      "one": "{count} disco novo já está na sua estante, com {moves}.",
+      "other": "{count} discos novos já estão na sua estante, com {moves}."
+    },
+    "moves": {
+      "one": "{count} mudança",
+      "other": "{count} mudanças"
+    },
+    "newSkipped": {
+      "one": "{count} disco novo não cabe onde deveria. Adicione uma estante ou gere o mapa de novo.",
+      "other": "{count} discos novos não cabem onde deveriam. Adicione uma estante ou gere o mapa de novo."
+    },
+    "replaceFailed": "Não foi possível importar “{username}”: {message} Sua coleção atual não mudou.",
+    "syncFailed": "Não foi possível atualizar do Discogs: {message}",
+    "importFailed": "A importação falhou. Confira o usuário e se a coleção é pública.",
+    "loadFailed": "Não foi possível carregar sua estante.",
+    "mapLeftover": {
+      "one": "Mapa gerado. {count} disco não cabe: adicione uma estante ou aumente a capacidade.",
+      "other": "Mapa gerado. {count} discos não cabem: adicione uma estante ou aumente a capacidade."
+    },
+    "mapUpdated": {
+      "one": "Mapa atualizado: {count} disco mudou de nicho.",
+      "other": "Mapa atualizado: {count} discos mudaram de nicho."
+    },
+    "mapGenerated": {
+      "one": "Mapa gerado: {count} disco colocado.",
+      "other": "Mapa gerado: {count} discos colocados."
+    },
+    "mapSaveFailed": "Não foi possível salvar o mapa.",
+    "addedOneMove": "Disco adicionado. É só colocar no lugar: 1 mudança.",
+    "addedMoves": {
+      "one": "Disco adicionado: {count} mudança.",
+      "other": "Disco adicionado: {count} mudanças."
+    },
+    "addFailed": "Não foi possível adicionar o disco.",
+    "demoReadySingles": "Demonstração pronta: {lps} LPs, {singles} compactos e {cds} CDs em estantes já montadas, ordenados por gênero, depois artista.",
+    "singlesBoxAdded": {
+      "one": "Os compactos (7″) agora vão em estantes próprias. Adicionamos uma caixa de compactos para o seu {count} compacto, e nenhum LP mudou de lugar.",
+      "other": "Os compactos (7″) agora vão em estantes próprias. Adicionamos uma caixa de compactos para os seus {count} compactos, e nenhum LP mudou de lugar."
+    }
+  },
+  "demo": {
+    "living": "Sala",
+    "studio": "Estúdio",
+    "singles": "Caixa de compactos"
+  },
+  "templates": {
+    "kallax_4x4": "Kallax 4×4",
+    "kallax_5x5": "Kallax 5×5",
+    "low_2x4": "Móvel baixo 2×4",
+    "tower_1x5": "Torre 1×5",
+    "crates": "Caixotes em fila",
+    "record_box": "Caixa de discos",
+    "custom": "Sob medida"
+  },
+  "media": {
+    "lp": "LPs (12″ e 10″)",
+    "single": "Compactos (7″)",
+    "cd": "CDs"
+  },
+  "mediaShort": {
+    "lp": "LPs",
+    "single": "compactos",
+    "cd": "CDs"
+  },
+  "genres": {
+    "Blues": "Blues",
+    "Brass & Military": "Bandas e música militar",
+    "Children's": "Infantil",
+    "Classical": "Clássica",
+    "Electronic": "Eletrônica",
+    "Folk, World, & Country": "Folk, world e country",
+    "Funk / Soul": "Funk e soul",
+    "Hip Hop": "Hip hop",
+    "Jazz": "Jazz",
+    "Latin": "Latina",
+    "Non-Music": "Não musical",
+    "Pop": "Pop",
+    "Reggae": "Reggae",
+    "Rock": "Rock",
+    "Stage & Screen": "Cinema e teatro",
+    "No genre": "Sem gênero"
+  },
+  "map": {
+    "holdsOf": "{count} de {capacity}",
+    "places": "{count} lugares",
+    "blocked": "Bloqueado",
+    "empty": "Vazio",
+    "badge": "{count} de {capacity}",
+    "openCompartment": "{range}, {count} de {capacity} discos. Abrir o nicho",
+    "openEmpty": "{place}, vazio. Abrir o nicho",
+    "overCapacity": "acima da capacidade",
+    "genresCount": {
+      "one": "{count} gênero",
+      "other": "{count} gêneros"
+    },
+    "noYear": "Sem ano",
+    "shelfTitle": "{name}, {media}",
+    "groupTitle": "{media}",
+    "legend": "Cada nicho mostra suas letras; a faixa completa está na visualização do nicho."
+  },
+  "place": {
+    "rowCol": "linha {row}, coluna {col}",
+    "crate": "caixote {n}",
+    "box": "caixa {n}",
+    "column": "coluna {n}",
+    "fromTop": "prateleira {n} de cima para baixo",
+    "title": "{shelf}, {place}"
+  },
+  "search": {
+    "placeholder": "Busque um artista ou um título na sua coleção",
+    "results": "Resultados da busca",
+    "noMatch": "Nenhum disco corresponde a “{query}”.",
+    "where": "{place}, a cerca de {pct}% da esquerda",
+    "notPlaced": "{format}: este formato não vai em uma estante",
+    "noSinglesShelf": "Fora do mapa até você adicionar uma estante de compactos",
+    "noCdShelf": "Fora do mapa até você adicionar uma estante de CD",
+    "noLpShelf": "Fora do mapa até você adicionar uma estante de LP",
+    "notOnShelf": "Não está na estante: não cabe",
+    "or": "ou",
+    "addNew": "+ Adicionar um disco novo"
+  },
+  "add": {
+    "title": "Adicionar um disco novo",
+    "step1": "Encontre no Discogs",
+    "step2": "Veja onde ele vai",
+    "step3": "Adicionar disco",
+    "searchLabel": "Busque no Discogs o disco que você acabou de comprar.",
+    "searchPlaceholder": "Artista e título, por exemplo Kind of Blue Miles Davis",
+    "searching": "Buscando no Discogs…",
+    "searchFailed": "A busca falhou.",
+    "releaseFailed": "Não foi possível carregar essa edição.",
+    "noResults": "Nenhuma edição corresponde. Tente o artista e o título.",
+    "change": "Escolher outro",
+    "goesBetween": "Ele vai em {place}, entre {left} e {right}",
+    "goesAfter": "Ele vai em {place}, logo depois de {left}",
+    "goesBefore": "Ele vai em {place}, logo antes de {right}",
+    "goesIn": "Ele vai em {place}",
+    "notPlaced": "Esta edição é em {format}, então não vai em uma estante.",
+    "noShelf": "Você ainda não tem uma estante para {group}. Adicione uma em Estantes e ordem.",
+    "full": "Suas estantes estão cheias: não há lugar para ele em lugar nenhum.",
+    "fits": "Cabe. É só colocar no lugar: 1 mudança.",
+    "moves": {
+      "one": "Esse nicho está cheio: {count} mudança.",
+      "other": "Esse nicho está cheio: {count} mudanças."
+    },
+    "putItIn": "colocar",
+    "overflow": "O último disco não cabe mais nas suas estantes.",
+    "fallback": "({error} Mostrando os dados do resultado da busca.)",
+    "add": "Adicionar disco",
+    "adding": "Adicionando…",
+    "discogsUnchanged": "Adicionar salva só aqui; sua coleção do Discogs não muda."
+  },
+  "levelNames": {
+    "genre": "Gênero",
+    "artist": "Artista",
+    "year": "Ano",
+    "label": "Gravadora",
+    "title": "Título"
+  },
+  "builder": {
+    "yourShelves": "Suas estantes",
+    "flowOrder": "Os discos passam por elas nesta ordem.",
+    "addOne": "Adicione pelo menos uma estante para gerar o mapa.",
+    "generate": "Gerar o mapa",
+    "generateShort": "Gerar",
+    "recompute": "Recalcular",
+    "recomputeTitle": "Recalcular o mapa inteiro?",
+    "generateTitle": "Gerar o mapa?",
+    "willChange": {
+      "one": "{count} disco vai mudar de nicho. As calibrações que você fez são substituídas pela nova organização.",
+      "other": "{count} discos vão mudar de nicho. As calibrações que você fez são substituídas pela nova organização."
+    },
+    "willPlace": {
+      "one": "{count} disco vai ser colocado.",
+      "other": "{count} discos vão ser colocados."
+    },
+    "leftover": {
+      "one": "{count} disco não cabe. Ele vai aparecer como fora da estante.",
+      "other": "{count} discos não cabem. Eles vão aparecer como fora da estante."
+    },
+    "slackReduced": "Só cabe usando parte do espaço livre que você pediu.",
+    "notPlaced": {
+      "one": "{count} fita cassete, arquivo ou outro formato fica fora das estantes.",
+      "other": "{count} fitas cassete, arquivos ou outros formatos ficam fora das estantes."
+    },
+    "cardLine": "{media}, {template}, {rows} × {cols}",
+    "holds": "Cabem {count}",
+    "edit": "Editar",
+    "moveUp": "Subir {name}",
+    "moveDown": "Descer {name}",
+    "remove": "Remover {name}",
+    "newShelf": "Estante nova",
+    "name": "Nome",
+    "template": "Modelo",
+    "holdsLabel": "Guarda",
+    "rows": "Linhas",
+    "cols": "Colunas",
+    "perCompartment": "Discos por nicho",
+    "freeSpace": "Espaço livre (todas as estantes)",
+    "readIt": "Leitura",
+    "byRows": "Por linhas (da esquerda para a direita)",
+    "byColumns": "Por colunas (de cima para baixo)",
+    "thisHolds": "Nesta estante cabem {count} {media}",
+    "arithmetic": {
+      "one": "{open} nicho × {capacity} discos",
+      "other": "{open} nichos × {capacity} discos"
+    },
+    "arithmeticMixed": {
+      "one": "{open} nicho, {overrides} com capacidade própria",
+      "other": "{open} nichos, {overrides} com capacidade própria"
+    },
+    "withBlocked": {
+      "one": "{text}, {count} bloqueado",
+      "other": "{text}, {count} bloqueados"
+    },
+    "importing": "Importando: {done} de {total} até agora",
+    "fill": "{media}: seus {count} discos encheriam {pct}% de {places} lugares",
+    "fillWithThis": "{media}: seus {count} discos encheriam {pct}% de {places} lugares, com esta estante",
+    "fillNoShelf": "{media}: seus {count} discos ainda não têm estante",
+    "wontFit": "{count} não vão caber com {slack}% de espaço livre. Adicione nichos ou aumente a capacidade.",
+    "tapMode": "O que tocar em um nicho faz",
+    "tapBlock": "Tocar para bloquear",
+    "tapCapacity": "Tocar para definir a capacidade",
+    "tapToBlockHint": "Toque em um nicho para bloqueá-lo (um toca-discos, caixas de som).",
+    "tapCapacityHint": "Toque em um nicho para dar a ele uma capacidade própria.",
+    "capacityOf": "Capacidade de {place}",
+    "capacityEmpty": "Deixe vazio para usar os {count} da estante.",
+    "preview": "Prévia",
+    "blocked": "bloqueado",
+    "available": "disponível",
+    "capacityN": "capacidade {count}",
+    "addShelf": "Adicionar uma estante",
+    "sortOrder": "Ordem",
+    "firstBy": "Primeiro por",
+    "thenBy": "Depois por",
+    "none": "Nenhum",
+    "ties": "Os empates sempre se resolvem por artista, depois ano, depois título.",
+    "ignoreArticles": "Ignorar os artigos iniciais (“The Beatles” no B em vez do T, “Los Lobos” no L)",
+    "suggestedLp": "Kallax",
+    "suggestedLpN": "Kallax {n}",
+    "suggestedSingles": "Compactos",
+    "suggestedCds": "Estante de CD"
+  },
+  "record": {
+    "offMap": "Fora do mapa",
+    "otherFormat": "Uma edição em {format}: este formato não vai em uma estante",
+    "doesntFit": "Não cabe nas suas estantes. Adicione uma estante ou aumente a capacidade.",
+    "position": "Disco {index} de {total}, a cerca de {pct}% da esquerda",
+    "yearUnknown": "ano desconhecido",
+    "formatUnknown": "Formato desconhecido",
+    "drawingLabel": "O nicho, com este disco destacado: disco {index} de {total}",
+    "showOnMap": "Mostrar no mapa",
+    "twoLeft": "Dois à esquerda",
+    "justLeft": "Logo à esquerda",
+    "thisOne": "Este",
+    "justRight": "Logo à direita",
+    "twoRight": "Dois à direita",
+    "inPlace": "em {place}",
+    "neighbors": "Os discos de cada lado",
+    "tracklist": "Lista de faixas",
+    "tracklistFailed": "Não foi possível carregar a lista de faixas.",
+    "noTracklist": "O Discogs não tem lista de faixas para esta edição.",
+    "side": "Lado {side}",
+    "disc": "Disco {n}",
+    "emptyTitle": "Encontre um disco",
+    "emptyText": "Busque um artista ou um título para ver onde está um disco, os discos de cada lado e a lista de faixas. Clique em um nicho para ver o que tem dentro."
+  },
+  "rail": {
+    "label": "Seus {media} de {first} a {last}",
+    "decade": "Anos {decade}",
+    "segment": {
+      "one": "{label}: {count} disco",
+      "other": "{label}: {count} discos"
+    },
+    "segmentGo": {
+      "one": "{label}: {count} disco. Ir para onde começa",
+      "other": "{label}: {count} discos. Ir para onde começam"
+    }
+  },
+  "compartment": {
+    "count": {
+      "one": "{count} de {capacity} discos",
+      "other": "{count} de {capacity} discos"
+    },
+    "over": "Você marcou este nicho como mais cheio do que a capacidade. Tudo bem: o mapa segue a sua estante real.",
+    "calibrate": "O primeiro disco aqui é outro…",
+    "drawingHint": "Aponte para um disco para vê-lo; clique para ver os detalhes e a capa.",
+    "list": "Discos deste nicho, da esquerda para a direita",
+    "empty": "Este nicho está vazio.",
+    "added": "adicionado por você",
+    "position": "{index} de {total}",
+    "calibrateLabel": "Qual é de verdade o primeiro disco deste nicho?",
+    "calibratePlaceholder": "Busque neste nicho e no anterior",
+    "calibrateNoMatch": "Nenhum resultado neste nicho nem no anterior.",
+    "calibrateHint": "Só o limite com o nicho anterior se move. Todo o resto fica onde está.",
+    "calibrateFailed": "Não foi possível salvar a calibração.",
+    "refusal": {
+      "unavailable": "Esse nicho não está disponível.",
+      "notOnShelf": "Esse disco não está nesta estante.",
+      "firstCompartment": "Este é o primeiro nicho, então os discos anteriores não têm para onde ir.",
+      "notAdjacent": "Escolha um disco deste nicho ou do imediatamente anterior: a calibração só move o limite entre eles."
+    }
+  },
+  "collection": {
+    "title": "Coleção",
+    "demoLocal": {
+      "one": "A coleção de demonstração: {count} disco, guardado neste navegador.",
+      "other": "A coleção de demonstração: {count} discos, guardados neste navegador."
+    },
+    "demo": {
+      "one": "A coleção de demonstração: {count} disco.",
+      "other": "A coleção de demonstração: {count} discos."
+    },
+    "discogs": {
+      "one": "A coleção do Discogs de “{username}”: {count} disco.",
+      "other": "A coleção do Discogs de “{username}”: {count} discos."
+    },
+    "already": "Essa já é a sua coleção. Ela se atualiza sozinha a partir do Discogs.",
+    "importOwn": "Importe a sua própria coleção do Discogs em vez desta",
+    "importOther": "Importe outra coleção do Discogs",
+    "placeholder": "Usuário do Discogs",
+    "waitSync": "Espere a atualização do Discogs terminar.",
+    "confirmTitle": "Substituir a sua coleção pela de “{username}”?",
+    "confirmText": {
+      "one": "Seu {count} disco e suas estantes são substituídos, inclusive os discos que você adicionou à mão. Você vai montar as estantes de novo para a nova coleção. Nada muda no Discogs.",
+      "other": "Seus {count} discos e suas estantes são substituídos, inclusive os discos que você adicionou à mão. Você vai montar as estantes de novo para a nova coleção. Nada muda no Discogs."
+    },
+    "accountFirst": "Primeiro você vai criar uma conta grátis.",
+    "replace": "Substituir minha coleção"
+  },
+  "cover": {
+    "none": "{artist}, {title} (sem capa)"
+  },
+  "tour": {
+    "offerTitle": "Quer um tour rápido?",
+    "offerText": "Leva mais ou menos um minuto.",
+    "showMe": "Me mostre",
+    "notNow": "Agora não",
+    "waiting": "Vamos mostrar tudo assim que sua estante estiver pronta.",
+    "back": "Voltar",
+    "next": "Próximo",
+    "skip": "Pular o tour",
+    "finish": "Pronto",
+    "progress": "{n} de {total}",
+    "label": "Tour",
+    "steps": {
+      "search": {
+        "title": "Buscar",
+        "text": "Digite um artista ou um título para encontrar onde está um disco."
+      },
+      "rail": {
+        "title": "O trilho de latão",
+        "text": "Sua coleção inteira, do começo ao fim. O marcador mostarda mostra onde fica um disco."
+      },
+      "compartment": {
+        "title": "Um nicho",
+        "text": "Cada nicho mostra sua faixa. Clique em um para ver os discos que tem dentro."
+      },
+      "record": {
+        "title": "A ficha do disco",
+        "text": "Onde ele está, os discos de cada lado e a lista de faixas."
+      },
+      "add": {
+        "title": "Adicionar um disco novo",
+        "text": "Comprou algo novo? Encontre no Discogs e veja onde ele vai."
+      },
+      "setup": {
+        "title": "Estantes e ordem",
+        "text": "Monte seus móveis. LPs e compactos vão em estantes separadas, e você vê quantos discos cabem enquanto monta."
+      },
+      "language": {
+        "title": "Idioma",
+        "text": "Mude o idioma aqui."
+      },
+      "done": {
+        "title": "Pronto",
+        "text": "É isso. Você pode fazer o tour de novo pelo menu."
+      }
+    }
+  }
+}

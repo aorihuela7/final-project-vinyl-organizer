@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/nextjs";
 import { APP_NAME } from "@/lib/config";
 import { useI18n } from "@/i18n/client";
+import { LanguageSelect, LocaleSync } from "./language-select";
 
 function Bar({ children }: { children?: ReactNode }) {
   return (
@@ -29,14 +30,15 @@ export function SiteHeaderFallback() {
 }
 
 /** App bar: the brand on the left; on the right the language selector, "My shelf", and the account. Signing in never blocks the app. */
-export function SiteHeader({ languageSelect }: { languageSelect?: ReactNode }) {
+export function SiteHeader() {
   const { isLoaded, isSignedIn } = useAuth();
   const { t } = useI18n();
 
   return (
     <Bar>
       <nav className="flex items-center gap-3 text-[15px]" aria-label={t("header.account")}>
-        {languageSelect}
+        <LanguageSelect />
+        <LocaleSync />
         {isLoaded && isSignedIn ? (
           <>
             <Link href="/app" className="rounded-pill px-2 py-1.5 font-semibold text-ink hover:underline">
