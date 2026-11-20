@@ -68,6 +68,7 @@ export function Sheet({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
+        data-sheet
         className={`relative flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[10px] bg-paper shadow-sheet outline-none sm:rounded-card ${wide ? "sm:max-w-3xl" : ""}`}
       >
         {!bare && (

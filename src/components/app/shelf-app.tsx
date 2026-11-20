@@ -1,6 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useSupabase } from "@/lib/supabase/browser";
+import { START_TOUR_EVENT, TourOffer, TourOverlay, TourWaiting, useTourState, type TourStep } from "./tour";
 import { useSearchParams } from "next/navigation";
 import { SignUpButton } from "@clerk/nextjs";
 import { displayArtist, type Slot } from "@/lib/layout";
@@ -67,6 +70,62 @@ export function ShelfApp() {
 
   const byId = useMemo(() => new Map((app.data?.records ?? []).map((r) => [r.id, r])), [app.data?.records]);
 
+  // ------------------------------------------------------------ guided tour
+  const { userId } = useAuth();
+  const supabase = useSupabase();
+  const hasMap = !!app.data?.config && app.views.some((v) => v.index.sorted.length > 0);
+  const tour = useTourState({
+    mode: app.mode,
+    userId,
+    supabase,
+    // The first demo visit, or right after signing up (even before there are records).
+    ready: app.status.kind === "ready" || (app.mode === "remote" && app.status.kind === "onboarding"),
+    hasMap,
+  });
+  const startTour = tour.start;
+  const startTourOnMap = useCallback(() => {
+    setTab("map");
+    setOpenSlot(null);
+    setAdding(false);
+    startTour();
+  }, [startTour]);
+  // "Take the tour" from the account menu, or /app?tour=1 from another page.
+  useEffect(() => {
+    const onStart = () => startTourOnMap();
+    window.addEventListener(START_TOUR_EVENT, onStart);
+    return () => window.removeEventListener(START_TOUR_EVENT, onStart);
+  }, [startTourOnMap]);
+  const wantsTour = params.get("tour") === "1";
+  useEffect(() => {
+    if (wantsTour && hasMap) {
+      const timer = setTimeout(startTourOnMap, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [wantsTour, hasMap, startTourOnMap]);
+  const sample = app.views.find((v) => v.index.sorted.length > 0)?.index.sorted[0]?.id ?? null;
+  const tourSteps: TourStep[] = [
+    { id: "search", target: '[data-tour="search"]' },
+    { id: "rail", target: 'nav[data-tour="rail"]' },
+    { id: "compartment", target: "[data-map] [data-slot]" },
+    {
+      id: "record",
+      target: wide ? '[data-tour="record"]' : "[data-sheet]",
+      enter: () => {
+        if (sample) {
+          setOpenRecord(sample);
+          showFound(sample);
+        }
+      },
+      leave: () => setOpenRecord(null),
+    },
+    { id: "add", target: '[data-tour="add"]' },
+    { id: "setup", target: '[data-tour="setup"]' },
+    { id: "language", target: '[data-tour="language"]' },
+    { id: "done" },
+  ];
+  const tourOffer = tour.offer ? <TourOffer onAccept={tour.accept} onDecline={tour.decline} /> : null;
+  const tourWaiting = tour.waiting ? <TourWaiting /> : null;
+
   if (app.status.kind === "loading") {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-muted" role="status" aria-live="polite">
@@ -75,8 +134,21 @@ export function ShelfApp() {
       </div>
     );
   }
-  if (app.status.kind === "onboarding") return <Onboarding app={app} />;
-  if (app.status.kind === "importing") return <ImportProgress job={app.status.job} message={renderMsg(t, app.status.message)} />;
+  if (app.status.kind === "onboarding")
+    return (
+      <div className="flex flex-col gap-4">
+        {tourOffer}
+        {tourWaiting}
+        <Onboarding app={app} />
+      </div>
+    );
+  if (app.status.kind === "importing")
+    return (
+      <div className="flex flex-col gap-4">
+        {tourWaiting}
+        <ImportProgress job={app.status.job} message={renderMsg(t, app.status.message)} />
+      </div>
+    );
   if (app.status.kind === "error" || !app.data) {
     return (
       <div className={`${card} mx-auto flex max-w-md flex-col gap-3 p-5`} role="alert">
@@ -118,6 +190,9 @@ export function ShelfApp() {
 
   return (
     <div className="flex flex-col gap-4">
+      {tourOffer}
+      {tourWaiting}
+      {tour.active && hasMap && <TourOverlay steps={tourSteps} onEnd={tour.end} />}
       {app.mode === "local" && (
         <Banner className="flex flex-wrap items-center justify-between gap-2">
           <span>{t("app.demoBanner")}</span>
@@ -147,7 +222,8 @@ export function ShelfApp() {
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-1 self-start rounded-pill border border-input-line bg-paper p-1 text-sm" role="group" aria-label={t("app.views")}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1 rounded-pill border border-input-line bg-paper p-1 text-sm" role="group" aria-label={t("app.views")}>
             {(
               [
                 ["map", t("app.tabMap")],
@@ -157,6 +233,7 @@ export function ShelfApp() {
               <button
                 key={id}
                 type="button"
+                data-tour={id === "setup" ? "setup" : undefined}
                 aria-pressed={tab === id}
                 onClick={() => setTab(id)}
                 className={`rounded-pill px-4 py-1.5 font-semibold ${tab === id ? "bg-ink text-paper" : "text-muted hover:text-ink"}`}
@@ -164,6 +241,12 @@ export function ShelfApp() {
                 {label}
               </button>
             ))}
+          </div>
+          {hasMap && (
+            <button type="button" onClick={startTourOnMap} className="rounded-pill px-2 py-1 text-sm font-semibold text-ink underline-offset-2 hover:underline">
+              {t("header.takeTour")}
+            </button>
+          )}
           </div>
 
           {tab === "setup" ? (

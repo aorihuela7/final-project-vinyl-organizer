@@ -56,7 +56,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 8. Compartment view and brass rail | Done | Compartment view rebuilt: walnut frame with the full range on a brass plate, the same drawing as the map (same viewBox and seed, so it looks identical), hover bubble with artist, title, and position, click opens the card, an accessible list of the records, calibration as a secondary pill with translated refusals. Brass rail per format group (`brass-rail.tsx`, segments from `src/lib/visual/rail.ts` with 4 tests): letters, genres, or decades sized by records, engraved separators, labels only where they fit whole, mustard marker hanging below that slides in 1 s, segments jump to their first compartment and flash it. Checked with genre, artist, and year first in Playwright; fixed a bug where an open record showed as a modal over Shelves & order on desktop. Old `spines.tsx` removed. Screenshots `p8-*` |
 | 9. Other screens | Done | Landing with a walnut hero (Kallax slice 2 × 3 with legs, plates, lean, a found record, and the brass rail, built with the map's own components through a shared `RailBar`), CTAs and Discogs form kept; Collection panel translated and in Nogal; Clerk screens themed (ink primary, paper background, Nunito Sans, 4 px radius); cover placeholders translated; old cream and terracotta tokens are gone (the semantic names map onto Nogal); every component except the Discogs attribution and notice goes through the dictionaries; screenshots `p9-landing-*`, `p9-sign-up-*`, `p9-onboarding-*` |
 | 10. Language selector and translations | Done | Selector in the app bar (paper pill, each language by its own name, on every page including the landing), cookie plus `user_preferences` when signed in (`LocaleSync`: a choice on this device is saved, a device without the cookie adopts the saved one), `<html lang>` updated, switching keeps the person where they were (checked in Playwright: the open record card stays open), `es.json` and `pt.json` complete (342 keys each, including the tour and the 15 genres from the plan), numbers with grouping ("1.392"), zero reads as plural in all three; dictionary test (same keys, same placeholders, singular and plural forms) and translation tests, 15 tests; screenshots `p10-es-*`, `p10-pt-*`, `p10-pt-landing-*` |
-| 11. Guided tour | Todo | |
+| 11. Guided tour | Done | `tour.tsx`, local (no library): offer dialog ("Want a quick tour? It takes about a minute.", "Show me around" / "Not now"), waiting banner for new accounts without a map, 8 steps anchored to real elements with a spotlight (a hole in a shadow) and a Nogal popover (walnut strip, progress "2 of 8", Back, Next, Skip tour); step 4 opens a sample record (side column on desktop, bottom sheet on phones) and closes it after. Keyboard: focus moves into the popover and returns after, Esc closes (captured, so an open sheet doesn't also close), arrows move, Tab stays inside. Reduced motion respected. State in localStorage (demo) or `user_preferences.tour_status`; a demo answer carries over on sign-up. "Take the tour" in the Clerk account menu and next to the view tabs. Walked through all 8 steps at 1280 and 375 in Playwright (focus on Next each step, `completed` saved, not offered again after reload, Esc closes); screenshots `p11-*` |
 | 12. Mobile, accessibility, and performance pass | Todo | |
 | 13. Visual QA | Todo | |
 | 14. Morning summary | Todo | |
@@ -124,6 +124,10 @@ Rule 4 (several formats, the largest size wins) needs every format, which only t
 - **Portuguese needs a native speaker's review.** It's Brazilian Portuguese ("compactos" for 7″ singles, "nicho" for a compartment). Ale reviews the Spanish (neutral, with "tú"; "repisa" for shelf, "compartimiento" for compartment).
 - **Shelf names are data.** The demo's shelves ("Living room", "Studio", "Singles box") are named in the language active when the demo is created, and don't change when the language changes, like any name the user types.
 
+- **When a status counts as answered.** Seeing the offer saves nothing until the person answers; "Not now" and "Skip tour" save `dismissed`, finishing saves `completed`, so neither asks again. Existing v1 accounts have no tour status, so they're offered the tour once in v2.
+- **"Take the tour" without an account.** There's no account menu in the accountless demo, so a "Take the tour" link also sits next to the Map / Shelves & order tabs for everyone.
+- **The signed-in tour path wasn't driven end to end tonight.** It needs a Clerk test account; the e2e suite covers sign-up, and the tour reads and writes `user_preferences` through the same RLS helpers as the language.
+
 ## Blocked: needs Ale
 
 (none yet)
@@ -142,6 +146,7 @@ If the session stops on a usage limit, a recurring session job (created when the
 
 - 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
 - 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
+- 2026-11-20 08:50 CST · Phase 11 done: guided tour.
 - 2026-11-20 08:15 CST · Phase 10 done: language selector, Spanish and Portuguese.
 - 2026-11-20 07:35 CST · Phase 9 done: landing hero, collection panel, Clerk theme.
 - 2026-11-20 07:05 CST · Phase 8 done: compartment view and brass rail.

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { SignInButton, SignUpButton, UserButton, useAuth } from "@clerk/nextjs";
 import { APP_NAME } from "@/lib/config";
@@ -33,6 +34,12 @@ export function SiteHeaderFallback() {
 export function SiteHeader() {
   const { isLoaded, isSignedIn } = useAuth();
   const { t } = useI18n();
+  const pathname = usePathname();
+  const router = useRouter();
+  const takeTour = () => {
+    if (pathname === "/app") window.dispatchEvent(new Event("ro:start-tour"));
+    else router.push("/app?tour=1");
+  };
 
   return (
     <Bar>
@@ -44,7 +51,11 @@ export function SiteHeader() {
             <Link href="/app" className="rounded-pill px-2 py-1.5 font-semibold text-ink hover:underline">
               {t("header.myShelf")}
             </Link>
-            <UserButton />
+            <UserButton>
+              <UserButton.MenuItems>
+                <UserButton.Action label={t("header.takeTour")} labelIcon={<span aria-hidden className="text-sm">?</span>} onClick={takeTour} />
+              </UserButton.MenuItems>
+            </UserButton>
           </>
         ) : isLoaded ? (
           <>
