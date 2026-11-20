@@ -5,6 +5,21 @@ import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
 /** Widest a compartment gets on the map, so a tower doesn't fill the screen. */
 export const MAX_CELL_PX = 190;
 
+/** Frame padding (2 × 14) and the gap between compartments, in px. */
+const FRAME_PX = 28;
+const GAP_PX = 10;
+
+/**
+ * One compartment width for every shelf on a page (a CSS length), so a CD
+ * tower is drawn at the same scale as a Kallax of LPs: the width the widest
+ * shelf (most columns) gets in its container, at most MAX_CELL_PX. Needs a
+ * container (`@container`) around the shelves.
+ */
+export function sharedCell(maxCols: number): string {
+  const cols = Math.max(1, maxCols);
+  return `min(${MAX_CELL_PX}px, (100cqw - ${FRAME_PX + (cols - 1) * GAP_PX}px) / ${cols})`;
+}
+
 /**
  * A piece of walnut furniture: the frame with a faint top highlight, a header
  * line in the display face (name on the left, a count on the right), the grid
@@ -24,15 +39,18 @@ export function Furniture({
   cols: number;
   children: ReactNode;
   className?: string;
-  maxCell?: number;
+  /** Widest a compartment gets: px, or a CSS length shared by every shelf on the page (sharedCell). */
+  maxCell?: number | string;
   label?: string;
 }) {
-  // Frame padding (2 × 14) plus the gaps between compartments.
-  const maxWidth = cols * maxCell + (cols - 1) * 10 + 28;
+  // Frame padding plus the gaps between compartments.
+  const extra = (cols - 1) * GAP_PX + FRAME_PX;
+  const maxWidth = typeof maxCell === "number" ? cols * maxCell + extra : `calc(${cols} * ${maxCell} + ${extra}px)`;
   return (
     <section aria-label={label} className={`relative mb-[34px] w-full ${className}`} style={{ maxWidth }}>
       <div className="surface-walnut relative rounded-[4px] px-[14px] pt-[14px] pb-3 shadow-[inset_0_1px_0_rgb(255_255_255/0.15)]">
-        <div className="-mt-1 mb-2.5 flex justify-between gap-2.5 px-0.5 font-display text-sm text-on-walnut">
+        {/* On a narrow shelf (a one-column tower) the count wraps under the name instead of cutting it. */}
+        <div className="-mt-1 mb-2.5 flex flex-wrap justify-between gap-x-2.5 px-0.5 font-display text-sm text-on-walnut">
           <span className="min-w-0 truncate">{title}</span>
           {aside !== undefined && <span className="shrink-0 tabular-nums">{aside}</span>}
         </div>

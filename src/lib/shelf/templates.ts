@@ -15,12 +15,13 @@ export type Template = {
 /**
  * Unmeasured defaults (see the Decisions log in CLAUDE.md), per compartment:
  * LPs 80 per cube and 70 per crate or box; singles (7″) 150 per cube, one row
- * deep, and 100 per box; CDs 60 per cube.
+ * deep, and 100 per box; CDs 30 per row of CDs (a Kallax cube with a CD insert
+ * holds two rows, so 60 per cube, as in v1).
  */
 export const CAPACITY = {
   lp: { cube: 80, box: 70 },
   single: { cube: 150, box: 100 },
-  cd: { cube: 60, box: 60 },
+  cd: { cube: 30, box: 30 },
 } as const satisfies Record<ShelfMedia, { cube: number; box: number }>;
 
 export const TEMPLATES: readonly Template[] = [
@@ -44,4 +45,23 @@ export function defaultCapacity(id: TemplateId, media: ShelfMedia): number {
 /** Whether a template's compartments are square cubes (Kallax-like) or wider boxes, for drawing them. */
 export function isBoxTemplate(id: TemplateId): boolean {
   return template(id).kind === "box";
+}
+
+/**
+ * Compartment rows per row of cubes. A CD is about 12.5 cm tall, so a 33 cm
+ * Kallax cube with a CD insert holds two rows of CDs with a board between
+ * them: on CD shelves each row of CDs is its own compartment (a continuous
+ * range, with its own plate), so a Kallax 4×4 for CDs has 8 rows.
+ */
+export function rowsPerCube(id: TemplateId, media: ShelfMedia): 1 | 2 {
+  return media === "cd" && template(id).kind === "cube" ? 2 : 1;
+}
+
+/** Width ÷ height of one row of CDs: a 33 cm cube split by a board into two rows about 15.7 cm high. */
+export const CD_ROW_ASPECT = 2.1;
+
+/** Width ÷ height of a compartment's interior, for drawing it: square cubes, wider boxes, low rows of CDs. */
+export function compartmentAspect(id: TemplateId, media: ShelfMedia): number {
+  if (media === "cd") return CD_ROW_ASPECT;
+  return isBoxTemplate(id) ? 1.25 : 1;
 }

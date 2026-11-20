@@ -21,7 +21,8 @@
  * transform={`rotate(${-angle} ${x} ${floor})`} />.
  */
 
-export type RecordSize = 7 | 10 | 12;
+/** Vinyl by size in inches, or a CD (drawn in its own low compartment: see compartmentAspect). */
+export type RecordSize = 7 | 10 | 12 | "cd";
 
 export type LeanInput = {
   /** Stable record ID: its height and jitter come from a hash of it, so a record looks the same everywhere. */
@@ -62,8 +63,13 @@ export type LeanLayout = {
   pad: number;
 };
 
-/** Heights by size, as a share of the room above the floor. */
-const HEIGHT_SHARE: Record<RecordSize, number> = { 12: 1, 10: 0.8, 7: 0.56 };
+/**
+ * Heights by size, as a share of the room above the floor. Vinyl is measured
+ * against a cube (a 12″ jacket fills it); a CD (12.5 cm) against its own row
+ * of CDs (about 15.7 cm, half a cube), so it's drawn at about 40% of an LP's
+ * height when both compartments are the same width.
+ */
+const HEIGHT_SHARE: Record<RecordSize, number> = { 12: 1, 10: 0.8, 7: 0.56, cd: 0.85 };
 /** How many earlier records each leaning record checks for contact (a short one can sit between tall ones). */
 const LOOKBACK = 12;
 const MAX_TRIES = 20;

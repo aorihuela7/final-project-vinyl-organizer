@@ -20,7 +20,8 @@ import {
   type SortSettings,
 } from "@/lib/layout";
 import { DEFAULT_SLACK_PCT } from "@/lib/config";
-import { defaultCapacity, template, type TemplateId } from "./templates";
+import { defaultCapacity, rowsPerCube, template, type TemplateId } from "./templates";
+import type { RecordSize } from "@/lib/visual/lean";
 
 /** Records saved before v2 may lack the format group columns: they're classified on read. */
 export type StoredRecord = Omit<RecordInput, "size_inches" | "format_group"> & Partial<Pick<RecordInput, "size_inches" | "format_group">> & {
@@ -109,6 +110,12 @@ export function sizeOf(r: StoredRecord) {
   return sizeOfRecord(r);
 }
 
+/** How a record is drawn on a shelf of this format group: CDs as CDs; vinyl by size, 12″ when unknown (7″ on a singles shelf). */
+export function drawingSize(r: StoredRecord | undefined, media: ShelfMedia): RecordSize {
+  if (media === "cd") return "cd";
+  return (r ? sizeOf(r) : null) ?? (media === "single" ? 7 : 12);
+}
+
 /** How many discs a record has (its places with thickness by format): 2 for a double album, up to 12 for a box set. */
 export function discsOf(r: Pick<StoredRecord, "format_qty" | "media">): number {
   if (r.media === "other") return 1;
@@ -171,16 +178,50 @@ export function newFurniture(id: TemplateId, sortIndex: number, media: ShelfMedi
       name: name ?? DEFAULT_TEMPLATE_NAMES[id],
       template: id,
       media,
-      rows: t.rows,
+      rows: t.rows * rowsPerCube(id, media),
       cols: t.cols,
       traversal: t.traversal,
       defaultCapacity: defaultCapacity(id, media),
       sortIndex,
       compartments: [],
     },
-    t.rows,
+    t.rows * rowsPerCube(id, media),
     t.cols,
   );
+}
+
+/** A different template for a shelf: its grid and traversal, at the template's size for the shelf's format group. */
+export function changeTemplate(f: FurnitureConfig, id: TemplateId): FurnitureConfig {
+  const t = template(id);
+  return resizeFurniture({ ...f, template: id, traversal: t.traversal, defaultCapacity: defaultCapacity(id, f.media) }, t.rows * rowsPerCube(id, f.media), t.cols);
+}
+
+/**
+ * A different format group for a shelf. The capacity follows the new group's
+ * default unless it was changed by hand. On cube templates CDs stand in two
+ * rows per cube, so going to CDs splits every row in two (a blocked cube
+ * blocks both of its rows) and coming back joins them (blocked only if both
+ * were); per-compartment capacities were counted for the other format, so
+ * they're cleared then.
+ */
+export function changeMedia(f: FurnitureConfig, media: ShelfMedia): FurnitureConfig {
+  const capacity = f.defaultCapacity === defaultCapacity(f.template, f.media) ? defaultCapacity(f.template, media) : f.defaultCapacity;
+  const from = rowsPerCube(f.template, f.media);
+  const to = rowsPerCube(f.template, media);
+  if (from === to) return { ...f, media, defaultCapacity: capacity };
+  const status = new Map(f.compartments.map((c) => [`${c.row}:${c.col}`, c.status]));
+  const rows = to > from ? Math.min(12, f.rows * 2) : Math.ceil(f.rows / 2);
+  const compartments: CompartmentConfig[] = [];
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < f.cols; col++) {
+      const blocked =
+        to > from
+          ? status.get(`${Math.floor(row / 2)}:${col}`) === "blocked"
+          : [2 * row, 2 * row + 1].filter((r) => r < f.rows).every((r) => status.get(`${r}:${col}`) === "blocked");
+      compartments.push({ row, col, status: blocked ? "blocked" : "available", capacity: null });
+    }
+  }
+  return { ...f, media, defaultCapacity: capacity, rows, compartments };
 }
 
 /** Changes the grid size, keeping the settings of compartments that still exist. */

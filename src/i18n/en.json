@@ -345,6 +345,7 @@
     "template": "Template",
     "holdsLabel": "Holds",
     "rows": "Rows",
+    "cdRows": "CDs stand in two rows per cube (a CD insert in the middle), so each row of CDs is a compartment with its own plate.",
     "cols": "Columns",
     "perCompartment": "Records per compartment",
     "freeSpace": "Free space to leave (all shelves)",

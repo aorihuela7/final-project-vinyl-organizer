@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { releaseUrl, type RecordInput } from "@/lib/discogs/map";
 import { buildIndex, displayArtist, locate } from "@/lib/layout";
 import { formatLine, slotTitle } from "@/lib/shelf/describe";
-import { sizeOf, toLayoutRecord, toSortSettings, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
-import { isBoxTemplate } from "@/lib/shelf/templates";
+import { drawingSize, toLayoutRecord, toSortSettings, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
+import { compartmentAspect } from "@/lib/shelf/templates";
 import { useI18n } from "@/i18n/client";
 import { Banner, btnPrimary, btnSecondary, input } from "../ui";
 import { CompartmentDrawing } from "./compartment-drawing";
@@ -95,14 +95,15 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord }: Props) {
 
   const placed = useMemo(() => {
     if (!preview || !preview.media || !preview.target) return null;
-    const view = app.views.find((v) => v.media === preview.media);
+    const media = preview.media;
+    const view = app.views.find((v) => v.media === media);
     if (!view) return null;
     const group = (app.data?.records ?? []).filter((r) => preview.placement.has(r.id) && view.index.positionOf.has(r.id));
     const index = buildIndex([...group, preview.record].map(toLayoutRecord), preview.placement, view.index.slots, toSortSettings(config.settings));
     const location = locate(index, preview.record.id);
     if (!location) return null;
     const inSlot = index.bySlot.get(location.slot.id) ?? [];
-    const sizeById = new Map([...group, preview.record].map((r) => [r.id, sizeOf(r) ?? (preview.media === "single" ? 7 : 12)] as const));
+    const sizeById = new Map([...group, preview.record].map((r) => [r.id, drawingSize(r, media)] as const));
     const drawing = inSlot.map((r) => ({ id: r.id, size: sizeById.get(r.id)! }));
     return { location, drawing };
   }, [preview, app.views, app.data?.records, config.settings]);
@@ -137,7 +138,7 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord }: Props) {
   })();
 
   const furnitureOfTarget = placed ? config.furniture.find((f) => f.key === placed.location.slot.shelfKey) : undefined;
-  const aspect = furnitureOfTarget && isBoxTemplate(furnitureOfTarget.template) ? 1.25 : 1;
+  const aspect = furnitureOfTarget ? compartmentAspect(furnitureOfTarget.template, furnitureOfTarget.media) : 1;
   const groupLabel = chosen ? t(`mediaShort.${chosen.format_group === "other" ? "lp" : chosen.format_group}`) : "";
 
   return (

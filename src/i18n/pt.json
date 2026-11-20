@@ -345,6 +345,7 @@
     "template": "Modelo",
     "holdsLabel": "Guarda",
     "rows": "Linhas",
+    "cdRows": "Os CDs ficam em duas linhas por cubo (com uma divisória no meio), então cada linha de CDs é um nicho com a sua própria placa.",
     "cols": "Colunas",
     "perCompartment": "Discos por nicho",
     "freeSpace": "Espaço livre (todas as estantes)",

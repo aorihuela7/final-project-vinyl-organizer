@@ -345,6 +345,7 @@
     "template": "Modelo",
     "holdsLabel": "Guarda",
     "rows": "Filas",
+    "cdRows": "Los CD van en dos filas por cubo (con un separador al medio), así que cada fila de CD es un compartimiento con su propia placa.",
     "cols": "Columnas",
     "perCompartment": "Discos por compartimiento",
     "freeSpace": "Espacio libre (todas las repisas)",

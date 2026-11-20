@@ -14,6 +14,7 @@ const MIXES: Mix[] = [
   // About 10% to 30% 10″ records among 12″ ones, varying with the seed.
   { name: "10″ among 12″", size: (i, seed) => (((i * 53 + seed) % 100) < 10 + (seed % 21) ? 10 : 12) },
   { name: "all 7″", size: () => 7 },
+  { name: "all CDs", size: () => "cd" },
 ];
 
 function inputs(n: number, seed: number, mix: Mix): LeanInput[] {
@@ -111,6 +112,18 @@ describe("leanLayout", () => {
     const { records } = leanLayout(inputs(4, 1, MIXES[2]!), { capacity: 100, width: 125, height: 100, seed: 1 });
     expect(records.map((r) => r.angle > 0)).toEqual([false, false, true, true]);
     expect(records[3]!.angle).toBeGreaterThan(records[2]!.angle);
+  });
+
+  it("draws a CD at about 40% of an LP's height when both compartments are the same width", () => {
+    // An LP in a square cube; a CD in a row of CDs 2.1 times wider than tall (half a cube with a board).
+    const lp = leanLayout([{ id: "a", size: 12 }], { capacity: 80, width: 100, height: 100 }).records[0]!;
+    const cd = leanLayout([{ id: "a", size: "cd" }], { capacity: 30, width: 210, height: 100 }).records[0]!;
+    // Same drawn width means the CD's height counts 1/2.1 as much.
+    const ratio = cd.height / 2.1 / lp.height;
+    expect(ratio).toBeGreaterThan(0.37);
+    expect(ratio).toBeLessThan(0.43);
+    // Thicker too: 30 CDs per row against 80 LPs per cube.
+    expect(cd.width / 2.1).toBeGreaterThan(lp.width * 2.4);
   });
 
   it("gives a larger or equal maximum angle with more free space", () => {

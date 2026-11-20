@@ -6,7 +6,8 @@ import { percent } from "@/lib/design";
 import { formatLine, slotTitle } from "@/lib/shelf/describe";
 import { releaseUrl } from "@/lib/discogs/map";
 import type { TracklistSection } from "@/lib/discogs/tracklist";
-import { discsOf, groupOf, sizeOf, type MediaView, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
+import { discsOf, drawingSize, groupOf, type MediaView, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
+import { CD_ROW_ASPECT } from "@/lib/shelf/templates";
 import { OutBanner, TakeOutChooser } from "./temporary";
 import { genreName } from "@/i18n/core";
 import { useI18n } from "@/i18n/client";
@@ -79,8 +80,11 @@ export function RecordCard({
   const view = location ? views.find((v) => v.index.slotById.has(location.slot.id)) : undefined;
   const drawing = location && view ? (view.index.bySlot.get(location.slot.id) ?? []).map((r) => {
           const stored = byId.get(r.id);
-          return { id: r.id, size: (stored ? sizeOf(stored) : null) ?? 12, out: !!stored?.temp_location_id, places: config.settings.thicknessByFormat && stored ? discsOf(stored) : 1 };
+          return { id: r.id, size: drawingSize(stored, view.media), out: !!stored?.temp_location_id, places: config.settings.thicknessByFormat && stored ? discsOf(stored) : 1 };
         }) : [];
+
+  // A wide crop of the compartment; a row of CDs is already wider than that.
+  const detailAspect = view?.media === "cd" ? CD_ROW_ASPECT : 1.6;
 
   return (
     <article className={`${card} grid gap-3.5 overflow-hidden pb-[18px]`} aria-labelledby={headingId} data-record-card>
@@ -133,11 +137,11 @@ export function RecordCard({
         <>
           <div
             className="surface-interior relative mx-[18px] rounded-[3px] border-8 border-walnut"
-            style={{ aspectRatio: 1.6 }}
+            style={{ aspectRatio: detailAspect }}
             role="img"
             aria-label={t("record.drawingLabel", { index: location.indexInSlot + 1, total: location.totalInSlot })}
           >
-            <CompartmentDrawing records={drawing} capacity={location.slot.capacity} width={160} height={100} foundId={record.id} lifted />
+            <CompartmentDrawing records={drawing} capacity={location.slot.capacity} width={100 * detailAspect} height={100} foundId={record.id} lifted />
           </div>
           <Neighbors location={location} record={record} config={config} byId={byId} onPick={onPickRecord} />
         </>

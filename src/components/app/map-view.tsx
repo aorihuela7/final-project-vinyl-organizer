@@ -2,14 +2,14 @@
 
 import { useMemo, type ReactNode } from "react";
 import type { ShelfMedia, Slot } from "@/lib/layout";
-import { discsOf, sizeOf, toSortSettings, type FurnitureConfig, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
+import { discsOf, drawingSize, toSortSettings, type FurnitureConfig, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotPlace } from "@/lib/shelf/describe";
-import { isBoxTemplate } from "@/lib/shelf/templates";
+import { compartmentAspect } from "@/lib/shelf/templates";
 import { plateLabels, plateLines, type Plate as PlateData } from "@/lib/visual/plates";
 import { genreName } from "@/i18n/core";
 import { useI18n } from "@/i18n/client";
 import { CompartmentDrawing, type DrawingRecord } from "./compartment-drawing";
-import { Compartment, CountBadge, Furniture, Plate, type PlateLineText } from "./furniture";
+import { Compartment, CountBadge, Furniture, Plate, sharedCell, type PlateLineText } from "./furniture";
 import { DiscogsAttribution } from "./discogs-attribution";
 
 type Props = {
@@ -27,9 +27,9 @@ type Props = {
   railFor?: (view: MediaView) => ReactNode;
 };
 
-/** Box templates (crates, record boxes) are a bit wider than tall; Kallax cubes are square. */
-export function aspectOf(f: Pick<FurnitureConfig, "template">): number {
-  return isBoxTemplate(f.template) ? 1.25 : 1;
+/** Kallax cubes are square, boxes (crates, record boxes) a bit wider than tall, and rows of CDs low. */
+export function aspectOf(f: Pick<FurnitureConfig, "template" | "media">): number {
+  return compartmentAspect(f.template, f.media);
 }
 
 export type GroupData = {
@@ -54,7 +54,7 @@ export function useGroupData(views: MediaView[], config: ShelfConfig, byId: Map<
             const stored = byId.get(r.id);
             return {
               id: r.id,
-              size: (stored ? sizeOf(stored) : null) ?? (view.media === "single" ? 7 : 12),
+              size: drawingSize(stored, view.media),
               out: !!stored?.temp_location_id,
               places: settings.thicknessByFormat && stored ? discsOf(stored) : 1,
             };
@@ -83,8 +83,11 @@ export function MapView({ config, views, byId, foundId, foundSlot, lifted, onOpe
   const genre = (g: string) => genreName(locale, g);
   const genresCount = (count: number) => (config.settings.sortLevels[0] === "tag" ? t("map.tagsCount", { count }) : t("map.genresCount", { count }));
 
+  // Every shelf at the same scale, so LPs, singles, and CDs keep their real proportions.
+  const cell = sharedCell(Math.max(1, ...furniture.map((f) => f.cols)));
+
   return (
-    <div className="flex flex-col gap-2" data-map>
+    <div className="@container flex flex-col gap-2" data-map>
       {groups.map((group) => {
         const shelves = furniture.filter((f) => f.media === group.view.media);
         if (shelves.length === 0) return null;
@@ -105,6 +108,7 @@ export function MapView({ config, views, byId, foundId, foundSlot, lifted, onOpe
                   flashSlot={flashSlot}
                   onOpen={onOpen}
                   plateLines={(p) => plateLines(p, genre, genresCount)}
+                  cell={cell}
                   t={t}
                   n={n}
                   locale={locale}
@@ -129,6 +133,7 @@ function ShelfFurniture({
   flashSlot,
   onOpen,
   plateLines,
+  cell,
   t,
   n,
   locale,
@@ -142,6 +147,8 @@ function ShelfFurniture({
   flashSlot: string | null;
   onOpen: (slot: Slot) => void;
   plateLines: (p: PlateData) => PlateLineText[];
+  /** Compartment width shared by every shelf on the map (sharedCell). */
+  cell: string;
   t: ReturnType<typeof useI18n>["t"];
   n: ReturnType<typeof useI18n>["n"];
   locale: ReturnType<typeof useI18n>["locale"];
@@ -161,6 +168,7 @@ function ShelfFurniture({
   return (
     <Furniture
       cols={f.cols}
+      maxCell={cell}
       label={f.name}
       title={
         f.section

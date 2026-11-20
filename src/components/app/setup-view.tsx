@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { SORT_LEVELS, type ShelfMedia, type SortLevel } from "@/lib/layout";
-import { discsOf, groupOf, newFurniture, resizeFurniture, type FurnitureConfig, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
+import { changeMedia, changeTemplate, discsOf, groupOf, newFurniture, resizeFurniture, type FurnitureConfig, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotPlace } from "@/lib/shelf/describe";
 import { groupFills, shelfHolds } from "@/lib/shelf/capacity";
-import { TEMPLATES, defaultCapacity, isBoxTemplate, template, type TemplateId } from "@/lib/shelf/templates";
+import { TEMPLATES, compartmentAspect, isBoxTemplate, rowsPerCube, type TemplateId } from "@/lib/shelf/templates";
 import { useI18n } from "@/i18n/client";
 import { genreName } from "@/i18n/core";
 import { Banner, btnPrimary, btnSecondary, btnSecondarySm, card } from "../ui";
@@ -271,13 +271,8 @@ function ShelfBuilder({
     }));
   };
 
-  const setMedia = (media: ShelfMedia) =>
-    onChange((x) => ({
-      ...x,
-      media,
-      // Follow the new type's default, unless the capacity was changed by hand.
-      defaultCapacity: x.defaultCapacity === defaultCapacity(x.template, x.media) ? defaultCapacity(x.template, media) : x.defaultCapacity,
-    }));
+  // CDs stand in two rows per cube: changeMedia splits or joins the rows.
+  const setMedia = (media: ShelfMedia) => onChange((x) => changeMedia(x, media));
 
   const arithmetic =
     holds.overrides > 0
@@ -305,8 +300,8 @@ function ShelfBuilder({
             <select
               value={f.template}
               onChange={(e) => {
-                const tpl = template(e.target.value as TemplateId);
-                onChange((x) => resizeFurniture({ ...x, template: tpl.id, traversal: tpl.traversal, defaultCapacity: defaultCapacity(tpl.id, x.media) }, tpl.rows, tpl.cols));
+                const id = e.target.value as TemplateId;
+                onChange((x) => changeTemplate(x, id));
               }}
               className={control}
             >
@@ -351,6 +346,7 @@ function ShelfBuilder({
               className={control}
             />
           </label>
+          {rowsPerCube(f.template, f.media) === 2 && <p className="col-span-2 -mt-1 text-xs text-muted">{t("builder.cdRows")}</p>}
           <label className={field}>
             {t("builder.perCompartment")}
             <input
@@ -503,7 +499,7 @@ function PreviewFurniture({
   };
   if (f.traversal === "columns") for (let col = 0; col < f.cols; col++) for (let row = 0; row < f.rows; row++) visit(row, col);
   else for (let row = 0; row < f.rows; row++) for (let col = 0; col < f.cols; col++) visit(row, col);
-  const aspect = isBoxTemplate(f.template) ? 1.25 : 1;
+  const aspect = compartmentAspect(f.template, f.media);
 
   return (
     <Furniture cols={f.cols} title={t("builder.preview")} aside={t("map.places", { count: places })} maxCell={110}>

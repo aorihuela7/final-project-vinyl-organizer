@@ -4,8 +4,8 @@ import { useMemo, useRef, useState, type MouseEvent } from "react";
 import { displayArtist, type Slot } from "@/lib/layout";
 import { recordColor } from "@/lib/design";
 import { slotTitle } from "@/lib/shelf/describe";
-import { discsOf, sizeOf, toSortSettings, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
-import { isBoxTemplate } from "@/lib/shelf/templates";
+import { discsOf, drawingSize, toSortSettings, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
+import { compartmentAspect } from "@/lib/shelf/templates";
 import { plateLabels } from "@/lib/visual/plates";
 import { searchRecords } from "@/lib/search";
 import { genreName } from "@/i18n/core";
@@ -49,7 +49,7 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
     [view.index, settings, slot.id, t, locale],
   );
   const furniture = config.furniture.find((f) => f.key === slot.shelfKey);
-  const aspect = furniture && isBoxTemplate(furniture.template) ? 1.25 : 1;
+  const aspect = furniture ? compartmentAspect(furniture.template, furniture.media) : 1;
   const load = config.settings.thicknessByFormat ? records.reduce((n, r) => n + (r.weight && r.weight > 0 ? r.weight : 1), 0) : records.length;
   const over = load > slot.capacity;
   const drawing = useMemo(
@@ -58,7 +58,7 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
         const stored = byId.get(r.id);
         return {
           id: r.id,
-          size: (stored ? sizeOf(stored) : null) ?? (view.media === "single" ? 7 : 12),
+          size: drawingSize(stored, view.media),
           out: !!stored?.temp_location_id,
           places: config.settings.thicknessByFormat && stored ? discsOf(stored) : 1,
         };
