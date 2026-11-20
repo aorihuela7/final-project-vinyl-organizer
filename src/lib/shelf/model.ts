@@ -61,6 +61,8 @@ export type SettingsConfig = {
   sortLevels: SortLevel[];
   ignoreArticles: boolean;
   slackPct: number;
+  /** Count double albums and box sets by their number of discs (capacity in places). */
+  thicknessByFormat?: boolean;
 };
 
 export type ShelfConfig = { furniture: FurnitureConfig[]; settings: SettingsConfig };
@@ -68,7 +70,7 @@ export type ShelfConfig = { furniture: FurnitureConfig[]; settings: SettingsConf
 export const DEFAULT_SETTINGS: SettingsConfig = { sortLevels: ["artist"], ignoreArticles: false, slackPct: DEFAULT_SLACK_PCT };
 
 export function toSortSettings(settings: SettingsConfig): SortSettings {
-  return { levels: settings.sortLevels, ignoreArticles: settings.ignoreArticles };
+  return { levels: settings.sortLevels, ignoreArticles: settings.ignoreArticles, thicknessByFormat: !!settings.thicknessByFormat };
 }
 
 export function toShelfSpecs(furniture: readonly FurnitureConfig[]): ShelfSpec[] {
@@ -95,8 +97,15 @@ export function sizeOf(r: StoredRecord) {
   return sizeOfRecord(r);
 }
 
+/** How many discs a record has (its places with thickness by format): 2 for a double album, up to 12 for a box set. */
+export function discsOf(r: Pick<StoredRecord, "format_qty" | "media">): number {
+  if (r.media === "other") return 1;
+  const qty = r.format_qty ?? 1;
+  return Math.min(12, Math.max(1, Math.round(qty)));
+}
+
 export function toLayoutRecord(r: StoredRecord): LayoutRecord {
-  return { id: r.id, artist: r.artist, title: r.title, year: r.year, label: r.label, genre: r.genre, media: groupOfRecord(r) };
+  return { id: r.id, artist: r.artist, title: r.title, year: r.year, label: r.label, genre: r.genre, media: groupOfRecord(r), weight: discsOf(r) };
 }
 
 let localCounter = 0;

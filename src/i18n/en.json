@@ -379,7 +379,8 @@
     "suggestedLp": "Kallax",
     "suggestedLpN": "Kallax {n}",
     "suggestedSingles": "Singles",
-    "suggestedCds": "CD shelf"
+    "suggestedCds": "CD shelf",
+    "thickness": "Count double albums and box sets by their number of discs (a double LP takes two places)"
   },
   "record": {
     "offMap": "Not on the map",
@@ -438,8 +439,16 @@
       "unavailable": "That compartment isn't available.",
       "notOnShelf": "That record isn't on this shelf.",
       "firstCompartment": "This is the first compartment, so the records before it have nowhere to go.",
-      "notAdjacent": "Pick a record from this compartment or the one right before it: calibration only moves the boundary between them."
-    }
+      "notAdjacent": "Pick a record from this compartment or the one right before it: calibration only moves the boundary between them.",
+      "lastCompartment": "This is the last compartment, so the records after it have nowhere to go.",
+      "notEnough": "The next compartment doesn't have that many records to give.",
+      "badCount": "Type a whole number."
+    },
+    "countButton": "Count the records here",
+    "countLabel": "How many records are in this compartment right now?",
+    "countSave": "Save the count",
+    "countHint": "Only the boundary with the next compartment moves: extra records go to it, or missing ones come from it.",
+    "places": "{count} of {capacity} places"
   },
   "collection": {
     "title": "Collection",

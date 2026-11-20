@@ -8,7 +8,7 @@
  */
 import { sortRecords } from "./sort";
 import { traverse } from "./traversal";
-import { SHELF_MEDIA, type LayoutRecord, type Placement, type ShelfMedia, type ShelfSpec, type Slot, type SortSettings } from "./types";
+import { SHELF_MEDIA, placesOf, type LayoutRecord, type Placement, type ShelfMedia, type ShelfSpec, type Slot, type SortSettings } from "./types";
 
 export type Distribution = {
   /** Records per slot, in traversal order. */
@@ -90,9 +90,58 @@ export type LayoutResult = {
   notPlaced: string[];
 };
 
+/**
+ * Thickness by format: the same idea with weights. Each compartment's share of
+ * the collection's places is proportional to its effective capacity; records
+ * are walked in order and a record goes in the current compartment while its
+ * midpoint stays within that compartment's cumulative share and it fits.
+ * A record thicker than a whole compartment goes alone in an empty one (flagged
+ * by the map as over capacity) instead of blocking the rest.
+ */
+export function distributeWeighted(weights: readonly number[], slots: readonly Slot[], slackPct: number): Distribution {
+  const slack = Math.min(Math.max(slackPct, 0), 90) / 100;
+  const caps = slots.map((s) => Math.max(0, Math.floor(s.capacity)));
+  const total = weights.reduce((a, b) => a + b, 0);
+  const effective = caps.map((c) => c * (1 - slack));
+  const effectiveTotal = effective.reduce((a, b) => a + b, 0);
+  const capacityTotal = caps.reduce((a, b) => a + b, 0);
+  const counts = caps.map(() => 0);
+  if (weights.length === 0 || capacityTotal === 0) return { counts, leftover: weights.length, slackReduced: false };
+  const useEffective = total <= effectiveTotal;
+  const shares = useEffective ? effective : caps;
+  const shareTotal = shares.reduce((a, b) => a + b, 0);
+  const placeable = Math.min(total, capacityTotal);
+  const cumulative: number[] = [];
+  let acc = 0;
+  for (const share of shares) {
+    acc += share;
+    cumulative.push((placeable * acc) / shareTotal);
+  }
+  let slot = 0;
+  let load = 0;
+  let assigned = 0;
+  let placed = 0;
+  for (const w of weights) {
+    while (slot < slots.length) {
+      const fits = load + w <= caps[slot]! || (load === 0 && w > caps[slot]! && caps[slot]! > 0);
+      const withinShare = assigned + w / 2 <= cumulative[slot]! + 1e-9;
+      if (fits && (withinShare || slot === slots.length - 1)) break;
+      slot++;
+      load = 0;
+    }
+    if (slot >= slots.length) break;
+    counts[slot]!++;
+    load += w;
+    assigned += w;
+    placed++;
+  }
+  return { counts, leftover: weights.length - placed, slackReduced: !useEffective && slack > 0 };
+}
+
 export function layoutGroup(records: readonly LayoutRecord[], slots: Slot[], settings: SortSettings, slackPct: number, placement: Placement): GroupLayout {
   const sorted = sortRecords(records, settings);
-  const { counts, slackReduced } = distribute(sorted.length, slots, slackPct);
+  const weighted = !!settings.thicknessByFormat && sorted.some((r) => placesOf(r, settings) !== 1);
+  const { counts, slackReduced } = weighted ? distributeWeighted(sorted.map((r) => placesOf(r, settings)), slots, slackPct) : distribute(sorted.length, slots, slackPct);
   let next = 0;
   const countMap = new Map<string, number>();
   slots.forEach((slot, i) => {

@@ -379,7 +379,8 @@
     "suggestedLp": "Kallax",
     "suggestedLpN": "Kallax {n}",
     "suggestedSingles": "Compactos",
-    "suggestedCds": "Estante de CD"
+    "suggestedCds": "Estante de CD",
+    "thickness": "Contar discos duplos e caixas pela quantidade de discos (um LP duplo ocupa dois lugares)"
   },
   "record": {
     "offMap": "Fora do mapa",
@@ -438,8 +439,16 @@
       "unavailable": "Esse nicho não está disponível.",
       "notOnShelf": "Esse disco não está nesta estante.",
       "firstCompartment": "Este é o primeiro nicho, então os discos anteriores não têm para onde ir.",
-      "notAdjacent": "Escolha um disco deste nicho ou do imediatamente anterior: a calibração só move o limite entre eles."
-    }
+      "notAdjacent": "Escolha um disco deste nicho ou do imediatamente anterior: a calibração só move o limite entre eles.",
+      "lastCompartment": "Este é o último nicho, então os discos seguintes não têm para onde ir.",
+      "notEnough": "O nicho seguinte não tem tantos discos para dar.",
+      "badCount": "Digite um número inteiro."
+    },
+    "countButton": "Contar os discos daqui",
+    "countLabel": "Quantos discos há agora neste nicho?",
+    "countSave": "Salvar a contagem",
+    "countHint": "Só o limite com o nicho seguinte se move: os discos a mais vão para ele, ou os que faltam vêm dele.",
+    "places": "{count} de {capacity} lugares"
   },
   "collection": {
     "title": "Coleção",

@@ -2,7 +2,7 @@
 
 import { useMemo, type ReactNode } from "react";
 import type { ShelfMedia, Slot } from "@/lib/layout";
-import { sizeOf, toSortSettings, type FurnitureConfig, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
+import { discsOf, sizeOf, toSortSettings, type FurnitureConfig, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotPlace } from "@/lib/shelf/describe";
 import { isBoxTemplate } from "@/lib/shelf/templates";
 import { plateLabels, plateLines, type Plate as PlateData } from "@/lib/visual/plates";
@@ -52,7 +52,12 @@ export function useGroupData(views: MediaView[], config: ShelfConfig, byId: Map<
           slotId,
           list.map((r) => {
             const stored = byId.get(r.id);
-            return { id: r.id, size: (stored ? sizeOf(stored) : null) ?? (view.media === "single" ? 7 : 12), out: !!stored?.temp_location_id };
+            return {
+              id: r.id,
+              size: (stored ? sizeOf(stored) : null) ?? (view.media === "single" ? 7 : 12),
+              out: !!stored?.temp_location_id,
+              places: settings.thicknessByFormat && stored ? discsOf(stored) : 1,
+            };
           }),
         );
       }
@@ -144,7 +149,7 @@ function ShelfFurniture({
     for (let col = 0; col < f.cols; col++) {
       const s = group.slotAt.get(`${f.key}:${row}:${col}`);
       if (s) {
-        total += group.view.index.bySlot.get(s.id)?.length ?? 0;
+        total += (group.drawings.get(s.id) ?? EMPTY).reduce((n, r) => n + (r.places ?? 1), 0);
         capacity += s.capacity;
       }
     }
@@ -164,7 +169,8 @@ function ShelfFurniture({
         if (!slot) return <Compartment key={i} aspect={aspect} blocked={t("map.blocked")} />;
         const records = group.drawings.get(slot.id) ?? EMPTY;
         const plate = group.plates.get(slot.id);
-        const count = records.length;
+        // With thickness by format the count is in places (a double album takes 2).
+        const count = records.reduce((n, r) => n + (r.places ?? 1), 0);
         const isFound = foundSlot === slot.id;
         const place = slotPlace(slot, f, t);
         const label = plate

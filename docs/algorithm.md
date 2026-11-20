@@ -118,6 +118,21 @@ The computed map can drift from the real shelf (double albums, box sets, a 10" h
 
 **Reality beats capacity:** if C or P ends up with more records than its capacity, it's flagged on the map, not blocked. The shelf in front of the user is the truth.
 
+### 7b. Calibration by count (v2, `calibrateCount`)
+
+"There are 74 records in compartment C right now." Like the first-record calibration, it moves **only one boundary**, this time the one between C and the next available compartment Q: if C holds more than 74 on the map, its last records move to the front of Q; if it holds fewer, Q's first records move to the end of C. Reality beats capacity: going over is flagged, not blocked. It's refused when it would need another boundary (C is the last compartment, or Q doesn't have enough records to give).
+
+### 7c. Thickness by format (v2, optional)
+
+A setting counts double albums and box sets by their number of discs (`format_qty` from Discogs, 1 to 12), so a compartment's capacity is measured in **places**: an 80-place cube holds 80 single LPs or 40 doubles. With it on:
+
+- **Initial layout** (`distributeWeighted`): each compartment's share of the collection's places is proportional to its effective capacity, as before. Records are walked in sort order; a record stays in the current compartment while its midpoint stays inside that compartment's cumulative share and it fits. Contiguity holds by construction, and no compartment goes over its capacity in places (a record thicker than a whole compartment goes alone in an empty one, flagged).
+- **Insertion** checks room in places, and a cascade moves as many records as it takes to make room. The minimum-move proof (6b) is for one place per record; with weights it's the same nearest-room rule, used as a heuristic.
+- **Calibration** flags over capacity in places.
+- **Drawings** make each record as wide as its places.
+
+Off, everything counts one place per record, exactly as in v1 (the v1 tests run unchanged).
+
 ## 8. Finding a record (`query.ts`)
 
 - **Position inside the compartment:** if the record is the i-th of n (counting from 0), it sits at (i + 0.5) / n from the left. The 1st of 5 is at 10%, the 3rd of 5 at 50%. Shown as "40% from the left".

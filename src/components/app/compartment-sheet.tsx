@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, type MouseEvent } from "react";
 import { displayArtist, type Slot } from "@/lib/layout";
 import { recordColor } from "@/lib/design";
 import { slotTitle } from "@/lib/shelf/describe";
-import { sizeOf, toSortSettings, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
+import { discsOf, sizeOf, toSortSettings, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { isBoxTemplate } from "@/lib/shelf/templates";
 import { plateLabels } from "@/lib/visual/plates";
 import { searchRecords } from "@/lib/search";
@@ -38,6 +38,7 @@ type Props = {
 export function CompartmentSheet({ slot, view, config, byId, app, highlightId, onClose, onPickRecord, startCalibrating = false }: Props) {
   const { t, locale } = useI18n();
   const [calibrating, setCalibrating] = useState(startCalibrating);
+  const [counting, setCounting] = useState(false);
   const [hover, setHover] = useState<{ id: string; x: number; y: number; w: number } | null>(null);
   const frame = useRef<HTMLDivElement>(null);
   const settings = toSortSettings(config.settings);
@@ -48,10 +49,20 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
   );
   const furniture = config.furniture.find((f) => f.key === slot.shelfKey);
   const aspect = furniture && isBoxTemplate(furniture.template) ? 1.25 : 1;
-  const over = records.length > slot.capacity;
+  const load = config.settings.thicknessByFormat ? records.reduce((n, r) => n + (r.weight && r.weight > 0 ? r.weight : 1), 0) : records.length;
+  const over = load > slot.capacity;
   const drawing = useMemo(
-    () => records.map((r) => ({ id: r.id, size: (byId.get(r.id) ? sizeOf(byId.get(r.id)!) : null) ?? (view.media === "single" ? 7 : 12), out: !!byId.get(r.id)?.temp_location_id })),
-    [records, byId, view.media],
+    () =>
+      records.map((r) => {
+        const stored = byId.get(r.id);
+        return {
+          id: r.id,
+          size: (stored ? sizeOf(stored) : null) ?? (view.media === "single" ? 7 : 12),
+          out: !!stored?.temp_location_id,
+          places: config.settings.thicknessByFormat && stored ? discsOf(stored) : 1,
+        };
+      }),
+    [records, byId, view.media, config.settings.thicknessByFormat],
   );
   const shown = hover ? byId.get(hover.id) : undefined;
   const shownIndex = hover ? records.findIndex((r) => r.id === hover.id) : -1;
@@ -76,7 +87,11 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
                 {title}
               </h2>
               <p className="text-sm">
-                <span className={over ? "rounded-[3px] bg-mustard px-1.5 font-semibold text-ink" : "opacity-85"}>{t("compartment.count", { count: records.length, capacity: slot.capacity })}</span>
+                <span className={over ? "rounded-[3px] bg-mustard px-1.5 font-semibold text-ink" : "opacity-85"}>
+                  {config.settings.thicknessByFormat
+                    ? `${t("common.records", { count: records.length })}, ${t("compartment.places", { count: load, capacity: slot.capacity })}`
+                    : t("compartment.count", { count: records.length, capacity: slot.capacity })}
+                </span>
               </p>
             </div>
             <button type="button" onClick={onClose} className="shrink-0 rounded-pill border border-on-walnut/60 px-3 py-1 text-sm font-semibold text-on-walnut hover:bg-on-walnut/10">
@@ -125,10 +140,17 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
 
           {calibrating ? (
             <Calibrate slot={slot} view={view} byId={byId} app={app} onDone={() => setCalibrating(false)} />
+          ) : counting ? (
+            <CalibrateCount slot={slot} app={app} current={records.length} onDone={() => setCounting(false)} />
           ) : (
-            <button type="button" onClick={() => setCalibrating(true)} className={`${btnSecondarySm} self-start`}>
-              {t("compartment.calibrate")}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => setCalibrating(true)} className={btnSecondarySm}>
+                {t("compartment.calibrate")}
+              </button>
+              <button type="button" onClick={() => setCounting(true)} className={btnSecondarySm}>
+                {t("compartment.countButton")}
+              </button>
+            </div>
           )}
 
           {records.length === 0 ? (
@@ -221,5 +243,48 @@ function Calibrate({ slot, view, byId, app, onDone }: { slot: Slot; view: MediaV
         {t("common.cancel")}
       </button>
     </div>
+  );
+}
+
+/** Calibration by count: "there are N records here", moving only the boundary with the next compartment. */
+function CalibrateCount({ slot, app, current, onDone }: { slot: Slot; app: ShelfApp; current: number; onDone: () => void }) {
+  const { t } = useI18n();
+  const [value, setValue] = useState(String(current));
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <form
+      className="flex flex-col gap-2 rounded-card border border-input-line p-3"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setError(null);
+        const count = Number(value);
+        try {
+          const result = await app.calibrateCount(slot.id, Number.isFinite(count) ? count : -1);
+          if (!result.ok) setError(t(`compartment.refusal.${result.code}`));
+          else onDone();
+        } catch (err) {
+          setError(err instanceof Error ? `${t("compartment.calibrateFailed")} ${err.message}` : t("compartment.calibrateFailed"));
+        }
+      }}
+    >
+      <label htmlFor="calibrate-count" className="text-sm font-semibold text-ink">
+        {t("compartment.countLabel")}
+      </label>
+      <div className="flex gap-2">
+        <input id="calibrate-count" type="number" inputMode="numeric" min={0} max={1000} autoFocus value={value} onChange={(e) => setValue(e.target.value)} className={`${input} w-28`} />
+        <button type="submit" disabled={app.busy} className={btnSecondarySm}>
+          {t("compartment.countSave")}
+        </button>
+      </div>
+      {error && (
+        <p role="alert" className="text-sm font-semibold text-danger">
+          {error}
+        </p>
+      )}
+      <p className="text-xs text-muted">{t("compartment.countHint")}</p>
+      <button type="button" onClick={onDone} className="self-start text-sm font-semibold text-ink underline underline-offset-2">
+        {t("common.cancel")}
+      </button>
+    </form>
   );
 }

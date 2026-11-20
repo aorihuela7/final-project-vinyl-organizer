@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { SORT_LEVELS, type ShelfMedia, type SortLevel } from "@/lib/layout";
-import { groupOf, newFurniture, resizeFurniture, type FurnitureConfig, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
+import { discsOf, groupOf, newFurniture, resizeFurniture, type FurnitureConfig, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotPlace } from "@/lib/shelf/describe";
 import { groupFills, shelfHolds } from "@/lib/shelf/capacity";
 import { TEMPLATES, defaultCapacity, isBoxTemplate, template, type TemplateId } from "@/lib/shelf/templates";
@@ -28,11 +28,13 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
     initial.furniture.length > 0 && !app.data?.config ? [...initial.furniture].sort((a, b) => a.sortIndex - b.sortIndex)[0]!.key : null,
   );
 
+  // Records per group, or places with thickness by format (a double album counts 2).
+  const thickness = !!draft.settings.thicknessByFormat;
   const counts = useMemo<Counts>(() => {
     const c: Counts = { lp: 0, single: 0, cd: 0, other: 0 };
-    for (const r of records) c[groupOf(r)]++;
+    for (const r of records) c[groupOf(r)] += thickness ? discsOf(r) : 1;
     return c;
-  }, [records]);
+  }, [records, thickness]);
 
   const furniture = [...draft.furniture].sort((a, b) => a.sortIndex - b.sortIndex);
 
@@ -121,8 +123,10 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
       <SortOrder
         levels={draft.settings.sortLevels}
         ignoreArticles={draft.settings.ignoreArticles}
+        thickness={!!draft.settings.thicknessByFormat}
         onLevel={setLevel}
         onIgnoreArticles={(v) => setDraft((d) => ({ ...d, settings: { ...d.settings, ignoreArticles: v } }))}
+        onThickness={(v) => setDraft((d) => ({ ...d, settings: { ...d.settings, thicknessByFormat: v } }))}
       />
 
       <div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-input-line/60 bg-wall/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
@@ -560,13 +564,17 @@ function TemplatePicker({ onAdd }: { onAdd: (id: TemplateId) => void }) {
 function SortOrder({
   levels,
   ignoreArticles,
+  thickness,
   onLevel,
   onIgnoreArticles,
+  onThickness,
 }: {
   levels: SortLevel[];
   ignoreArticles: boolean;
+  thickness: boolean;
   onLevel: (i: number, v: SortLevel | "") => void;
   onIgnoreArticles: (v: boolean) => void;
+  onThickness: (v: boolean) => void;
 }) {
   const { t } = useI18n();
   return (
@@ -593,6 +601,10 @@ function SortOrder({
       <label className="flex items-center gap-2 text-sm text-ink">
         <input type="checkbox" checked={ignoreArticles} onChange={(e) => onIgnoreArticles(e.target.checked)} className="size-4 accent-ink" />
         {t("builder.ignoreArticles")}
+      </label>
+      <label className="flex items-center gap-2 text-sm text-ink">
+        <input type="checkbox" checked={thickness} onChange={(e) => onThickness(e.target.checked)} className="size-4 accent-ink" />
+        {t("builder.thickness")}
       </label>
     </section>
   );

@@ -22,7 +22,22 @@ export type LayoutRecord = {
   genre: string | null;
   /** The record's format group: which shelves it can go on. */
   media: RecordMedia;
+  /**
+   * How many places it takes on the shelf (thickness by format: a double album
+   * takes 2). Missing means 1, and then everything works by record count.
+   */
+  weight?: number;
 };
+
+/** A record's weight (its number of discs, 1 if unknown). */
+export function weightOf(r: Pick<LayoutRecord, "weight">): number {
+  return r.weight && r.weight > 0 ? r.weight : 1;
+}
+
+/** The places a record takes: its weight with thickness by format, otherwise 1. */
+export function placesOf(r: Pick<LayoutRecord, "weight">, settings: Pick<SortSettings, "thicknessByFormat">): number {
+  return settings.thicknessByFormat ? weightOf(r) : 1;
+}
 
 export type SortSettings = {
   /** One to three levels, e.g. ["genre", "artist"]. Fixed tiebreakers follow: artist → year → title → id. */
@@ -30,6 +45,8 @@ export type SortSettings = {
   ignoreArticles: boolean;
   /** Leading articles to ignore. Defaults to DEFAULT_ARTICLES. */
   articles?: readonly string[];
+  /** Thickness by format: records take as many places as their weight (discs). Off: one place each. */
+  thicknessByFormat?: boolean;
 };
 
 export type CompartmentSpec = {

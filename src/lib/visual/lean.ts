@@ -27,6 +27,8 @@ export type LeanInput = {
   size: RecordSize;
   /** Width of the record's place on the shelf. Defaults to the inner width ÷ capacity. */
   width?: number;
+  /** Or its share in places (thickness by format: a double album is 2). Used when width is missing. */
+  places?: number;
 };
 
 export type LeanOptions = {
@@ -124,14 +126,19 @@ export function leanLayout(inputs: readonly LeanInput[], options: LeanOptions): 
   if (n === 0) return { records: [], floor, pad };
 
   const inner = W - 2 * pad;
-  // A compartment marked fuller than its capacity (calibration) squeezes instead of overflowing.
-  const capacity = Math.max(1, options.capacity, n);
-  let slots = inputs.map((r) => (r.width && r.width > 0 ? r.width : inner / capacity));
+  // A compartment marked fuller than its capacity (calibration) squeezes instead of overflowing: see placeCapacity.
+  // Capacity in places; with weights, the free share comes from places, not records.
+  const totalPlaces = inputs.reduce((n, r) => n + (r.places && r.places > 0 ? r.places : 1), 0);
+  const placeCapacity = Math.max(1, options.capacity, totalPlaces);
+  let slots = inputs.map((r) => (r.width && r.width > 0 ? r.width : ((r.places && r.places > 0 ? r.places : 1) * inner) / placeCapacity));
   const used = slots.reduce((a, b) => a + b, 0);
   if (used > inner) slots = slots.map((s) => (s * inner) / used);
   const usedWidth = Math.min(inner, used);
 
-  const { k, maxAngle, exponent } = leanParams(n, options.capacity);
+  // How far records lean depends on the free share of the compartment (in places).
+  const placesUsed = Math.round(totalPlaces);
+  const { k: kPlaces, maxAngle, exponent } = leanParams(placesUsed, options.capacity);
+  const k = Math.min(n, kPlaces);
   // The bases never use more than 65% of the free width.
   const limit = Math.min(pad + usedWidth + 0.65 * Math.max(0, inner - usedWidth) + 3, W - pad);
 

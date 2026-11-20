@@ -5,7 +5,7 @@ import { leanLayout, type LeanRecord, type RecordSize } from "@/lib/visual/lean"
 import { recordColor } from "@/lib/design";
 
 /** out: taken to a temporary location; drawn hollow, so its spot shows. */
-export type DrawingRecord = { id: string; size: RecordSize; out?: boolean };
+export type DrawingRecord = { id: string; size: RecordSize; out?: boolean; places?: number };
 
 type Props = {
   records: readonly DrawingRecord[];

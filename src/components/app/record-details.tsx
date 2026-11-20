@@ -6,7 +6,7 @@ import { percent } from "@/lib/design";
 import { formatLine, slotTitle } from "@/lib/shelf/describe";
 import { releaseUrl } from "@/lib/discogs/map";
 import type { TracklistSection } from "@/lib/discogs/tracklist";
-import { groupOf, sizeOf, type MediaView, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
+import { discsOf, groupOf, sizeOf, type MediaView, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
 import { OutBanner, TakeOutChooser } from "./temporary";
 import { genreName } from "@/i18n/core";
 import { useI18n } from "@/i18n/client";
@@ -77,7 +77,10 @@ export function RecordCard({
 
   const genres = [record.genre ? genreName(locale, record.genre) : null, ...(record.styles ?? [])].filter(Boolean).join(", ");
   const view = location ? views.find((v) => v.index.slotById.has(location.slot.id)) : undefined;
-  const drawing = location && view ? (view.index.bySlot.get(location.slot.id) ?? []).map((r) => ({ id: r.id, size: (byId.get(r.id) ? sizeOf(byId.get(r.id)!) : null) ?? 12, out: !!byId.get(r.id)?.temp_location_id })) : [];
+  const drawing = location && view ? (view.index.bySlot.get(location.slot.id) ?? []).map((r) => {
+          const stored = byId.get(r.id);
+          return { id: r.id, size: (stored ? sizeOf(stored) : null) ?? 12, out: !!stored?.temp_location_id, places: config.settings.thicknessByFormat && stored ? discsOf(stored) : 1 };
+        }) : [];
 
   return (
     <article className={`${card} grid gap-3.5 overflow-hidden pb-[18px]`} aria-labelledby={headingId} data-record-card>

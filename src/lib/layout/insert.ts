@@ -31,7 +31,7 @@
  */
 import { buildIndex } from "./query";
 import { aliasesFor, artistSortName, compareKeys, sortKeyOf, type ArtistAliases } from "./sort";
-import type { LayoutRecord, Move, Placement, Slot, SortSettings } from "./types";
+import { placesOf, type LayoutRecord, type Move, type Placement, type Slot, type SortSettings } from "./types";
 
 /** "naive": v1's forward cascade (the baseline). "minimum": the fewest records moved (v2). */
 export type InsertStrategy = "naive" | "minimum";
@@ -105,8 +105,15 @@ function insertOne(state: ShelfState, record: LayoutRecord, aliases: ArtistAlias
 
   const index = buildIndex(state.records.filter((r) => r.id !== record.id), placement, slots, settings, aliases);
   const lists = slots.map((s) => [...(index.bySlot.get(s.id) ?? [])]);
-  const originalCounts = lists.map((l) => l.length);
-  const hasRoom = (i: number) => originalCounts[i]! < slots[i]!.capacity;
+  // Loads in places: the record count, or the sum of weights with thickness by format.
+  const weightOf = (r: LayoutRecord) => placesOf(r, settings);
+  const sum = (list: readonly LayoutRecord[]) => list.reduce((n, r) => n + weightOf(r), 0);
+  const originalLoads = lists.map(sum);
+  const added = weightOf(record);
+  const hasRoom = (i: number) => originalLoads[i]! + added <= slots[i]!.capacity;
+  // A compartment calibrated over its capacity may stay as full as it was, but no fuller.
+  const limit = (i: number) => Math.max(slots[i]!.capacity, originalLoads[i]!);
+  const loads = [...originalLoads];
   const slotIndexOf = (id: string) => index.slotOf.get(id)!.index;
 
   // 1. Insertion point: the first placed record that sorts after the new one.
@@ -197,6 +204,7 @@ function insertOne(state: ShelfState, record: LayoutRecord, aliases: ArtistAlias
   let at = list.findIndex((r) => compareKeys(index.keys.get(r.id)!, key, settings.levels) > 0);
   if (at === -1) at = list.length;
   list.splice(at, 0, record);
+  loads[candidate]! += added;
 
   const destination = new Map<string, string | null>([[record.id, slots[candidate]!.id]]);
   const overflow: string[] = [];
@@ -204,27 +212,36 @@ function insertOne(state: ShelfState, record: LayoutRecord, aliases: ArtistAlias
   // Minimum moves, backward: the first record of each full compartment goes to the end of the one before.
   if (direction === "backward") {
     let current = candidate;
-    while (!hasRoom(current)) {
-      const pushed = lists[current]!.shift()!;
+    while (current > 0 && loads[current]! > limit(current)) {
       const previous = current - 1;
-      lists[previous]!.push(pushed);
-      destination.set(pushed.id, slots[previous]!.id);
+      while (loads[current]! > limit(current) && lists[current]!.length > 0 && lists[current]![0]!.id !== record.id) {
+        const pushed = lists[current]!.shift()!;
+        loads[current]! -= weightOf(pushed);
+        lists[previous]!.push(pushed);
+        loads[previous]! += weightOf(pushed);
+        destination.set(pushed.id, slots[previous]!.id);
+      }
       current = previous;
     }
   }
 
-  // 3–4. Cascade while the compartment we just added to was already full.
+  // 3–4. Cascade while the compartment we just added to is over: its last records go to the next one.
   let current = candidate;
-  while (direction === "forward" && !hasRoom(current)) {
-    const pushed = lists[current]!.pop()!;
+  while (direction === "forward" && loads[current]! > limit(current)) {
     const nextSlot = current + 1;
-    if (nextSlot >= slots.length) {
-      destination.set(pushed.id, null);
-      overflow.push(pushed.id);
-      break;
+    while (loads[current]! > limit(current) && lists[current]!.length > 0) {
+      const pushed = lists[current]!.pop()!;
+      loads[current]! -= weightOf(pushed);
+      if (nextSlot >= slots.length) {
+        destination.set(pushed.id, null);
+        overflow.push(pushed.id);
+        continue;
+      }
+      lists[nextSlot]!.unshift(pushed);
+      loads[nextSlot]! += weightOf(pushed);
+      destination.set(pushed.id, slots[nextSlot]!.id);
     }
-    lists[nextSlot]!.unshift(pushed);
-    destination.set(pushed.id, slots[nextSlot]!.id);
+    if (nextSlot >= slots.length) break;
     current = nextSlot;
   }
 

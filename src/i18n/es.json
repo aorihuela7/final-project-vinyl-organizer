@@ -379,7 +379,8 @@
     "suggestedLp": "Kallax",
     "suggestedLpN": "Kallax {n}",
     "suggestedSingles": "Singles",
-    "suggestedCds": "Repisa de CD"
+    "suggestedCds": "Repisa de CD",
+    "thickness": "Contar los discos dobles y las cajas por su cantidad de discos (un LP doble ocupa dos lugares)"
   },
   "record": {
     "offMap": "Fuera del mapa",
@@ -438,8 +439,16 @@
       "unavailable": "Ese compartimiento no está disponible.",
       "notOnShelf": "Ese disco no está en esta repisa.",
       "firstCompartment": "Este es el primer compartimiento, así que los discos anteriores no tienen adónde ir.",
-      "notAdjacent": "Elige un disco de este compartimiento o del inmediatamente anterior: la calibración solo mueve el límite entre ellos."
-    }
+      "notAdjacent": "Elige un disco de este compartimiento o del inmediatamente anterior: la calibración solo mueve el límite entre ellos.",
+      "lastCompartment": "Este es el último compartimiento, así que los discos siguientes no tienen adónde ir.",
+      "notEnough": "El compartimiento siguiente no tiene tantos discos para dar.",
+      "badCount": "Escribe un número entero."
+    },
+    "countButton": "Contar los discos de aquí",
+    "countLabel": "¿Cuántos discos hay ahora en este compartimiento?",
+    "countSave": "Guardar el conteo",
+    "countHint": "Solo se mueve el límite con el compartimiento siguiente: los discos de más pasan a él, o los que faltan vienen de él.",
+    "places": "{count} de {capacity} lugares"
   },
   "collection": {
     "title": "Colección",

@@ -87,7 +87,7 @@ export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState>
     fetchAll<StoredRecord>(supabase, "records", RECORD_COLUMNS, "id"),
     supabase.from("furniture").select("id, name, template, media, rows, cols, traversal, default_capacity, sort_index").order("sort_index"),
     fetchAll<CompartmentRow>(supabase, "compartments", "id, furniture_id, row, col, status, capacity", "id"),
-    supabase.from("shelf_settings").select("sort_levels, ignore_articles, slack_pct").maybeSingle(),
+    supabase.from("shelf_settings").select("sort_levels, ignore_articles, slack_pct, thickness_by_format").maybeSingle(),
     fetchAll<{ record_id: string; compartment_id: string }>(supabase, "placements", "record_id, compartment_id", "record_id"),
     supabase.from("collections").select("id, source, discogs_username, last_synced_at").maybeSingle(),
     supabase.from("import_jobs").select("*").order("created_at", { ascending: false }).limit(5),
@@ -118,9 +118,14 @@ export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState>
     compartments: (byFurniture.get(f.id) ?? []).sort((a, b) => a.row - b.row || a.col - b.col),
   }));
 
-  const s = settingsRes.data as { sort_levels: string[]; ignore_articles: boolean; slack_pct: number } | null;
+  const s = settingsRes.data as { sort_levels: string[]; ignore_articles: boolean; slack_pct: number; thickness_by_format?: boolean } | null;
   const settings = s
-    ? { sortLevels: s.sort_levels as ShelfConfig["settings"]["sortLevels"], ignoreArticles: s.ignore_articles, slackPct: Number(s.slack_pct) }
+    ? {
+        sortLevels: s.sort_levels as ShelfConfig["settings"]["sortLevels"],
+        ignoreArticles: s.ignore_articles,
+        slackPct: Number(s.slack_pct),
+        thicknessByFormat: !!s.thickness_by_format,
+      }
     : DEFAULT_SETTINGS;
 
   const jobs = (jobsRes.data ?? []) as JobRow[];
@@ -167,6 +172,7 @@ export async function saveSetupRemote(
       sort_levels: config.settings.sortLevels,
       ignore_articles: config.settings.ignoreArticles,
       slack_pct: config.settings.slackPct,
+      thickness_by_format: !!config.settings.thicknessByFormat,
     },
     p_placements: [...byPosition].map(([recordId, position]) => ({ record_id: recordId, ...parsePosition(position) })),
     p_event: { kind: event.kind, moves: event.moves, moved_count: event.movedCount },

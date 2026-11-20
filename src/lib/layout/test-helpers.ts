@@ -13,6 +13,7 @@ export function rec(artist: string, extra: Partial<LayoutRecord> = {}): LayoutRe
     label: extra.label ?? null,
     genre: "genre" in extra ? (extra.genre ?? null) : "Rock",
     media: extra.media ?? "lp",
+    ...(extra.weight !== undefined ? { weight: extra.weight } : {}),
   };
 }
 

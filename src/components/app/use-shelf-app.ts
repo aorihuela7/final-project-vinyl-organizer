@@ -14,6 +14,7 @@ import { useI18n } from "@/i18n/client";
 import type { RecordInput } from "@/lib/discogs/map";
 import {
   calibrate as calibrateLayout,
+  calibrateCount as calibrateCountLayout,
   collapseMoves,
   countChanges,
   insertRecord,
@@ -690,6 +691,29 @@ export function useShelfApp(startParam: string | null) {
     [data, views, applyChange],
   );
 
+  /** Calibration by count: "there are N records in this compartment right now". */
+  const calibrateCount = useCallback(
+    async (slotId: string, count: number) => {
+      if (!data?.config) return { ok: false as const, code: "notOnShelf" as const, reason: "Generate a map first." };
+      const view = views.find((v) => v.index.slotById.has(slotId));
+      if (!view) return { ok: false as const, code: "unavailable" as const, reason: "That compartment isn't available." };
+      const settings = toSortSettings(data.config.settings);
+      const group = data.records.filter((r) => groupOf(r) === view.media).map(toLayoutRecord);
+      const result = calibrateCountLayout({ slots: view.index.slots, records: group, placement: data.placement, settings }, slotId, count);
+      if (!result.ok) return result;
+      if (result.movedCount > 0) {
+        setBusy(true);
+        try {
+          await applyChange(result.placement, result.moves, { kind: "calibrate", moves: result.moves, movedCount: result.movedCount });
+        } finally {
+          setBusy(false);
+        }
+      }
+      return result;
+    },
+    [data, views, applyChange],
+  );
+
   /** "Add a new record": the naive insertion, computed without saving. */
   const previewInsert = useCallback(
     (input: RecordInput): InsertPreview | null => {
@@ -821,6 +845,7 @@ export function useShelfApp(startParam: string | null) {
     previewMap,
     generateMap,
     calibrate,
+    calibrateCount,
     previewInsert,
     addRecord,
     takeOut,
