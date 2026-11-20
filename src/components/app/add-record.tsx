@@ -154,9 +154,9 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord }: Props) {
 
           {!preview?.media ? (
             <p className="rounded-card bg-warning-soft p-3 text-sm text-warning">
-              {chosen.media === "other"
+              {chosen.format_group === "other"
                 ? `This is a ${chosen.format_name ?? "non-vinyl"} release, so it doesn't go on a shelf.`
-                : `You don't have a shelf for ${chosen.media === "cd" ? "CDs" : "vinyl"} yet. Add one in “Shelves & order”.`}
+                : `You don't have a shelf for ${chosen.format_group === "cd" ? "CDs" : chosen.format_group === "single" ? "singles (7″)" : "LPs"} yet. Add one in Shelves & order.`}
             </p>
           ) : !preview.target ? (
             <p className="rounded-card bg-warning-soft p-3 text-sm text-warning">Your shelves are full: there&apos;s no room for it anywhere.</p>

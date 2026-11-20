@@ -13,6 +13,9 @@ import { slotPlace } from "@/lib/shelf/describe";
 import { TEMPLATES, defaultCapacity, template, type TemplateId } from "@/lib/shelf/templates";
 import { Sheet } from "./sheet";
 import type { MapPreview, ShelfApp } from "./use-shelf-app";
+import { useI18n } from "@/i18n/client";
+import { groupOf } from "@/lib/shelf/model";
+import type { ShelfMedia } from "@/lib/layout";
 
 const LEVEL_LABEL: Record<SortLevel, string> = { genre: "Genre", artist: "Artist", year: "Year", label: "Label", title: "Title" };
 
@@ -24,14 +27,15 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
   const [preview, setPreview] = useState<MapPreview | null>(null);
   const [adding, setAdding] = useState<TemplateId>("kallax_4x4");
 
+  const { t } = useI18n();
   const counts = useMemo(() => {
-    const c = { vinyl: 0, cd: 0, other: 0 };
-    for (const r of records) c[r.media]++;
+    const c = { lp: 0, single: 0, cd: 0, other: 0 };
+    for (const r of records) c[groupOf(r)]++;
     return c;
   }, [records]);
 
   const furniture = [...draft.furniture].sort((a, b) => a.sortIndex - b.sortIndex);
-  const capacityOf = (media: "vinyl" | "cd") =>
+  const capacityOf = (media: ShelfMedia) =>
     furniture
       .filter((f) => f.media === media)
       .reduce((sum, f) => sum + f.compartments.filter((c) => c.status === "available").reduce((s, c) => s + (c.capacity ?? f.defaultCapacity), 0), 0);
@@ -57,7 +61,7 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
   const add = () =>
     setDraft((d) => ({
       ...d,
-      furniture: [...d.furniture, newFurniture(adding, d.furniture.length, counts.vinyl === 0 && counts.cd > 0 ? "cd" : "vinyl")],
+      furniture: [...d.furniture, newFurniture(adding, d.furniture.length, counts.lp === 0 && counts.cd > 0 ? "cd" : "lp", t(`templates.${adding}`))],
     }));
 
   const setLevel = (i: number, value: SortLevel | "") =>
@@ -101,9 +105,9 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-ink">Add a shelf</span>
             <select value={adding} onChange={(e) => setAdding(e.target.value as TemplateId)} className="rounded-control border border-line-strong bg-surface px-2 py-2 text-base">
-              {TEMPLATES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
+              {TEMPLATES.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {t(`templates.${tpl.id}`)}
                 </option>
               ))}
             </select>
@@ -167,7 +171,8 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
 
       <section className="rounded-card bg-sunken p-3 text-sm text-ink">
         <p>
-          Vinyl: {counts.vinyl.toLocaleString("en-US")} records for {capacityOf("vinyl").toLocaleString("en-US")} places
+          LPs: {counts.lp.toLocaleString("en-US")} records for {capacityOf("lp").toLocaleString("en-US")} places
+          {counts.single > 0 && <> · Singles: {counts.single.toLocaleString("en-US")} for {capacityOf("single").toLocaleString("en-US")} places</>}
           {counts.cd > 0 && (
             <>
               {" "}
@@ -253,6 +258,7 @@ function ShelfEditor({
   onMove: (delta: number) => void;
   onRemove: () => void;
 }) {
+  const { t: tl } = useI18n();
   const [tapMode, setTapMode] = useState<"block" | "capacity">("block");
   const [editing, setEditing] = useState<{ row: number; col: number } | null>(null);
   const id = `shelf-${f.key}`;
@@ -309,9 +315,9 @@ function ShelfEditor({
             }}
             className="rounded-control border border-line-strong bg-surface px-2 py-2 text-base"
           >
-            {TEMPLATES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
+            {TEMPLATES.map((tpl) => (
+              <option key={tpl.id} value={tpl.id}>
+                {tl(`templates.${tpl.id}`)}
               </option>
             ))}
           </select>
@@ -355,7 +361,7 @@ function ShelfEditor({
         <fieldset className="flex flex-col gap-1 text-sm">
           <legend className="font-medium text-ink">Holds</legend>
           <div className="flex gap-3 pt-1">
-            {(["vinyl", "cd"] as const).map((m) => (
+            {(["lp", "single", "cd"] as const).map((m) => (
               <label key={m} className="flex items-center gap-1.5">
                 <input
                   type="radio"
@@ -364,7 +370,7 @@ function ShelfEditor({
                   onChange={() => onChange((x) => ({ ...x, media: m, defaultCapacity: defaultCapacity(x.template, m) }))}
                   className="accent-[var(--color-accent)]"
                 />
-                {m === "vinyl" ? "Vinyl" : "CDs"}
+                {tl(`media.${m}`)}
               </label>
             ))}
           </div>

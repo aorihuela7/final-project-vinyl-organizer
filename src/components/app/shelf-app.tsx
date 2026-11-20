@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SignUpButton } from "@clerk/nextjs";
 import { displayArtist, type Slot } from "@/lib/layout";
-import { suggestedConfig, type StoredRecord } from "@/lib/shelf/model";
+import { groupOf, suggestedConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotTitle } from "@/lib/shelf/describe";
 import { CompartmentSheet } from "./compartment-sheet";
 import { ImportProgress } from "./import-progress";
@@ -73,8 +73,10 @@ export function ShelfApp() {
   const config = data.config;
   const views = app.views;
   const leftover = views.reduce((n, v) => n + v.unplaced.length, 0);
-  const others = data.records.filter((r) => r.media === "other").length;
-  const cdsWithoutShelf = config && !config.furniture.some((f) => f.media === "cd") ? data.records.filter((r) => r.media === "cd").length : 0;
+  const others = data.records.filter((r) => groupOf(r) === "other").length;
+  const cdsWithoutShelf = config && !config.furniture.some((f) => f.media === "cd") ? data.records.filter((r) => groupOf(r) === "cd").length : 0;
+  // Singles (7″) only go on singles shelves: without one, they stay off the map, and every count says so.
+  const singlesWithoutShelf = config && !config.furniture.some((f) => f.media === "single") ? data.records.filter((r) => groupOf(r) === "single").length : 0;
   const recordInSheet = openRecord ? byId.get(openRecord) : undefined;
   const slotName = (id: string | null) => {
     if (id === null) return t("app.offTheShelf");
@@ -161,6 +163,14 @@ export function ShelfApp() {
               </div>
 
               <p className="text-sm text-muted">{collectionSummary(t, data.records.length, config.settings)}</p>
+              {singlesWithoutShelf > 0 && (
+                <Banner className="flex flex-wrap items-center justify-between gap-2">
+                  <span>{t("app.singlesOff", { count: singlesWithoutShelf })}</span>
+                  <button type="button" onClick={() => setTab("setup")} className={btnPrimarySm}>
+                    {t("app.addSinglesShelf")}
+                  </button>
+                </Banner>
+              )}
               {(leftover > 0 || others > 0 || cdsWithoutShelf > 0) && (
                 <ul className="flex flex-col gap-1 text-sm">
                   {leftover > 0 && (

@@ -3,7 +3,9 @@
  * signed-in app (Supabase), plus the glue to the layout algorithm.
  */
 import type { RecordInput } from "@/lib/discogs/map";
+import { groupOfRecord, sizeOfRecord } from "@/lib/discogs/format";
 import {
+  SHELF_MEDIA,
   buildIndex,
   initialLayout,
   positionKey,
@@ -19,7 +21,8 @@ import {
 import { DEFAULT_SLACK_PCT } from "@/lib/config";
 import { defaultCapacity, template, type TemplateId } from "./templates";
 
-export type StoredRecord = RecordInput & {
+/** Records saved before v2 may lack the format group columns: they're classified on read. */
+export type StoredRecord = Omit<RecordInput, "size_inches" | "format_group"> & Partial<Pick<RecordInput, "size_inches" | "format_group">> & {
   id: string;
   origin: "import" | "added";
   synced_at?: string | null;
@@ -76,8 +79,18 @@ export function toShelfSpecs(furniture: readonly FurnitureConfig[]): ShelfSpec[]
   }));
 }
 
+/** The record's format group: lp, single, cd, or other. */
+export function groupOf(r: StoredRecord) {
+  return groupOfRecord(r);
+}
+
+/** 12, 10, or 7 inches for vinyl (drawings use it for heights); null otherwise. */
+export function sizeOf(r: StoredRecord) {
+  return sizeOfRecord(r);
+}
+
 export function toLayoutRecord(r: StoredRecord): LayoutRecord {
-  return { id: r.id, artist: r.artist, title: r.title, year: r.year, label: r.label, genre: r.genre, media: r.media };
+  return { id: r.id, artist: r.artist, title: r.title, year: r.year, label: r.label, genre: r.genre, media: groupOfRecord(r) };
 }
 
 let localCounter = 0;
@@ -86,13 +99,24 @@ export function localKey(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${localCounter}`;
 }
 
+/** English names for new shelves; the UI passes translated ones. */
+export const DEFAULT_TEMPLATE_NAMES: Record<TemplateId, string> = {
+  kallax_4x4: "Kallax 4×4",
+  kallax_5x5: "Kallax 5×5",
+  low_2x4: "Low unit 2×4",
+  tower_1x5: "Tower 1×5",
+  crates: "Crates",
+  record_box: "Record box",
+  custom: "Shelf",
+};
+
 /** A new shelf from a template, with every compartment listed. */
-export function newFurniture(id: TemplateId, sortIndex: number, media: ShelfMedia = "vinyl", name?: string): FurnitureConfig {
+export function newFurniture(id: TemplateId, sortIndex: number, media: ShelfMedia = "lp", name?: string): FurnitureConfig {
   const t = template(id);
   return resizeFurniture(
     {
       key: localKey("shelf"),
-      name: name ?? (media === "cd" ? `${t.label} (CDs)` : t.label),
+      name: name ?? DEFAULT_TEMPLATE_NAMES[id],
       template: id,
       media,
       rows: t.rows,
@@ -120,34 +144,56 @@ export function resizeFurniture(f: FurnitureConfig, rows: number, cols: number):
   return { ...f, rows, cols, compartments };
 }
 
-/** The demo's prebuilt shelves (CLAUDE.md): "Living room" Kallax 4×4 with two blocked cubes, "Studio" tower 1×5. */
-export function demoConfig(): ShelfConfig {
-  const living = newFurniture("kallax_4x4", 0, "vinyl", "Living room");
+export type DemoNames = { living: string; studio: string; singles: string };
+const DEMO_NAMES: DemoNames = { living: "Living room", studio: "Studio", singles: "Singles box" };
+
+/**
+ * The demo's prebuilt shelves (CLAUDE.md): "Living room" Kallax 4×4 for LPs with
+ * two blocked cubes (the turntable), "Studio" tower 1×5 for CDs, and a
+ * "Singles box" record box 1×3 when the collection has singles.
+ */
+export function demoConfig(records: readonly StoredRecord[] = [], names: DemoNames = DEMO_NAMES): ShelfConfig {
+  const living = newFurniture("kallax_4x4", 0, "lp", names.living);
   living.compartments = living.compartments.map((c) =>
     c.row === 1 && (c.col === 1 || c.col === 2) ? { ...c, status: "blocked" } : c,
   );
-  const studio = newFurniture("tower_1x5", 1, "cd", "Studio");
-  return { furniture: [living, studio], settings: { sortLevels: ["genre", "artist"], ignoreArticles: false, slackPct: DEFAULT_SLACK_PCT } };
+  const studio = newFurniture("tower_1x5", 1, "cd", names.studio);
+  const furniture = [living, studio];
+  if (records.some((r) => groupOf(r) === "single")) furniture.push(newFurniture("record_box", 2, "single", names.singles));
+  return { furniture, settings: { sortLevels: ["genre", "artist"], ignoreArticles: false, slackPct: DEFAULT_SLACK_PCT } };
 }
 
-/** A first suggestion for an imported collection: enough Kallax 4×4 for the vinyl, and one for CDs if there are any. */
-export function suggestedConfig(records: readonly StoredRecord[]): ShelfConfig {
-  const vinyl = records.filter((r) => r.media === "vinyl").length;
-  const cds = records.filter((r) => r.media === "cd").length;
-  const perShelf = 16 * Math.floor(80 * (1 - DEFAULT_SLACK_PCT / 100));
+export type SuggestedNames = { lp: (n: number | null) => string; single: string; cd: string };
+const SUGGESTED_NAMES: SuggestedNames = { lp: (n) => (n === null ? "Kallax" : `Kallax ${n}`), single: "Singles", cd: "CD shelf" };
+
+/**
+ * A first suggestion for an imported collection: enough Kallax 4×4 for the LPs,
+ * a record box (or a Kallax, if they don't fit in one) for the singles, and a
+ * Kallax for CDs if there are any.
+ */
+export function suggestedConfig(records: readonly StoredRecord[], names: SuggestedNames = SUGGESTED_NAMES): ShelfConfig {
+  const count = (g: string) => records.filter((r) => groupOf(r) === g).length;
+  const lps = count("lp");
+  const singles = count("single");
+  const cds = count("cd");
+  const usable = (capacity: number, compartments: number) => compartments * Math.floor(capacity * (1 - DEFAULT_SLACK_PCT / 100));
   const furniture: FurnitureConfig[] = [];
-  const vinylShelves = Math.max(1, Math.ceil(vinyl / perShelf));
-  for (let i = 0; i < vinylShelves; i++) {
-    furniture.push(newFurniture("kallax_4x4", furniture.length, "vinyl", vinylShelves > 1 ? `Kallax ${i + 1}` : "Kallax"));
+  const lpShelves = Math.max(1, Math.ceil(lps / usable(defaultCapacity("kallax_4x4", "lp"), 16)));
+  for (let i = 0; i < lpShelves; i++) {
+    furniture.push(newFurniture("kallax_4x4", furniture.length, "lp", names.lp(lpShelves > 1 ? i + 1 : null)));
   }
-  if (cds > 0) furniture.push(newFurniture("kallax_4x4", furniture.length, "cd", "CD shelf"));
+  if (singles > 0) {
+    const fitsInBox = singles <= usable(defaultCapacity("record_box", "single"), 3);
+    furniture.push(newFurniture(fitsInBox ? "record_box" : "kallax_4x4", furniture.length, "single", names.single));
+  }
+  if (cds > 0) furniture.push(newFurniture("kallax_4x4", furniture.length, "cd", names.cd));
   return { furniture, settings: DEFAULT_SETTINGS };
 }
 
 /** Position key (sortIndex:row:col) of each slot id, for comparing placements across saves. */
 export function positionsBySlotId(furniture: readonly FurnitureConfig[]): Map<string, string> {
   const map = new Map<string, string>();
-  for (const media of ["vinyl", "cd"] as const) {
+  for (const media of SHELF_MEDIA) {
     for (const s of traverse(toShelfSpecs(furniture), media)) map.set(s.id, s.position);
   }
   return map;
@@ -191,9 +237,9 @@ export type MediaView = {
 export function buildViews(records: readonly StoredRecord[], config: ShelfConfig, placement: Placement): MediaView[] {
   const specs = toShelfSpecs(config.furniture);
   const settings = toSortSettings(config.settings);
-  return (["vinyl", "cd"] as const).map((media) => {
+  return SHELF_MEDIA.map((media) => {
     const slots = traverse(specs, media);
-    const group = records.filter((r) => r.media === media);
+    const group = records.filter((r) => groupOf(r) === media);
     const index = buildIndex(group.map(toLayoutRecord), placement, slots, settings);
     const unplaced = slots.length > 0 ? group.filter((r) => !index.positionOf.has(r.id)) : [];
     return { media, index, unplaced };
@@ -201,3 +247,18 @@ export function buildViews(records: readonly StoredRecord[], config: ShelfConfig
 }
 
 export { positionKey };
+
+/** Records placed in a compartment of another format group (e.g. a single on an LP shelf). */
+export function misplacedRecords(records: readonly StoredRecord[], config: ShelfConfig, placement: Placement): string[] {
+  const specs = toShelfSpecs(config.furniture);
+  const mediaOfSlot = new Map<string, ShelfMedia>();
+  for (const media of SHELF_MEDIA) for (const s of traverse(specs, media)) mediaOfSlot.set(s.id, media);
+  const out: string[] = [];
+  for (const r of records) {
+    const slot = placement.get(r.id);
+    if (!slot) continue;
+    const media = mediaOfSlot.get(slot);
+    if (media && media !== groupOf(r)) out.push(r.id);
+  }
+  return out;
+}

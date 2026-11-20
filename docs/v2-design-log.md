@@ -48,7 +48,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 0. Issues, CLAUDE.md, branch | Done | Branch `v2-design`; issues #4–#14 (v2 plan: fix-first #4–#6, add #7–#11, hardening #12, security pass #13, design review #14) and #15–#23 (Nogal parts); CLAUDE.md has a v2 scope section, format groups, Nogal design, multilingual UI |
 | 1. Foundations | Done | Nogal tokens in `src/styles/tokens.css` (+ `surface-*` utilities in globals.css), Belleza and Nunito Sans via `next/font`, type scale 11–26, i18n in `src/i18n/` (core, server, client, `en.json`, 7 tests), app bar, banners, buttons, and inputs in `src/components/ui.tsx`; screenshots `p1-landing-*`, `p1-app-demo-*`; build and 76 tests pass |
 | 2. Lean function | Done | `src/lib/visual/lean.ts` (port of `leanLayout`, widths per record, sizes 12/10/7) and 15 Vitest tests: every n from 1 to 80 × 20 seeds × square and 1.6:1 × three size mixes, 0 overlaps by separating-axis test (~10 million pairs), corners inside, tops left of bases, angles non-decreasing, determinism, monotonic maximum angle, 25 × 80 records in under 16 ms; preview `p2-lean-preview.png` |
-| 3. Format groups | Todo | |
+| 3. Format groups | Done | Classifier `src/lib/discogs/format.ts` (17 tests with real description arrays); migrations `20261120094123_v2_format_groups` and `20261120094124_v2_user_preferences` applied with `supabase db push --remote --yes` and verified read-only (0 records without a group, 0 singles on LP shelves, 37 `format_split` events with 1,678 moves); layout groups `lp`/`single`/`cd` with tests (a 7″ never on an LP shelf, invariants per group); browser demo snapshot v2 with migration test (no LP moves); Record box template; demo Singles box; banner for singles without a shelf; screenshot `p3-demo-groups-*` (13 singles in the Singles box, none on Living room) |
 | 4. Map | Todo | |
 | 5. Search row and "Add a new record" | Todo | |
 | 6. Shelf builder with live capacity | Todo | |
@@ -70,6 +70,22 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 22. Security pass (#13) | Todo | |
 | 23. Design review at 390 and 1440 px (#14) | Todo | |
 
+## Classification counts (phase 3)
+
+Ale's Discogs collection (`aorihuelar`, 1,704 records), classified by the migration from the stored format data:
+
+| Rule | Group | Records |
+| --- | --- | --- |
+| 1, explicit size `7"` | single | 147 |
+| 1, explicit size `10"` | LP (10″) | 6 |
+| 1, explicit size `12"` | LP (12″) | 19 |
+| 2, `Single` or `EP` without a size | single | 2 |
+| 3, everything else on vinyl | LP (12″) | 1,197 |
+| CD | CD | 327 |
+| Other formats | not placed | 6 |
+
+Rule 4 (several formats, the largest size wins) needs every format, which only the import has; it applies at the next re-sync. Across the whole database: 50,844 LPs, 3,627 singles, 306 10″ records.
+
 ## Assumptions and questions for Ale
 
 - **Order of the v2-plan issues vs. the Nogal phases.** Ale asked to implement the v2-plan issues too. Taken: Nogal phases first, then the remaining issues (minimum-move insertion and simulator, temporary locations, better calibration, custom sections and tags, guest mode, hardening, security pass, design review). Why: the redesign touches every screen, and the plan's constraint "modify `src/lib/layout` only for the format groups" applies to the Nogal phases; the minimum-move work changes the layout code afterwards, as the v2 plan says. Easy to change: the order is only a sequence of slices.
@@ -82,6 +98,12 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 
 - **Lean jitter and the nearly-full case.** With the mockup's ±0.7° jitter, a nearly full compartment (maximum 1.2°) can reach 1.9°, above the plan's 1.5° test, and the jitter of the outermost record made the maximum angle non-monotonic. Taken: jitter shrinks with the maximum angle (full ±0.7° from 4° up), the outermost record takes the maximum exactly, and no record goes past it. Visually the same.
 - **Over-capacity compartments.** A calibrated compartment can hold more records than its capacity. Taken: the drawing squeezes records to fit the width instead of overflowing, and all stand upright.
+
+- **Mixed vinyl and CD releases.** Rule 4 talks about vinyl sizes. Taken: v1's media rule stays (the first vinyl or CD format in Discogs' order decides vinyl vs CD), and among vinyl formats the largest size wins. Easy to change in `classifyFormats` and the SQL function.
+- **Odd sizes.** Discogs has a few 5″, 6″, 8″, 9″, 11″, and 16″ records. Taken: up to 8″ goes with singles, 9″ to 11″ counts as 10″, bigger as 12″. Easy to change.
+- **The database trigger only fills empty groups.** Rows written by the deployed v1 (which doesn't know the columns) get their group from the stored format; the v2 import sends both columns computed from every format. A v1 re-sync that changes a record's formats keeps the old group until v2 is deployed. When a record changes group, v2 takes it off the map on load (`format_split` event) and puts it back through insertion in its own group.
+- **Singles capacity on the Record box for LPs.** The Record box template holds 100 singles or 70 LPs per box; the Crates template still exists for LPs. Easy to change in `CAPACITY`.
+- **`supabase db push` needs `--yes` in agent mode.** The CLI refused without it ("ask the user before re-running with --yes"). Ale authorized `--yes` for new migrations tonight, so it was re-run with `--remote --yes`.
 
 ## Blocked: needs Ale
 
@@ -99,6 +121,7 @@ If the session stops on a usage limit, a recurring session job (created when the
 
 - 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
 - 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
+- 2026-11-20 04:20 CST · Phase 3 done: format groups end to end, migrations applied.
 - 2026-11-20 03:45 CST · Phase 2 done: lean function and tests.
 - 2026-11-20 03:38 CST · Phase 1 done: tokens, fonts, i18n system, shell strings, ui primitives.
 

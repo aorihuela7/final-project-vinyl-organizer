@@ -8,7 +8,7 @@
  */
 import { sortRecords } from "./sort";
 import { traverse } from "./traversal";
-import type { LayoutRecord, Placement, ShelfMedia, ShelfSpec, Slot, SortSettings } from "./types";
+import { SHELF_MEDIA, type LayoutRecord, type Placement, type ShelfMedia, type ShelfSpec, type Slot, type SortSettings } from "./types";
 
 export type Distribution = {
   /** Records per slot, in traversal order. */
@@ -117,7 +117,8 @@ export function initialLayout(
 ): LayoutResult {
   const placement: Placement = new Map();
   const groups = {} as Record<ShelfMedia, GroupLayout>;
-  for (const media of ["vinyl", "cd"] as const) {
+  // Each format group flows only through shelves of its own group.
+  for (const media of SHELF_MEDIA) {
     groups[media] = layoutGroup(
       records.filter((r) => r.media === media),
       traverse(shelves, media),

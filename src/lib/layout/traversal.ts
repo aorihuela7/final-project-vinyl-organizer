@@ -2,7 +2,7 @@
  * Traversal: the order in which a sorted list "flows" through the compartments.
  * Shelves go by sort_index; inside a shelf, by rows (left to right, top to
  * bottom) or by columns (top to bottom, then the next column). Blocked
- * compartments are skipped. Vinyl and CD shelves are separate groups.
+ * compartments are skipped. LP, singles, and CD shelves are separate groups.
  */
 import type { ShelfMedia, ShelfSpec, Slot } from "./types";
 

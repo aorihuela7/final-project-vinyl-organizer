@@ -3,8 +3,14 @@
 export type SortLevel = "genre" | "artist" | "year" | "label" | "title";
 export const SORT_LEVELS: readonly SortLevel[] = ["genre", "artist", "year", "label", "title"];
 
-export type RecordMedia = "vinyl" | "cd" | "other";
-export type ShelfMedia = "vinyl" | "cd";
+/**
+ * Format groups (v2). Each group is laid out on its own shelves with the same
+ * sort settings: LPs (12" and 10") only on LP shelves, singles (7") only on
+ * singles shelves, CDs only on CD shelves. "other" (cassettes, files…) is never placed.
+ */
+export type ShelfMedia = "lp" | "single" | "cd";
+export type RecordMedia = ShelfMedia | "other";
+export const SHELF_MEDIA: readonly ShelfMedia[] = ["lp", "single", "cd"];
 
 /** The fields of a record the algorithm reads. */
 export type LayoutRecord = {
@@ -14,6 +20,7 @@ export type LayoutRecord = {
   year: number | null;
   label: string | null;
   genre: string | null;
+  /** The record's format group: which shelves it can go on. */
   media: RecordMedia;
 };
 

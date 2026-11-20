@@ -4,7 +4,7 @@ import { displayArtist, locate, type Location } from "@/lib/layout";
 import { percent } from "@/lib/design";
 import { formatLine, slotTitle } from "@/lib/shelf/describe";
 import { releaseUrl } from "@/lib/discogs/map";
-import type { MediaView, ShelfConfig, StoredRecord } from "@/lib/shelf/model";
+import { groupOf, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { Cover } from "./cover";
 import { DiscogsAttribution } from "./discogs-attribution";
 
@@ -144,7 +144,7 @@ export function RecordDetails({
         </>
       ) : (
         <p className="rounded-card bg-warning-soft p-3 text-sm text-warning">
-          {record.media === "other"
+          {groupOf(record) === "other"
             ? `This is a ${record.format_name ?? "non-vinyl"} release, so it isn't on a shelf.`
             : "This record isn't on the shelf yet: it doesn't fit. Add a shelf or regenerate the map."}
         </p>

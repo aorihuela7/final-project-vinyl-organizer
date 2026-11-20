@@ -98,7 +98,12 @@
     "anotherCompartment": "another compartment",
     "recordFallback": "Record",
     "levelThen": ", then ",
-    "crashText": "Your shelf is safe. Try again, and if it keeps happening, reload the page."
+    "crashText": "Your shelf is safe. Try again, and if it keeps happening, reload the page.",
+    "singlesOff": {
+      "one": "Singles (7″) now go on their own shelves. {count} single is off the map until you add a Singles shelf.",
+      "other": "Singles (7″) now go on their own shelves. {count} singles are off the map until you add a Singles shelf."
+    },
+    "addSinglesShelf": "Add a Singles shelf"
   },
   "levels": {
     "genre": "genre",
@@ -163,6 +168,35 @@
       "one": "Record added: {count} move.",
       "other": "Record added: {count} moves."
     },
-    "addFailed": "Couldn't add the record."
+    "addFailed": "Couldn't add the record.",
+    "demoReadySingles": "Demo ready: {lps} LPs, {singles} singles, and {cds} CDs on prebuilt shelves, sorted by genre, then artist.",
+    "singlesBoxAdded": {
+      "one": "Singles (7″) now go on their own shelves. We added a Singles box for your {count} single, and no LP moved.",
+      "other": "Singles (7″) now go on their own shelves. We added a Singles box for your {count} singles, and no LP moved."
+    }
+  },
+  "demo": {
+    "living": "Living room",
+    "studio": "Studio",
+    "singles": "Singles box"
+  },
+  "templates": {
+    "kallax_4x4": "Kallax 4×4",
+    "kallax_5x5": "Kallax 5×5",
+    "low_2x4": "Low unit 2×4",
+    "tower_1x5": "Tower 1×5",
+    "crates": "Crates in a row",
+    "record_box": "Record box",
+    "custom": "Custom"
+  },
+  "media": {
+    "lp": "LPs (12″ and 10″)",
+    "single": "Singles (7″)",
+    "cd": "CDs"
+  },
+  "mediaShort": {
+    "lp": "LPs",
+    "single": "singles",
+    "cd": "CDs"
   }
 }

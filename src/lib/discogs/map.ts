@@ -9,8 +9,9 @@ import type {
   DiscogsRelease,
   DiscogsSearchResult,
 } from "./types";
+import { classifyFormats, formatMedia, type FormatGroup, type Media, type SizeInches } from "./format";
 
-export type Media = "vinyl" | "cd" | "other";
+export type { FormatGroup, Media, SizeInches } from "./format";
 
 /** A record as we store it (without ids and bookkeeping columns). */
 export type RecordInput = {
@@ -26,14 +27,15 @@ export type RecordInput = {
   format_qty: number | null;
   format_descriptions: string[];
   media: Media;
+  /** 7, 10, or 12 for vinyl; null otherwise. */
+  size_inches: SizeInches | null;
+  /** Which shelves it goes on: LPs (12″ and 10″), singles (7″), CDs, or none. */
+  format_group: FormatGroup;
   cover_url: string | null;
   thumb_url: string | null;
   discogs_url: string;
   date_added: string | null;
 };
-
-const VINYL_FORMATS = new Set(["vinyl", "shellac", "flexi-disc", "lathe cut"]);
-const CD_FORMATS = new Set(["cd", "cdr", "sacd", "hybrid", "minidisc"]);
 
 /**
  * Which shelf a record goes on: the first format that is a vinyl format makes
@@ -42,9 +44,8 @@ const CD_FORMATS = new Set(["cd", "cdr", "sacd", "hybrid", "minidisc"]);
  */
 export function mediaOf(formats: DiscogsFormat[] | undefined): { media: Media; format: DiscogsFormat | null } {
   for (const f of formats ?? []) {
-    const name = f.name.trim().toLowerCase();
-    if (VINYL_FORMATS.has(name)) return { media: "vinyl", format: f };
-    if (CD_FORMATS.has(name)) return { media: "cd", format: f };
+    const media = formatMedia(f.name);
+    if (media !== "other") return { media, format: f };
   }
   return { media: "other", format: formats?.[0] ?? null };
 }
@@ -80,7 +81,7 @@ function toInt(value: unknown): number | null {
 }
 
 function fromBasic(b: DiscogsBasicInformation, instanceId: number | null, dateAdded: string | null): RecordInput {
-  const { media, format } = mediaOf(b.formats);
+  const { media, format, group, sizeInches } = classifyFormats(b.formats);
   return {
     discogs_release_id: b.id,
     discogs_instance_id: instanceId,
@@ -94,6 +95,8 @@ function fromBasic(b: DiscogsBasicInformation, instanceId: number | null, dateAd
     format_qty: toInt(format?.qty),
     format_descriptions: format?.descriptions ?? [],
     media,
+    size_inches: sizeInches,
+    format_group: group,
     cover_url: cleanImageUrl(b.cover_image),
     thumb_url: cleanImageUrl(b.thumb),
     discogs_url: releaseUrl(b.id),
@@ -134,8 +137,10 @@ export function mapSearchResult(r: DiscogsSearchResult): RecordInput {
   const dash = r.title.indexOf(" - ");
   const artist = dash > 0 ? r.title.slice(0, dash).trim() : "Unknown Artist";
   const title = dash > 0 ? r.title.slice(dash + 3).trim() : r.title.trim();
-  const formats: DiscogsFormat[] = (r.format ?? []).map((name) => ({ name }));
-  const { media } = mediaOf(formats);
+  // A flat list like ["Vinyl", "7\"", "45 RPM", "Single"]: the first entry is the format, the rest its descriptions.
+  const flat = r.format ?? [];
+  const formats: DiscogsFormat[] = flat.length ? [{ name: flat[0]!, descriptions: flat.slice(1) }] : [];
+  const { media, group, sizeInches } = classifyFormats(formats);
   return {
     discogs_release_id: r.id,
     discogs_instance_id: null,
@@ -149,6 +154,8 @@ export function mapSearchResult(r: DiscogsSearchResult): RecordInput {
     format_qty: null,
     format_descriptions: (r.format ?? []).slice(1),
     media,
+    size_inches: sizeInches,
+    format_group: group,
     cover_url: cleanImageUrl(r.cover_image),
     thumb_url: cleanImageUrl(r.thumb),
     discogs_url: releaseUrl(r.id),

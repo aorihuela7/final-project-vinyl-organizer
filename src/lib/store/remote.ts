@@ -5,7 +5,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RecordInput } from "@/lib/discogs/map";
-import type { Move, Placement } from "@/lib/layout";
+import type { Move, Placement, ShelfMedia } from "@/lib/layout";
 import type { CompartmentConfig, FurnitureConfig, ShelfConfig, StoredRecord } from "@/lib/shelf/model";
 import { DEFAULT_SETTINGS } from "@/lib/shelf/model";
 import type { TemplateId } from "@/lib/shelf/templates";
@@ -43,7 +43,7 @@ export type RemoteState = {
 };
 
 const RECORD_COLUMNS =
-  "id, discogs_release_id, discogs_instance_id, artist, title, year, label, genre, styles, format_name, format_qty, format_descriptions, media, cover_url, thumb_url, discogs_url, date_added, origin, synced_at";
+  "id, discogs_release_id, discogs_instance_id, artist, title, year, label, genre, styles, format_name, format_qty, format_descriptions, media, size_inches, format_group, cover_url, thumb_url, discogs_url, date_added, origin, synced_at";
 
 async function fetchAll<T>(supabase: SupabaseClient, table: string, columns: string, orderBy: string): Promise<T[]> {
   const size = 1000;
@@ -61,13 +61,22 @@ type FurnitureRow = {
   id: string;
   name: string;
   template: TemplateId;
-  media: "vinyl" | "cd";
+  /** In the database 'vinyl' means LPs (12" and 10"); see the v2 format groups migration. */
+  media: "vinyl" | "single" | "cd";
   rows: number;
   cols: number;
   traversal: "rows" | "columns";
   default_capacity: number;
   sort_index: number;
 };
+/** furniture.media in the database ↔ the format group in the app. */
+export function mediaFromDb(media: FurnitureRow["media"]): ShelfMedia {
+  return media === "vinyl" ? "lp" : media;
+}
+export function mediaToDb(media: ShelfMedia): FurnitureRow["media"] {
+  return media === "lp" ? "vinyl" : media;
+}
+
 type CompartmentRow = { id: string; furniture_id: string; row: number; col: number; status: "available" | "blocked"; capacity: number | null };
 
 export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState> {
@@ -95,7 +104,7 @@ export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState>
     key: f.id,
     name: f.name,
     template: f.template,
-    media: f.media,
+    media: mediaFromDb(f.media),
     rows: f.rows,
     cols: f.cols,
     traversal: f.traversal,
@@ -121,7 +130,7 @@ export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState>
   };
 }
 
-export type LayoutEvent = { kind: "initial" | "insert" | "calibrate" | "relayout"; moves: Move[]; movedCount: number };
+export type LayoutEvent = { kind: "initial" | "insert" | "calibrate" | "relayout" | "format_split"; moves: Move[]; movedCount: number };
 
 function parsePosition(position: string) {
   const [sortIndex, row, col] = position.split(":").map(Number);
@@ -139,7 +148,7 @@ export async function saveSetupRemote(
     p_furniture: config.furniture.map((f) => ({
       name: f.name,
       template: f.template,
-      media: f.media,
+      media: mediaToDb(f.media),
       rows: f.rows,
       cols: f.cols,
       traversal: f.traversal,
