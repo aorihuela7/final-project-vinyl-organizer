@@ -1,5 +1,6 @@
 import { getServerSession } from "@/lib/supabase/server";
-import { ImportError, startImport } from "@/lib/import/service";
+import { startImport } from "@/lib/import/service";
+import { publicError } from "@/lib/import/errors";
 import { startImportSchema } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
     const job = await startImport(session.supabase, session.userId, parsed.data);
     return Response.json({ job });
   } catch (err) {
-    const status = err instanceof ImportError ? err.status : 500;
-    return Response.json({ error: err instanceof Error ? err.message : "Couldn't start the import." }, { status });
+    const { status, message } = publicError(err, "Couldn't start the import. Try again in a minute.", "import/start");
+    return Response.json({ error: message }, { status });
   }
 }

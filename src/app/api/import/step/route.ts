@@ -1,5 +1,6 @@
 import { getServerSession } from "@/lib/supabase/server";
-import { ImportError, stepImport } from "@/lib/import/service";
+import { stepImport } from "@/lib/import/service";
+import { publicError } from "@/lib/import/errors";
 import { importStepSchema } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     const result = await stepImport(session.supabase, session.userId, parsed.data.jobId);
     return Response.json(result);
   } catch (err) {
-    const status = err instanceof ImportError ? err.status : 500;
-    return Response.json({ error: err instanceof Error ? err.message : "The import step failed." }, { status });
+    const { status, message } = publicError(err, "The import step failed. It will continue when you try again.", "import/step");
+    return Response.json({ error: message }, { status });
   }
 }

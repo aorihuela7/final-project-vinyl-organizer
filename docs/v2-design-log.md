@@ -66,7 +66,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 18. Calibration by count and thickness by format (#9) | Done | `calibrateCount` ("there are N records here" moves only the boundary with the next compartment; refuses what needs another boundary; flags over capacity) with 4 tests and a "Count the records here" form in the compartment view. Thickness by format: optional setting in Sort order (migration `20261120105551_v2_thickness_by_format` adds `shelf_settings.thickness_by_format` and teaches `save_setup` to save it; applied), records weigh their number of discs (`format_qty`, 1–12), `distributeWeighted` for the initial layout, insertion and calibration count places, drawings are as wide as their places, badges count places. Off by default, and off reproduces v1 exactly (all v1 tests unchanged, plus a test that weights are ignored when off); 5 weighted tests (spread in places, never over capacity, leftovers, a too-thick record, inserting a double album with both methods). Documented in `docs/algorithm.md` §7b–7c. Checked in Playwright: turning it on recomputes the demo map (98 records change compartment; the first cube goes to 70 of 80 places), and a count of 50 moves 14 records to the next compartment. Screenshots `p18-*` |
 | 19. Custom sections and tags (#10) | Done | Migration `20261120110319_v2_sections_and_tags` (tables `tags` and `artist_tags` with RLS and grants, `furniture.section`, "tag" allowed in `sort_levels`, `save_setup` saves sections; applied). Layout: `tag` sort level (user's order, untagged last), sections in `src/lib/layout/sections.ts` (each section laid out on its own shelves; insertion, calibration, and the simulator run inside the record's section), 4 tests. App: a Tags card in Shelves & order (create, order with ↑↓, remove, tag an artist from a search, every spelling at once), a Section select per shelf (genres in the collection and tags), the section in the shelf header, plates and rail by tag name, a notice when tags change and the map needs regenerating; demo and signed in. Checked in Playwright: sorting by tag puts "Sunday morning" first; pinning Rock to the Living room places 401 records there and reports the 440 that have no shelf. Screenshots `p19-*` |
 | 20. Guest mode (#11) | Done | Migration `20261120111031_v2_guest_mode` (table `share_links` with RLS; `shared_shelf(token)`, a `security definer` function granted to anon that returns only the shelf behind an active token, only the fields the read-only view needs, null otherwise; applied). "Share your shelf" card in Shelves & order (create, copy, renew, turn off; one active link per owner; the accountless demo is told to sign up). Guest page `/s/{token}` (no index): read-only map, rail, search, record card with neighbors and where a record is out, compartment view without calibration; data is shown only if synced in the last 6 hours (Discogs terms), otherwise it explains. New e2e test: an account creates a link, an anonymous browser opens it, searches, sees no editing controls; turning the link off makes it say the link no longer works (passes) |
-| 21. Hardening (#12) | Todo | |
+| 21. Hardening (#12) | Done, with one step blocked on Ale | Content-Security-Policy tuned for Clerk (its Frontend API decoded from the publishable key, `*.clerk.com` with any port for Clerk Protect, the Cloudflare check), Supabase, and Discogs covers; checked in Playwright with no violations (Clerk sign-up, demo, covers, tracklist). Import routes return generic messages for 5xx and log the details (`src/lib/import/errors.ts`). Migration `20261120111555_v2_hardening`: a nightly `pg_cron` job deletes Discogs records of accounts that haven't synced in 90 days (verified active), and `delete_user_data(user_id, secret)` for the Clerk deletion webhook, guarded by a hashed secret in a schema the Data API doesn't expose. Route `/api/webhooks/clerk` verifies Clerk's signature and calls it; it answers 503 until Ale configures it (see Blocked) |
 | 22. Security pass (#13) | Todo | |
 | 23. Design review at 390 and 1440 px (#14) | Todo | |
 
@@ -154,7 +154,16 @@ Rule 4 (several formats, the largest size wins) needs every format, which only t
 
 ## Blocked: needs Ale
 
-(none yet)
+**Clerk account deletion webhook (phase 21).** The code and the database function are deployed; three settings are needed:
+
+1. Pick a long random secret (for example `openssl rand -base64 32`) and add two environment variables in Vercel (Production and Preview) and in `.env.local`:
+   - `USER_DELETION_SECRET` = that secret;
+   - `CLERK_WEBHOOK_SIGNING_SECRET` = the signing secret Clerk shows in step 3.
+2. In the Supabase SQL editor (data, not schema), store the secret's hash once:
+   `insert into private.settings (name, value_hash) values ('user_deletion', encode(extensions.digest('<the secret>', 'sha256'), 'hex'));`
+3. In the Clerk dashboard → Webhooks → Add endpoint: `https://final-project-vinyl-organizer.vercel.app/api/webhooks/clerk`, event `user.deleted`; copy its signing secret into `CLERK_WEBHOOK_SIGNING_SECRET`.
+
+Until then the route answers 503 and nothing is deleted.
 
 ## Ideas for v2
 
@@ -190,6 +199,7 @@ Times from the commits (`git log`), CST.
 - 05:00 · Phase 18: calibration by count, thickness by format.
 - 05:09 · Phase 19: tags and sections.
 - 05:13 · Phase 20: guest mode.
+- 05:24 · Phase 21: CSP, generic import errors, nightly purge, deletion webhook (needs Ale's setup).
 
 ## Morning summary
 
