@@ -7,7 +7,8 @@ Reference documents live in `docs/`: the proposal, the v1 brief, and the TAs' co
 ## Language
 
 - **Talk to me in Spanish** (plans, questions, summaries, explanations).
-- **Everything in the repository is in English:** UI text, code, comments, commit messages, PR descriptions, README, migrations, and docs you write.
+- **Everything in the repository is in English:** code, comments, commit messages, PR descriptions, README, migrations, and docs you write.
+- **The UI is multilingual since v2:** English (default), Español, Português, through the dictionaries in `src/i18n/`. Every UI string goes through them; English is the source. The Discogs notice and "Data provided by Discogs" stay verbatim in English, and Discogs data (artists, titles, labels, styles) is never translated. Genre names are shown translated, but sorting always uses the canonical Discogs name.
 
 ## What it is
 
@@ -35,6 +36,22 @@ If time allows, in this order: (a) calibration with "This is the first record in
 
 **Out of v1 (don't build it even if it looks easy):** drag-and-drop editor, multiple rooms, per-compartment dimensions, splitting or merging compartments, thickness by format, temporary locations, minimum-move rearrangement, purchase simulator, sort-order suggestions, guest mode or QR, tracklists, MusicBrainz, any AI model call, Discogs OAuth, writing to Discogs, CSV import, barcode scanning, printable dividers.
 
+## v2 scope (due Tuesday, December 1, 5:30 PM, at the project fair)
+
+Plans: `docs/v2-plan.md` (what we learned from v1 and what to add) and `docs/v2-design-plan.md` (the Nogal redesign and its features). Work is tracked in GitHub issues #4–#23.
+
+**In v2:**
+- The **Nogal mid-century** redesign (`docs/design/nogal.html` is the visual spec).
+- **Format groups:** LPs (12″ and 10″), singles (7″), CDs, and other (not placed). Each group is laid out separately on its own shelves; a 7″ never sits on an LP shelf.
+- **Letter plates** on the map instead of names; a **brass rail** per format group.
+- **Live capacity** in the shelf builder.
+- **"Add a new record"** (renamed from "Where does this record go?").
+- **Tracklists** from Discogs in the record detail (fetched on demand, cached at most 6 hours, never stored in the database).
+- **Language selector** (English, Español, Português) and a **guided tour**.
+- From `docs/v2-plan.md`: easier calibration, minimum-move insertion with a purchase simulator (the naive method stays as the baseline), temporary locations and "Put it back", calibration by count and thickness by format, custom sections and tags, guest mode (read-only link or QR), and the hardening list (Clerk deletion webhook, purge of inactive accounts, CSP, no database errors in the browser).
+
+**Still out in v2:** drag-and-drop editor, multiple rooms, per-compartment dimensions, splitting or merging compartments, sort-order suggestions, MusicBrainz, any AI model call, Discogs OAuth, writing to Discogs, CSV import and manual entry, barcode scanning, printable dividers, dark mode, stores and Discogs inventory.
+
 ## Stack
 
 Next.js (App Router, TypeScript) on Vercel · Clerk for auth (`@clerk/nextjs`) · Supabase Postgres, connected to Clerk through Supabase's native third-party auth integration · Discogs API with the app's personal token, server-side only · Tailwind · Vitest for the algorithm · zod for input validation · Supabase CLI for migrations · GitHub CLI for PRs. No Docker, Redis, or external queues.
@@ -46,7 +63,9 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 - `collections`: collection source (`discogs` | `demo` | `manual`), `discogs_username`, `last_synced_at`. One per user in v1.
 - `records`: `discogs_release_id`, `discogs_instance_id` (two copies of the same release are two rows), `artist`, `title`, `year`, `label`, `genre` (primary), `styles[]`, `format_name`, `format_qty`, `format_descriptions[]`, `cover_url`, `thumb_url`, `discogs_url`, `synced_at`, `last_seen_job_id`, `origin` (`import` | `added`). Unique on (`user_id`, `discogs_instance_id`).
 - `import_jobs`: `status` (`queued` | `running` | `done` | `error`), `next_page`, `total_pages`, `items_total`, `items_done`, `attempts`, `last_error`, timestamps.
-- `furniture`: `name`, `template`, `media` (`vinyl` | `cd`), `rows`, `cols`, `traversal` (`rows` | `columns`), `default_capacity`, `sort_index`. Vinyl records flow only through vinyl shelves and CDs only through CD shelves; other formats are imported but not placed.
+- `furniture`: `name`, `template` (adds `record_box` in v2), `media` (`vinyl` | `single` | `cd`), `rows`, `cols`, `traversal` (`rows` | `columns`), `default_capacity`, `sort_index`. In the database `vinyl` means **LPs (12″ and 10″)**: the value stays `vinyl` so the deployed v1 keeps working, and renaming it to `lp` is a later migration. LPs flow only through LP shelves, singles only through singles shelves, CDs only through CD shelves; other formats are imported but not placed.
+- `records` also has `size_inches` (7, 10, 12, or null) and `format_group` (`lp` | `single` | `cd` | `other`), computed from the Discogs formats (see Algorithm) by a database trigger and by the import.
+- `user_preferences` (v2): `locale` (`en` | `es` | `pt`), `tour_status`. Exists before any shelf is saved.
 - `compartments`: `furniture_id`, `row`, `col`, `status` (`available` | `blocked`), `capacity` (optional, overrides the shelf's). Unique on (`furniture_id`, `row`, `col`).
 - `shelf_settings`: `sort_levels` (max 3), `ignore_articles`, `slack_pct`.
 - `placements`: `record_id` (primary key), `compartment_id`. **This is the physical state of the shelf**: it is stored, not recomputed on every view. Order within a compartment comes from the sort key.
@@ -56,6 +75,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 
 - **Sort key:** the chosen levels (from: genre, artist, year, label, title), then fixed tiebreakers artist → year → title → id, so the order is total and stable. Compare with `Intl.Collator('en', { sensitivity: 'base', numeric: true })`.
 - **Normalization:** strip Discogs' disambiguation suffix from artist names ("Nirvana (2)" → "Nirvana"); optional ignoring of leading articles (configurable list: The, A, An, El, La, Los, Las, Le, Les…; off by default); names that differ only by a leading article, case, or accents are one artist: if the collection has both "The Beatles" and "Beatles", all of them sort under "The Beatles"; with multiple artists, use the first; if genre is missing, use "No genre".
+- **Format groups (v2):** an explicit size wins (`7"` → single; `10"` or `12"` → LP); with no size, the exact description `Single` or `EP` → single; everything else on vinyl → LP (12″); with several formats, the largest size wins. CDs are their own group; everything else is `other`. Each group is laid out independently with the same sort settings.
 - **Traversal:** shelves by `sort_index`; within each, by rows (left to right, top to bottom) or by columns (top to bottom, then the next column); blocked compartments are skipped.
 - **Invariant 1, contiguity:** walking the sorted collection, the compartment's traversal index never decreases. Each compartment holds a continuous range.
 - **Invariant 2, capacity:** after the initial layout, no compartment exceeds its capacity. If the collection doesn't fit, report how many records are left over; never drop them silently.
@@ -92,16 +112,17 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 
 ## Covers and design
 
-- Restrained interface: neutral background, clear typography, a single accent color. The covers bring the color.
+- **Nogal mid-century (v2):** a 1960s living room. Sage wall background, walnut furniture on tapered legs, brass plates under each compartment, a brass rail for the whole collection, and mustard for what you found. Display face Belleza, text face Nunito Sans (both through `next/font`). The spec is `docs/v2-design-plan.md` and `docs/design/nogal.html`.
 - Covers are never altered (no filters, no text on top); they're integrated through the frame: square, same radius and same shadow everywhere.
-- Spines in the compartment view: on larger screens, vertical spines side by side, left to right as on the real shelf, each one record's share of the compartment's capacity wide, so the free space shows on the right. Each spine takes the palette color of its first-level group (fixed palette), darkened by a stable per-record amount so neighbors look different. Hovering or focusing a spine shows artist and title in a rounded bubble; clicking it opens the record card, and only there the cover. On phones, typographic strips (artist · title) for now; the mobile version of the spines is still to be designed.
+- **Compartment drawing:** one SVG component in three sizes (map, compartment view, record detail). Each record is a thin shape, one record's share of the capacity wide, colored by a hash of its record ID into the fixed spine palette (mustard is reserved for the found record), with heights by size (12″, 10″, 7″). Records lean into free space following `src/lib/visual/lean.ts` (visual only, never affects placement). Hovering or focusing a record shows artist and title; clicking it opens the record card, and only there the cover. On phones the compartment view adds a tappable text list under the drawing.
 - Record without a cover: our own placeholder (initials on a palette tile), never a broken image.
 - Design tokens (colors, type, radii, shadows) in a single file.
+- Plain sentences in sentence case; no strings joined with middle dots; no all-caps labels.
 - Mobile first: people use it standing in front of their shelf.
 
 ## Demo
 
-Demo collection source: the 1,000 most recently added records of the public Discogs collection of user `aorihuelar`, imported through the same path as any username import (10 pages, page cap). Prebuilt shelves: "Living room", Kallax 4×4 with two blocked compartments (turntable); "Studio", tower 1×5. Sort order: genre → artist. Default capacity: 80 records per cube (unmeasured), 70 per crate, 60 CDs per cube; global slack 10%. Without an account, the demo runs entirely in the browser; signing up saves it to the account.
+Demo collection source: the 1,000 most recently added records of the public Discogs collection of user `aorihuelar`, imported through the same path as any username import (10 pages, page cap). Prebuilt shelves: "Living room", Kallax 4×4 with two blocked compartments (turntable); "Studio", tower 1×5; and in v2 a "Singles box" (record box 1×3) when the demo collection has singles. Sort order: genre → artist. Default capacity: 80 records per cube (unmeasured), 70 per crate, 60 CDs per cube; global slack 10%. Without an account, the demo runs entirely in the browser; signing up saves it to the account.
 
 ## Security and free tiers
 
@@ -147,4 +168,8 @@ Demo collection source: the 1,000 most recently added records of the public Disc
 - Defaults: sort by artist, ignore articles off ("The Beatles" under T), slack 10%, 80 records per cube, 70 per crate, 60 CDs per cube.
 - Artist spellings: "The Beatles" and "Beatles" are the same artist and sort together under the spelling with the article.
 - Switching collections: one per user; a new import replaces the old collection and its shelves, then "Build your shelf" with suggested templates.
-- Compartment view: vertical spines with a hover bubble on larger screens (colors: group palette color with a per-record shade); phones keep the strips until we design the mobile version.
+- Compartment view (v1): vertical spines with a hover bubble on larger screens; replaced in v2 by the Nogal lean drawing.
+- v2 design: Nogal mid-century; fonts Belleza (display) and Nunito Sans (text).
+- v2 format groups: LPs (12″ and 10″) and singles (7″) on separate shelves; singles were removed from LP shelves without moving any LP. Singles capacity: 150 per Kallax cube (one row deep), 100 per record box (unmeasured).
+- v2 languages: English (default), Español, Português; Ale reviews the Spanish, the Portuguese needs a native speaker's review.
+- v2 kickoff answers and assumptions: `docs/v2-design-log.md`.

@@ -45,7 +45,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 
 | Phase | Status | Evidence |
 | --- | --- | --- |
-| 0. Issues, CLAUDE.md, branch | Doing | Branch `v2-design` and this log created |
+| 0. Issues, CLAUDE.md, branch | Done | Branch `v2-design`; issues #4–#14 (v2 plan: fix-first #4–#6, add #7–#11, hardening #12, security pass #13, design review #14) and #15–#23 (Nogal parts); CLAUDE.md has a v2 scope section, format groups, Nogal design, multilingual UI |
 | 1. Foundations | Todo | |
 | 2. Lean function | Todo | |
 | 3. Format groups | Todo | |
@@ -60,7 +60,15 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 12. Mobile, accessibility, and performance pass | Todo | |
 | 13. Visual QA | Todo | |
 | 14. Morning summary | Todo | |
-| 15+. Remaining v2-plan issues | Todo | Listed once the issues exist |
+| 15. Easier calibration (#4) | Todo | |
+| 16. Minimum-move insertion and purchase simulator (#7) | Todo | |
+| 17. Temporary locations and "Put it back" (#8) | Todo | |
+| 18. Calibration by count and thickness by format (#9) | Todo | |
+| 19. Custom sections and tags (#10) | Todo | |
+| 20. Guest mode (#11) | Todo | |
+| 21. Hardening (#12) | Todo | |
+| 22. Security pass (#13) | Todo | |
+| 23. Design review at 390 and 1440 px (#14) | Todo | |
 
 ## Assumptions and questions for Ale
 
@@ -81,6 +89,7 @@ If the session stops on a usage limit, a recurring session job (created when the
 ## Timeline
 
 - 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
+- 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
 
 ## Morning summary
 
