@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, recordCard, test } from "./fixtures";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
 /**
@@ -58,10 +59,10 @@ test("signs up, imports a Discogs collection by username, builds a shelf, and fi
   // 5. Search a record and see shelf, row, column, how far in, and its neighbors.
   await page.getByLabel("Search for an artist or a title in your collection").fill("Faith George Michael");
   await page.getByRole("listbox", { name: "Search results" }).getByRole("option").first().click();
-  const card = page.getByRole("dialog");
-  await expect(card.getByText(/Kallax \d · row \d, column \d/)).toBeVisible();
-  await expect(card.getByText(/\d+% from the left/)).toBeVisible();
-  await expect(card.getByText(/^Between /)).toBeVisible();
+  const card = recordCard(page);
+  await expect(card.getByText(/Kallax \d, row \d, column \d/)).toBeVisible();
+  await expect(card.getByText(/\d+% in from the left/)).toBeVisible();
+  await expect(card.getByText(/Just to the left|Just to the right/).first()).toBeVisible();
   await page.screenshot({ path: `docs/screenshots/record-${testInfo.project.name}.png` });
 
   // Reload: the map is persisted, not recomputed.
@@ -87,9 +88,9 @@ test("signs up, loads the demo into the account, calibrates, and adds a new purc
   const living = page.getByRole("region", { name: "Living room" });
   await living.getByRole("button").first().click();
   const firstSheet = page.getByRole("dialog");
-  const lastOfFirst = (await firstSheet.locator("ol li").last().innerText()).split("\n").find((l) => l.includes("·")) ?? "";
-  const lastArtist = lastOfFirst.split(" · ")[0]!.replace(/^\d+\s*/, "").trim();
-  const lastTitle = lastOfFirst.split(" · ").slice(1).join(" · ").trim();
+  const lastItem = firstSheet.locator("ol li").last();
+  const lastArtist = (await lastItem.locator(".font-semibold").first().innerText()).trim();
+  const lastTitle = (await lastItem.locator(".text-muted").last().innerText()).replace(/^,\s*/, "").trim();
   await firstSheet.getByRole("button", { name: "Close" }).click();
   await living.getByRole("button").nth(1).click();
   const sheet = page.getByRole("dialog");
@@ -105,15 +106,15 @@ test("signs up, loads the demo into the account, calibrates, and adds a new purc
   const add = page.getByRole("dialog");
   await add.getByRole("searchbox").fill("Kind of Blue Miles Davis");
   await add.getByRole("button", { name: /Miles Davis/ }).first().click({ timeout: 30_000 });
-  await expect(add.getByText(/from the left/)).toBeVisible({ timeout: 30_000 });
+  await expect(add.getByText(/It goes in/)).toBeVisible({ timeout: 30_000 });
   await expect(add.getByText(/It fits|moves\./)).toBeVisible();
   await page.screenshot({ path: `docs/screenshots/add-${testInfo.project.name}.png` });
   await add.getByRole("button", { name: "Add record" }).click();
-  await expect(page.getByText(/^Added\./)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/^Record added/)).toBeVisible({ timeout: 30_000 });
 
   // It's saved: after a reload, search finds it on the shelf.
   await page.reload();
   await expect(page.getByRole("region", { name: "Living room" })).toBeVisible({ timeout: 60_000 });
   await page.getByLabel("Search for an artist or a title in your collection").fill("Kind of Blue");
-  await expect(page.getByRole("listbox", { name: "Search results" }).getByText(/% from the left/).first()).toBeVisible();
+  await expect(page.getByRole("listbox", { name: "Search results" }).getByText(/% in from the left/).first()).toBeVisible();
 });

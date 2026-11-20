@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("home page shows the pitch, the demo entry, and the Discogs notice", async ({ page }) => {
   await page.goto("/");

@@ -58,7 +58,7 @@ export function RecordCard({ record, location, views, config, byId, onShowOnMap,
   const drawing = location && view ? (view.index.bySlot.get(location.slot.id) ?? []).map((r) => ({ id: r.id, size: (byId.get(r.id) ? sizeOf(byId.get(r.id)!) : null) ?? 12 })) : [];
 
   return (
-    <article className={`${card} grid gap-3.5 overflow-hidden pb-[18px]`} aria-labelledby={headingId}>
+    <article className={`${card} grid gap-3.5 overflow-hidden pb-[18px]`} aria-labelledby={headingId} data-record-card>
       <header className="surface-walnut flex items-start justify-between gap-3 px-[18px] py-3">
         <div className="min-w-0">
           {onClose && <span aria-hidden className="mx-auto mb-2 block h-1 w-10 rounded-pill bg-on-walnut/40 sm:hidden" />}

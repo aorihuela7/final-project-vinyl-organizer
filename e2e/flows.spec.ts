@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, skipTour, test } from "./fixtures";
 import { clerk, setupClerkTestingToken } from "@clerk/testing/playwright";
 import { ensureTestUser, openSession, supabaseAs } from "../scripts/lib/clerk-test";
 
@@ -18,7 +18,8 @@ test("the demo built without an account is saved when the visitor signs up", asy
 
   // Change something locally: unblock a compartment and regenerate.
   await page.getByRole("button", { name: "Shelves & order" }).click();
-  await page.locator("article").first().getByRole("button", { name: /row 2, column 2: blocked/ }).click();
+  await page.getByRole("article", { name: "Living room" }).getByRole("button", { name: "Edit" }).click();
+  await page.getByRole("button", { name: /row 2, column 2: blocked/ }).click();
   await page.getByRole("button", { name: "Generate map" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Recompute" }).click();
   await expect(page.getByText(/Map updated/)).toBeVisible();
@@ -30,8 +31,8 @@ test("the demo built without an account is saved when the visitor signs up", asy
   await page.getByRole("dialog").getByRole("searchbox").fill("Kind of Blue Miles Davis");
   await page.getByRole("dialog").getByRole("button", { name: /Miles Davis/ }).first().click({ timeout: 30_000 });
   await page.getByRole("dialog").getByRole("button", { name: "Add record" }).click();
-  await expect(page.getByText(/^Added\./)).toBeVisible({ timeout: 30_000 });
-  await page.keyboard.press("Escape"); // close the record card that opens after adding
+  await expect(page.getByText(/^Record added/)).toBeVisible({ timeout: 30_000 });
+  await page.keyboard.press("Escape"); // close the record card if it opened as a sheet
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
   const account = newAccount("save");
@@ -45,13 +46,14 @@ test("the demo built without an account is saved when the visitor signs up", asy
   await expect(page.getByText("This demo lives only in this browser")).toHaveCount(0);
   // The record added before signing up came along, on the shelf.
   await page.getByLabel("Search for an artist or a title in your collection").fill("Kind of Blue");
-  await expect(page.getByRole("listbox", { name: "Search results" }).getByText(/% from the left/).first()).toBeVisible();
+  await expect(page.getByRole("listbox", { name: "Search results" }).getByText(/% in from the left/).first()).toBeVisible();
 });
 
 test("an import resumes after the tab is closed", async ({ browser }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "Runs once.");
   test.setTimeout(240_000);
   const context = await browser.newContext();
+  await skipTour(context);
   const page = await context.newPage();
   await setupClerkTestingToken({ page });
   const account = newAccount("resume");
@@ -88,8 +90,8 @@ test("data older than 6 hours is refreshed with an 'Updating…' notice", async 
   await page.goto("/");
   await clerk.signIn({ page, emailAddress: email });
   await page.goto("/app");
-  await expect(page.getByText("Updating from Discogs…")).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText("Updating from Discogs…")).toHaveCount(0, { timeout: 120_000 });
+  await expect(page.getByText(/Updating from Discogs/)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/Updating from Discogs/)).toHaveCount(0, { timeout: 120_000 });
   const { data } = await supabase.from("collections").select("last_synced_at").single();
   expect(new Date(data!.last_synced_at as string).getTime()).toBeGreaterThan(Date.now() - 5 * 60 * 1000);
 });
@@ -129,13 +131,15 @@ test("a demo account imports its own Discogs collection: a typo changes nothing,
   // A typo: the demo stays as it was.
   await page.getByRole("button", { name: "Shelves & order" }).click();
   await expect(page.getByText(/The demo collection: 1,000 records/)).toBeVisible();
+  const { count: shelvesBefore } = await supabase.from("furniture").select("id", { count: "exact", head: true });
   await page.getByLabel("Import your own collection from Discogs instead").fill("no-such-user-zz9x");
   await page.getByRole("button", { name: "Import", exact: true }).click();
   await page.getByRole("button", { name: "Replace my collection" }).click();
-  await expect(page.getByText(/Couldn't import "no-such-user-zz9x".*Your current collection didn't change\./)).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/Couldn't import .no-such-user-zz9x.*Your current collection didn't change\./)).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText(/The demo collection: 1,000 records/)).toBeVisible();
   const { count: shelvesAfterTypo } = await supabase.from("furniture").select("id", { count: "exact", head: true });
-  expect(shelvesAfterTypo).toBe(2);
+  expect(shelvesAfterTypo).toBe(shelvesBefore);
+  expect(shelvesBefore).toBeGreaterThanOrEqual(2);
 
   // The real collection replaces the demo and its shelves.
   await page.getByLabel("Import your own collection from Discogs instead").fill("aorihuelar");
@@ -146,7 +150,7 @@ test("a demo account imports its own Discogs collection: a typo changes nothing,
   const imported = page.getByText(/[\d,]+ records imported/);
   await expect(imported).toBeVisible();
   const shownCount = Number((await imported.textContent())?.match(/([\d,]+) records imported/)?.[1].replace(/,/g, ""));
-  await expect(page.getByText(`The Discogs collection of "aorihuelar" replaced the previous one. Build your shelf for it.`)).toBeVisible();
+  await expect(page.getByText(/The Discogs collection of .aorihuelar. replaced the previous one\. Build your shelf for it\./)).toBeVisible();
 
   const { data: collection } = await supabase.from("collections").select("source, discogs_username").single();
   expect(collection).toEqual({ source: "discogs", discogs_username: "aorihuelar" });

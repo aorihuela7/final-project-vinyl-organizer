@@ -57,7 +57,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 9. Other screens | Done | Landing with a walnut hero (Kallax slice 2 × 3 with legs, plates, lean, a found record, and the brass rail, built with the map's own components through a shared `RailBar`), CTAs and Discogs form kept; Collection panel translated and in Nogal; Clerk screens themed (ink primary, paper background, Nunito Sans, 4 px radius); cover placeholders translated; old cream and terracotta tokens are gone (the semantic names map onto Nogal); every component except the Discogs attribution and notice goes through the dictionaries; screenshots `p9-landing-*`, `p9-sign-up-*`, `p9-onboarding-*` |
 | 10. Language selector and translations | Done | Selector in the app bar (paper pill, each language by its own name, on every page including the landing), cookie plus `user_preferences` when signed in (`LocaleSync`: a choice on this device is saved, a device without the cookie adopts the saved one), `<html lang>` updated, switching keeps the person where they were (checked in Playwright: the open record card stays open), `es.json` and `pt.json` complete (342 keys each, including the tour and the 15 genres from the plan), numbers with grouping ("1.392"), zero reads as plural in all three; dictionary test (same keys, same placeholders, singular and plural forms) and translation tests, 15 tests; screenshots `p10-es-*`, `p10-pt-*`, `p10-pt-landing-*` |
 | 11. Guided tour | Done | `tour.tsx`, local (no library): offer dialog ("Want a quick tour? It takes about a minute.", "Show me around" / "Not now"), waiting banner for new accounts without a map, 8 steps anchored to real elements with a spotlight (a hole in a shadow) and a Nogal popover (walnut strip, progress "2 of 8", Back, Next, Skip tour); step 4 opens a sample record (side column on desktop, bottom sheet on phones) and closes it after. Keyboard: focus moves into the popover and returns after, Esc closes (captured, so an open sheet doesn't also close), arrows move, Tab stays inside. Reduced motion respected. State in localStorage (demo) or `user_preferences.tour_status`; a demo answer carries over on sign-up. "Take the tour" in the Clerk account menu and next to the view tabs. Walked through all 8 steps at 1280 and 375 in Playwright (focus on Next each step, `completed` saved, not offered again after reload, Esc closes); screenshots `p11-*` |
-| 12. Mobile, accessibility, and performance pass | Todo | |
+| 12. Mobile, accessibility, and performance pass | Done | 375 px: compartments keep their grid, search row stacks, record detail and compartment view are bottom sheets, tour popovers fit (screens `p4`–`p11` at 375). Contrast measured for every text pair on brass, walnut, sage, paper, mustard, and translucent text (all ≥ 4.5:1 for body text; the one failure, mustard text on walnut at 3.5:1, became ink on a mustard badge). Keyboard: compartments, rail segments, neighbors, tour, sheets with focus trap and return; visible ink-and-paper focus ring; reduced motion stops the lift, the marker slide, and smooth scrolling. Drawings are memoized with stable props (the search keeps its query inside `SearchRow`, so typing doesn't re-render the map). E2E suite updated for v2 (fixtures that pre-answer the tour, the record card as a column or sheet, new copy) plus a new `e2e/v2.spec.ts` (tour, language, tracklist, singles box): 22 of 22 pass on desktop and mobile (16 in the full run, the 6 that failed on test selectors fixed and re-run). Fixed a real bug found by e2e: Next 16 keeps the previous page hidden in the DOM, so the landing hero's found compartment and rail matched app selectors; app and tour selectors are now scoped to the map |
 | 13. Visual QA | Todo | |
 | 14. Morning summary | Todo | |
 | 15. Easier calibration (#4) | Todo | |
@@ -69,6 +69,18 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 21. Hardening (#12) | Todo | |
 | 22. Security pass (#13) | Todo | |
 | 23. Design review at 390 and 1440 px (#14) | Todo | |
+
+## Plan for phases 15–23 (the remaining v2-plan issues)
+
+- **15 · Easier calibration (#4).** A map banner until the first calibration ("The map assumes 80 LPs per cube, an estimate…") with a button that opens the first compartment in calibration mode; defaults stay in one constant (`CAPACITY`), documented as estimates.
+- **16 · Minimum-move insertion and purchase simulator (#7).** For one new record, the cheapest plan shifts records toward the nearest compartment with room, in either direction; the cost is 1 + the number of boundaries crossed. Tested for optimality by brute force on small shelves, invariants on random runs, never worse than naive. The app uses it for "Add a new record" and re-syncs; the naive method stays as the baseline. Simulator: take a real collection, hold out 100 records as purchases, lay out the rest, then insert the 100 with both methods and count moves (seeded). In the app and as `scripts/simulate.ts`; result in the README.
+- **17 · Temporary locations and "Put it back" (#8).** Named places outside the sort order; a record taken out keeps its home spot; search and the card say where it is; "Put it back" shows its spot and neighbors. New table with RLS; the browser demo keeps them in its snapshot.
+- **18 · Calibration by count and thickness by format (#9).** "There are 74 records in here" moves the boundary with the next compartment; a setting counts double albums and box sets by their number of discs, so capacity follows thickness (layout weights, with tests).
+- **19 · Custom sections and tags (#10).** Tags per artist usable as a sort level; sections pin a genre or tag to a shelf, and the layout sorts inside each section.
+- **20 · Guest mode (#11).** A revocable read-only link to the map and search, served by a `security definer` function that returns only the shelf for that token.
+- **21 · Hardening (#12).** CSP tuned for Clerk, generic database errors in API responses, purge of Discogs data from inactive accounts with `pg_cron` (no secrets needed), and the Clerk deletion webhook (needs Ale for the signing secret and the dashboard endpoint).
+- **22 · Security pass (#13).** Checklist, an independent review, fixes, written up in `docs/security-pass.md`.
+- **23 · Design review (#14).** Every page at 390 and 1440 px, missing states designed, notes in `docs/design-review.md`.
 
 ## Classification counts (phase 3)
 
@@ -146,6 +158,7 @@ If the session stops on a usage limit, a recurring session job (created when the
 
 - 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
 - 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
+- 2026-11-20 09:45 CST · Phase 12 done: mobile, accessibility, performance, e2e suite green.
 - 2026-11-20 08:50 CST · Phase 11 done: guided tour.
 - 2026-11-20 08:15 CST · Phase 10 done: language selector, Spanish and Portuguese.
 - 2026-11-20 07:35 CST · Phase 9 done: landing hero, collection panel, Clerk theme.

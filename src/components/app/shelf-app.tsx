@@ -61,7 +61,7 @@ export function ShelfApp() {
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         setLifted(true);
-        document.querySelector('[data-found="true"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
+        document.querySelector('[data-map] [data-found="true"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
       }),
     );
   }, []);
@@ -105,7 +105,7 @@ export function ShelfApp() {
   const sample = app.views.find((v) => v.index.sorted.length > 0)?.index.sorted[0]?.id ?? null;
   const tourSteps: TourStep[] = [
     { id: "search", target: '[data-tour="search"]' },
-    { id: "rail", target: 'nav[data-tour="rail"]' },
+    { id: "rail", target: '[data-map] nav[data-tour="rail"]' },
     { id: "compartment", target: "[data-map] [data-slot]" },
     {
       id: "record",

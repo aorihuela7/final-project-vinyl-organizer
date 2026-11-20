@@ -73,7 +73,9 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
               <h2 id="compartment-title" className="font-display text-xl leading-tight">
                 {title}
               </h2>
-              <p className={`text-sm ${over ? "font-semibold text-mustard" : "opacity-85"}`}>{t("compartment.count", { count: records.length, capacity: slot.capacity })}</p>
+              <p className="text-sm">
+                <span className={over ? "rounded-[3px] bg-mustard px-1.5 font-semibold text-ink" : "opacity-85"}>{t("compartment.count", { count: records.length, capacity: slot.capacity })}</span>
+              </p>
             </div>
             <button type="button" onClick={onClose} className="shrink-0 rounded-pill border border-on-walnut/60 px-3 py-1 text-sm font-semibold text-on-walnut hover:bg-on-walnut/10">
               {t("common.close")}
