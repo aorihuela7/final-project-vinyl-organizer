@@ -21,7 +21,7 @@ Signing up is only needed to save your shelf or to import your own collection.
 
 ## How it works
 
-- `src/lib/layout/`: the layout algorithm in pure TypeScript (sort key, traversal, proportional initial layout, naive insertion with cascading overflow, calibration, position, neighbors, ranges). **Read [`docs/algorithm.md`](docs/algorithm.md)** for the explanation and a worked 10-record example.
+- `src/lib/layout/`: the layout algorithm in pure TypeScript (sort key, traversal, format groups, proportional initial layout, naive insertion with cascading overflow, minimum-move insertion, purchase simulator, calibration, position, neighbors). **Read [`docs/algorithm.md`](docs/algorithm.md)** for the explanation and a worked 10-record example.
 - `src/lib/import/` and `src/app/api/import/*`: resumable import jobs stored in Postgres (`import_jobs`), one page per step, upserted by Discogs instance id. When a full sync finishes, records it didn't see are deleted. Data older than 6 hours is refreshed when you open the app ("Updating from Discogs…").
 - `src/lib/discogs/`: the server-only Discogs client (app token, unique User-Agent, reads `X-Discogs-Ratelimit-Remaining`, exponential backoff on 429) and the pure mapping to our rows.
 - `supabase/migrations/`: schema, row-level security, grants, and the `save_setup` / `apply_placements` functions that write a whole change in one transaction.

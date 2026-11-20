@@ -17,6 +17,14 @@
  * Contiguity holds: every push moves the last record of a compartment to the
  * front of the next one.
  *
+ * v2 adds minimum moves (strategy "minimum"): a full compartment can also
+ * shift backward. For one new record, any valid plan has to move one record
+ * across every boundary between the insertion point and a compartment with
+ * room (full compartments can't take one more, and order is kept), so the
+ * cheapest plan goes to the nearest compartment with room, in either
+ * direction: cost = 1 + boundaries crossed. The naive method stays as the
+ * baseline for the purchase simulator.
+ *
  * One special case: if the new record is "The X" and the shelf already has
  * records by "X", those records now sort as "The X" (see artistAliases). They
  * are taken off and put back with the same rule, and their moves are counted.
@@ -24,6 +32,9 @@
 import { buildIndex } from "./query";
 import { aliasesFor, artistSortName, compareKeys, sortKeyOf, type ArtistAliases } from "./sort";
 import type { LayoutRecord, Move, Placement, Slot, SortSettings } from "./types";
+
+/** "naive": v1's forward cascade (the baseline). "minimum": the fewest records moved (v2). */
+export type InsertStrategy = "naive" | "minimum";
 
 export type ShelfState = {
   /** Available compartments of one media group, in traversal order. */
@@ -45,7 +56,7 @@ export type InsertResult = {
   overflow: string[];
 };
 
-export function insertRecord(state: ShelfState, record: LayoutRecord): InsertResult {
+export function insertRecord(state: ShelfState, record: LayoutRecord, strategy: InsertStrategy = "naive"): InsertResult {
   const { settings } = state;
   const others = state.records.filter((r) => r.id !== record.id);
   const before = aliasesFor(others, settings);
@@ -53,7 +64,7 @@ export function insertRecord(state: ShelfState, record: LayoutRecord): InsertRes
   const renamed = sameAliases(before, after)
     ? []
     : others.filter((r) => state.placement.has(r.id) && artistSortName(r.artist, settings, before) !== artistSortName(r.artist, settings, after));
-  if (renamed.length === 0) return insertOne(state, record, after);
+  if (renamed.length === 0) return insertOne(state, record, after, strategy);
 
   // Take the renamed records off the shelf, insert the new one, then put each renamed record back.
   const original = state.placement;
@@ -63,7 +74,7 @@ export function insertRecord(state: ShelfState, record: LayoutRecord): InsertRes
   const moves: Move[] = [];
   const overflow: string[] = [];
   for (const r of [record, ...renamed]) {
-    const result = insertOne({ ...state, records: all, placement }, r, after);
+    const result = insertOne({ ...state, records: all, placement }, r, after, strategy);
     placement = result.placement;
     for (const m of result.moves) moves.push(m.from === null && r.id !== record.id && m.recordId === r.id ? { ...m, from: original.get(r.id) ?? null } : m);
     overflow.push(...result.overflow);
@@ -85,7 +96,7 @@ function sameAliases(a: ArtistAliases | undefined, b: ArtistAliases | undefined)
   return true;
 }
 
-function insertOne(state: ShelfState, record: LayoutRecord, aliases: ArtistAliases | undefined): InsertResult {
+function insertOne(state: ShelfState, record: LayoutRecord, aliases: ArtistAliases | undefined, strategy: InsertStrategy): InsertResult {
   const { slots, settings } = state;
   const placement: Placement = new Map(state.placement);
   if (slots.length === 0) {
@@ -141,6 +152,46 @@ function insertOne(state: ShelfState, record: LayoutRecord, aliases: ArtistAlias
     }
   }
 
+  // Minimum moves: the compartments the new record may go in keep the range
+  // continuous (prev's through next's). If none has room, shift toward the
+  // nearest compartment with room, backward or forward.
+  let direction: "forward" | "backward" = "forward";
+  if (strategy === "minimum") {
+    const lo = prev ? slotIndexOf(prev.id) : 0;
+    const hi = next ? slotIndexOf(next.id) : slots.length - 1;
+    let roomy = -1;
+    for (let i = lo; i <= hi; i++) {
+      if (hasRoom(i)) {
+        roomy = i;
+        break;
+      }
+    }
+    if (roomy >= 0) {
+      candidate = roomy;
+    } else {
+      let forward = Infinity;
+      for (let i = hi + 1; i < slots.length; i++) {
+        if (hasRoom(i)) {
+          forward = i - hi;
+          break;
+        }
+      }
+      let backward = Infinity;
+      for (let i = lo - 1; i >= 0; i--) {
+        if (hasRoom(i)) {
+          backward = lo - i;
+          break;
+        }
+      }
+      if (backward < forward) {
+        direction = "backward";
+        candidate = lo;
+      } else {
+        candidate = hi;
+      }
+    }
+  }
+
   // Put the new record in the candidate, in sort order.
   const list = lists[candidate]!;
   let at = list.findIndex((r) => compareKeys(index.keys.get(r.id)!, key, settings.levels) > 0);
@@ -150,9 +201,21 @@ function insertOne(state: ShelfState, record: LayoutRecord, aliases: ArtistAlias
   const destination = new Map<string, string | null>([[record.id, slots[candidate]!.id]]);
   const overflow: string[] = [];
 
+  // Minimum moves, backward: the first record of each full compartment goes to the end of the one before.
+  if (direction === "backward") {
+    let current = candidate;
+    while (!hasRoom(current)) {
+      const pushed = lists[current]!.shift()!;
+      const previous = current - 1;
+      lists[previous]!.push(pushed);
+      destination.set(pushed.id, slots[previous]!.id);
+      current = previous;
+    }
+  }
+
   // 3–4. Cascade while the compartment we just added to was already full.
   let current = candidate;
-  while (!hasRoom(current)) {
+  while (direction === "forward" && !hasRoom(current)) {
     const pushed = lists[current]!.pop()!;
     const nextSlot = current + 1;
     if (nextSlot >= slots.length) {

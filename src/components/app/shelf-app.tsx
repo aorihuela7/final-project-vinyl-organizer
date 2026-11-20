@@ -7,12 +7,14 @@ import { START_TOUR_EVENT, TourOffer, TourOverlay, TourWaiting, useTourState, ty
 import { useSearchParams } from "next/navigation";
 import { SignUpButton } from "@clerk/nextjs";
 import { displayArtist, type Slot } from "@/lib/layout";
-import { groupOf, suggestedConfig, type StoredRecord } from "@/lib/shelf/model";
+import { groupOf, suggestedConfig, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotTitle } from "@/lib/shelf/describe";
 import { CompartmentSheet } from "./compartment-sheet";
 import { ImportProgress } from "./import-progress";
 import { MapView } from "./map-view";
 import { BrassRail } from "./brass-rail";
+import { CalibrationHint } from "./calibration-hint";
+import { SimulatorCard } from "./simulator-card";
 import { toSortSettings } from "@/lib/shelf/model";
 import { Onboarding } from "./onboarding";
 import { RecordCard, RecordCardEmpty, findLocation } from "./record-details";
@@ -67,6 +69,26 @@ export function ShelfApp() {
   }, []);
 
   const [adding, setAdding] = useState(false);
+  const [calibrateOnOpen, setCalibrateOnOpen] = useState(false);
+  // The calibration hint can be put off; it also goes away after the first calibration.
+  const [hintDismissed, setHintDismissed] = useState(true);
+  useEffect(() => {
+    let dismissed = false;
+    try {
+      dismissed = localStorage.getItem("ro:calibration-hint") === "dismissed";
+    } catch {
+      // keep showing it
+    }
+    void Promise.resolve().then(() => setHintDismissed(dismissed));
+  }, []);
+  const dismissHint = () => {
+    setHintDismissed(true);
+    try {
+      localStorage.setItem("ro:calibration-hint", "dismissed");
+    } catch {
+      // nothing to do
+    }
+  };
 
   const byId = useMemo(() => new Map((app.data?.records ?? []).map((r) => [r.id, r])), [app.data?.records]);
 
@@ -252,10 +274,23 @@ export function ShelfApp() {
           {tab === "setup" ? (
             <>
               <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} />
+              <SimulatorCard records={data.records} config={config} />
               <CollectionPanel app={app} />
             </>
           ) : (
             <div className="flex flex-col gap-4">
+              {hasMap && !data.calibrated && !hintDismissed && (
+                <CalibrationHint
+                  capacity={commonCapacity(config)}
+                  onCalibrate={() => {
+                    const first = views.find((v) => v.index.sorted.length > 0)?.index.slots[1] ?? views.find((v) => v.index.sorted.length > 0)?.index.slots[0];
+                    if (!first) return;
+                    setCalibrateOnOpen(true);
+                    setOpenSlot(first);
+                  }}
+                  onDismiss={dismissHint}
+                />
+              )}
               <SearchRow
                 records={data.records}
                 views={views}
@@ -342,7 +377,11 @@ export function ShelfApp() {
           byId={byId}
           app={app}
           highlightId={lastRecord}
-          onClose={() => setOpenSlot(null)}
+          startCalibrating={calibrateOnOpen}
+          onClose={() => {
+            setOpenSlot(null);
+            setCalibrateOnOpen(false);
+          }}
           onPickRecord={(id) => {
             setOpenSlot(null);
             setOpenRecord(id);
@@ -438,4 +477,11 @@ function NoticeBar({
       )}
     </Banner>
   );
+}
+
+/** The records per compartment most shelves use (for the calibration hint). */
+function commonCapacity(config: ShelfConfig): number {
+  const counts = new Map<number, number>();
+  for (const f of config.furniture) counts.set(f.defaultCapacity, (counts.get(f.defaultCapacity) ?? 0) + f.rows * f.cols);
+  return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 80;
 }

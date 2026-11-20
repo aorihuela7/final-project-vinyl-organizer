@@ -517,5 +517,39 @@
         "text": "É isso. Você pode fazer o tour de novo pelo menu."
       }
     }
+  },
+  "calibration": {
+    "hint": "O mapa supõe cerca de {capacity} discos por nicho, uma estimativa. Se na sua estante real um nicho começa com outro disco, diga ao app qual: o mapa segue a sua estante.",
+    "start": "Ajustar um nicho",
+    "later": "Agora não"
+  },
+  "simulator": {
+    "title": "Simulador de compras",
+    "text": {
+      "one": "Repete {count} compra na sua coleção e nas suas estantes, com a inserção da v1 (só empurra discos para a frente) e com a de mínimas mudanças da v2 (desloca discos para o lugar livre mais próximo, para a frente ou para trás).",
+      "other": "Repete {count} compras na sua coleção e nas suas estantes, com a inserção da v1 (só empurra discos para a frente) e com a de mínimas mudanças da v2 (desloca discos para o lugar livre mais próximo, para a frente ou para trás)."
+    },
+    "run": {
+      "one": "Repetir {count} compra",
+      "other": "Repetir {count} compras"
+    },
+    "running": "Calculando…",
+    "naive": "v1, ingênua",
+    "minimum": "v2, mínimas mudanças",
+    "moved": {
+      "one": "{count} disco mudou de lugar",
+      "other": "{count} discos mudaram de lugar"
+    },
+    "fewer": {
+      "one": "{scenario}, {purchases} compras mudam {count} disco a menos com a v2.",
+      "other": "{scenario}, {purchases} compras mudam {count} discos a menos com a v2."
+    },
+    "same": "{scenario}, {purchases} compras mudam os mesmos discos com os dois métodos: o espaço livre as absorve.",
+    "details": "Entraram direto: {naiveDirect} com a v1, {minimumDirect} com a v2. Mais mudanças em uma só compra: {naiveWorst} com a v1, {minimumWorst} com a v2.",
+    "howFull": "Quão cheias suas estantes ficam",
+    "asIs": "Como estão agora",
+    "fullPct": "{pct}% cheias depois das compras",
+    "scenarioNow": "Com suas estantes como estão",
+    "scenarioFull": "Com estantes {pct}% cheias depois das compras"
   }
 }

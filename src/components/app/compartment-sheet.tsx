@@ -26,6 +26,8 @@ type Props = {
   highlightId: string | null;
   onClose: () => void;
   onPickRecord: (id: string) => void;
+  /** Open with calibration already showing (from the map's calibration hint). */
+  startCalibrating?: boolean;
 };
 
 /**
@@ -33,9 +35,9 @@ type Props = {
  * plate, the same drawing as on the map (pointing at a record shows it,
  * clicking opens its card), the records as a list, and calibration.
  */
-export function CompartmentSheet({ slot, view, config, byId, app, highlightId, onClose, onPickRecord }: Props) {
+export function CompartmentSheet({ slot, view, config, byId, app, highlightId, onClose, onPickRecord, startCalibrating = false }: Props) {
   const { t, locale } = useI18n();
-  const [calibrating, setCalibrating] = useState(false);
+  const [calibrating, setCalibrating] = useState(startCalibrating);
   const [hover, setHover] = useState<{ id: string; x: number; y: number; w: number } | null>(null);
   const frame = useRef<HTMLDivElement>(null);
   const settings = toSortSettings(config.settings);

@@ -58,6 +58,8 @@ export type AppData = {
   collection: CollectionRow | null;
   /** Local demo only: when its records were fetched from Discogs. */
   fetchedAt: string | null;
+  /** Whether a compartment was ever calibrated (the map says it's computed from estimates until then). */
+  calibrated?: boolean;
 };
 
 export type Status =
@@ -130,7 +132,7 @@ function placeNewRecords(records: StoredRecord[], config: ShelfConfig, placement
     if (view.unplaced.length === 0) continue;
     let group = records.filter((r) => groupOf(r) === view.media && current.has(r.id)).map(toLayoutRecord);
     for (const r of sortRecords(view.unplaced.map(toLayoutRecord), settings)) {
-      const result = insertRecord({ slots: view.index.slots, records: group, placement: current, settings }, r);
+      const result = insertRecord({ slots: view.index.slots, records: group, placement: current, settings }, r, "minimum");
       if (result.overflow.length > 0 || !result.target) {
         skipped++;
         continue;
@@ -254,7 +256,14 @@ export function useShelfApp(startParam: string | null) {
         const ids = new Set(fresh.map((r) => r.id));
         const kept = new Map([...new Map(latest.placement)].filter(([id]) => ids.has(id)));
         const placed = placeNewRecords(fresh, latest.config, kept);
-        const next: AppData = { records: fresh, config: latest.config, placement: placed.placement, collection: null, fetchedAt: payload.fetchedAt };
+        const next: AppData = {
+          records: fresh,
+          config: latest.config,
+          placement: placed.placement,
+          collection: null,
+          fetchedAt: payload.fetchedAt,
+          calibrated: latest.events.some((e) => e.kind === "calibrate"),
+        };
         persistLocal(next, placed.moves.length ? { kind: "insert", movedCount: placed.moves.length } : undefined);
         if (alive.current) setData(next);
       } catch {
@@ -269,7 +278,7 @@ export function useShelfApp(startParam: string | null) {
   // ------------------------------------------------------------ remote
   const reloadRemote = useCallback(async (client: SupabaseClient) => {
     const state = await loadRemote(client);
-    const next: AppData = { records: state.records, config: state.config, placement: state.placement, collection: state.collection, fetchedAt: null };
+    const next: AppData = { records: state.records, config: state.config, placement: state.placement, collection: state.collection, fetchedAt: null, calibrated: state.calibrated };
     return { state, next };
   }, []);
 
@@ -432,7 +441,14 @@ export function useShelfApp(startParam: string | null) {
         const loaded = loadLocalWithMigration(demoNames().singles);
         const snapshot = loaded?.snapshot ?? null;
         if (snapshot) {
-          setData({ records: snapshot.records, config: snapshot.config, placement: new Map(snapshot.placement), collection: null, fetchedAt: snapshot.fetchedAt });
+          setData({
+            records: snapshot.records,
+            config: snapshot.config,
+            placement: new Map(snapshot.placement),
+            collection: null,
+            fetchedAt: snapshot.fetchedAt,
+            calibrated: snapshot.events.some((e) => e.kind === "calibrate"),
+          });
           setStatus({ kind: "ready" });
           if (loaded?.migration?.singlesBoxAdded) {
             setNotice({ tone: "info", msg: msg("notices.singlesBoxAdded", { count: snapshot.records.filter((r) => groupOf(r) === "single").length }) });
@@ -625,7 +641,7 @@ export function useShelfApp(startParam: string | null) {
       } else {
         persistLocal({ ...data, records, placement }, { kind: event.kind, movedCount: event.movedCount });
       }
-      setData({ ...data, records, placement });
+      setData({ ...data, records, placement, calibrated: data.calibrated || event.kind === "calibrate" });
     },
     [data, mode, supabase, persistLocal],
   );
@@ -664,7 +680,7 @@ export function useShelfApp(startParam: string | null) {
       }
       const settings = toSortSettings(data.config.settings);
       const group = data.records.filter((r) => groupOf(r) === view.media && data.placement.has(r.id)).map(toLayoutRecord);
-      const result = insertRecord({ slots: view.index.slots, records: group, placement: data.placement, settings }, toLayoutRecord(record));
+      const result = insertRecord({ slots: view.index.slots, records: group, placement: data.placement, settings }, toLayoutRecord(record), "minimum");
       return { record, media: view.media, target: result.target, moves: result.moves, movedCount: result.movedCount, overflow: result.overflow, placement: result.placement };
     },
     [data, views],
@@ -685,7 +701,7 @@ export function useShelfApp(startParam: string | null) {
         }
         const settings = toSortSettings(data.config.settings);
         const group = data.records.filter((r) => groupOf(r) === view.media && data.placement.has(r.id)).map(toLayoutRecord);
-        const result = insertRecord({ slots: view.index.slots, records: group, placement: data.placement, settings }, toLayoutRecord(stored));
+        const result = insertRecord({ slots: view.index.slots, records: group, placement: data.placement, settings }, toLayoutRecord(stored), "minimum");
         try {
           await applyChange(result.placement, result.moves, { kind: "insert", moves: result.moves, movedCount: result.movedCount }, [stored]);
         } catch (err) {

@@ -60,8 +60,8 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 12. Mobile, accessibility, and performance pass | Done | 375 px: compartments keep their grid, search row stacks, record detail and compartment view are bottom sheets, tour popovers fit (screens `p4`–`p11` at 375). Contrast measured for every text pair on brass, walnut, sage, paper, mustard, and translucent text (all ≥ 4.5:1 for body text; the one failure, mustard text on walnut at 3.5:1, became ink on a mustard badge). Keyboard: compartments, rail segments, neighbors, tour, sheets with focus trap and return; visible ink-and-paper focus ring; reduced motion stops the lift, the marker slide, and smooth scrolling. Drawings are memoized with stable props (the search keeps its query inside `SearchRow`, so typing doesn't re-render the map). E2E suite updated for v2 (fixtures that pre-answer the tour, the record card as a column or sheet, new copy) plus a new `e2e/v2.spec.ts` (tour, language, tracklist, singles box): 22 of 22 pass on desktop and mobile (16 in the full run, the 6 that failed on test selectors fixed and re-run). Fixed a real bug found by e2e: Next 16 keeps the previous page hidden in the DOM, so the landing hero's found compartment and rail matched app selectors; app and tour selectors are now scoped to the map |
 | 13. Visual QA | Todo | |
 | 14. Morning summary | Todo | |
-| 15. Easier calibration (#4) | Todo | |
-| 16. Minimum-move insertion and purchase simulator (#7) | Todo | |
+| 15. Easier calibration (#4) | Done | A banner on the map until the first calibration ("The map assumes about 80 records per compartment, an estimate…") with "Match a compartment", which opens the second compartment with calibration already showing, and "Not now" (remembered); the app knows whether you've calibrated (a `calibrate` layout event, or the demo's events). Defaults stay in `CAPACITY`, documented as unmeasured. Screenshots `p15-hint-1280.png`, `p15-calibrate-1280.png` |
+| 16. Minimum-move insertion and purchase simulator (#7) | Done | `insertRecord(…, "minimum")`: shift toward the nearest compartment with room in either direction (cost 1 + boundaries crossed), with the proof in `docs/algorithm.md` §6b; 6 tests (brute-force optimality on every small shelf and every gap, more than 100 cases; invariants over 300 random insertions; never worse than naive when naive keeps every record; the simulator is deterministic and wins on nearly full shelves). The app uses it for "Add a new record" and re-syncs; naive stays as the baseline. Simulator in `src/lib/layout/simulate.ts`, in Shelves & order ("How full your shelves end up": as they are, 90%, 95%, 98%, 100%) and as `scripts/simulate.ts`. On Ale's 1,725 records: 0 records moved with either method on the suggested shelves (10% free space spread everywhere); at 98% full, 17.5 vs 13.4 by artist; at 100% full by genre, 89.4 vs 60.6. Screenshot `p16-simulator-1280.png` |
 | 17. Temporary locations and "Put it back" (#8) | Todo | |
 | 18. Calibration by count and thickness by format (#9) | Todo | |
 | 19. Custom sections and tags (#10) | Todo | |
@@ -140,6 +140,9 @@ Rule 4 (several formats, the largest size wins) needs every format, which only t
 - **"Take the tour" without an account.** There's no account menu in the accountless demo, so a "Take the tour" link also sits next to the Map / Shelves & order tabs for everyone.
 - **The signed-in tour path wasn't driven end to end tonight.** It needs a Clerk test account; the e2e suite covers sign-up, and the tour reads and writes `user_preferences` through the same RLS helpers as the language.
 
+- **What the simulator compares.** With the app's own shelves (10% free space spread over every compartment), 100 purchases never move a record with either method, so the simulator also offers shelves resized to end up 90–100% full, where the two methods differ. That's the honest result: the free space does most of the work, and minimum moves help on nearly full shelves.
+- **Minimum moves are greedy across purchases.** Each purchase takes its cheapest plan; over a sequence, that's not always the cheapest overall (one 100%-full run had a worse single purchase than naive, with a lower total). Logged in `docs/algorithm.md`.
+
 ## Blocked: needs Ale
 
 (none yet)
@@ -158,6 +161,7 @@ If the session stops on a usage limit, a recurring session job (created when the
 
 - 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
 - 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
+- 2026-11-20 10:40 CST · Phases 15 and 16 done: calibration hint, minimum-move insertion, purchase simulator.
 - 2026-11-20 09:45 CST · Phase 12 done: mobile, accessibility, performance, e2e suite green.
 - 2026-11-20 08:50 CST · Phase 11 done: guided tour.
 - 2026-11-20 08:15 CST · Phase 10 done: language selector, Spanish and Portuguese.

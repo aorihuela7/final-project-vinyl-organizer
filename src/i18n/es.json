@@ -517,5 +517,39 @@
         "text": "Eso es todo. Puedes hacer el recorrido de nuevo desde el menú."
       }
     }
+  },
+  "calibration": {
+    "hint": "El mapa supone unos {capacity} discos por compartimiento, una estimación. Si en tu repisa real un compartimiento empieza con otro disco, dile a la app cuál: el mapa sigue a tu repisa.",
+    "start": "Ajustar un compartimiento",
+    "later": "Ahora no"
+  },
+  "simulator": {
+    "title": "Simulador de compras",
+    "text": {
+      "one": "Repite {count} compra en tu colección y tus repisas, con la inserción de v1 (solo empuja discos hacia adelante) y con la de mínimos movimientos de v2 (corre discos hacia el lugar libre más cercano, adelante o atrás).",
+      "other": "Repite {count} compras en tu colección y tus repisas, con la inserción de v1 (solo empuja discos hacia adelante) y con la de mínimos movimientos de v2 (corre discos hacia el lugar libre más cercano, adelante o atrás)."
+    },
+    "run": {
+      "one": "Repetir {count} compra",
+      "other": "Repetir {count} compras"
+    },
+    "running": "Calculando…",
+    "naive": "v1, ingenua",
+    "minimum": "v2, mínimos movimientos",
+    "moved": {
+      "one": "{count} disco movido",
+      "other": "{count} discos movidos"
+    },
+    "fewer": {
+      "one": "{scenario}, {purchases} compras mueven {count} disco menos con v2.",
+      "other": "{scenario}, {purchases} compras mueven {count} discos menos con v2."
+    },
+    "same": "{scenario}, {purchases} compras mueven los mismos discos con los dos métodos: el espacio libre las absorbe.",
+    "details": "Entraron directo: {naiveDirect} con v1, {minimumDirect} con v2. Más movimientos en una sola compra: {naiveWorst} con v1, {minimumWorst} con v2.",
+    "howFull": "Qué tan llenas quedan tus repisas",
+    "asIs": "Como están ahora",
+    "fullPct": "Llenas al {pct}% después de las compras",
+    "scenarioNow": "Con tus repisas como están",
+    "scenarioFull": "Con repisas llenas al {pct}% después de las compras"
   }
 }

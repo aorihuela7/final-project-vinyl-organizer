@@ -517,5 +517,39 @@
         "text": "That's it. You can take the tour again from the menu."
       }
     }
+  },
+  "calibration": {
+    "hint": "The map assumes about {capacity} records per compartment, an estimate. If a compartment on your real shelf starts with a different record, tell the app which one: the map follows your shelf.",
+    "start": "Match a compartment",
+    "later": "Not now"
+  },
+  "simulator": {
+    "title": "Purchase simulator",
+    "text": {
+      "one": "Replays {count} purchase on your collection and shelves, with v1's insertion (it only pushes records forward) and with v2's minimum moves (it shifts toward the nearest free place, forward or back).",
+      "other": "Replays {count} purchases on your collection and shelves, with v1's insertion (it only pushes records forward) and with v2's minimum moves (it shifts toward the nearest free place, forward or back)."
+    },
+    "run": {
+      "one": "Replay {count} purchase",
+      "other": "Replay {count} purchases"
+    },
+    "running": "Running…",
+    "naive": "v1, naive",
+    "minimum": "v2, minimum moves",
+    "moved": {
+      "one": "{count} record moved",
+      "other": "{count} records moved"
+    },
+    "fewer": {
+      "one": "{scenario}, {purchases} purchases move {count} record fewer with v2.",
+      "other": "{scenario}, {purchases} purchases move {count} records fewer with v2."
+    },
+    "same": "{scenario}, {purchases} purchases move the same records with both methods: the free space absorbs them.",
+    "details": "Straight in: {naiveDirect} with v1, {minimumDirect} with v2. Most moves for a single purchase: {naiveWorst} with v1, {minimumWorst} with v2.",
+    "howFull": "How full your shelves end up",
+    "asIs": "As they are now",
+    "fullPct": "{pct}% full after the purchases",
+    "scenarioNow": "With your shelves as they are",
+    "scenarioFull": "With shelves {pct}% full after the purchases"
   }
 }
