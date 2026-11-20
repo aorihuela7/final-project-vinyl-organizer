@@ -12,22 +12,23 @@ Project for Design, Build, Ship (MPCS 51238, UChicago, Autumn 2026). Focus: **Sy
 - **LPs and singles on separate shelves:** records are grouped by size from their Discogs formats (12″ and 10″ LPs, 7″ singles, CDs); a 7″ never sits on an LP shelf.
 - **Minimum-move insertion** for new records, with a **purchase simulator** that compares it with v1's naive method on your own collection ([results](docs/algorithm.md#6b-minimum-move-insertion-v2-insertts-with-strategy-minimum)).
 - **Live capacity** while you build a shelf; **calibration by count**; an optional **thickness by format** (a double LP takes two places).
-- **Temporary locations** (gig bag, next to the turntable…) and **Put it back**; **tags** per artist as a sort level and **sections** that pin a genre or tag to a shelf.
+- **Temporary locations** (gig bag, next to the turntable…) and **Put it back**; **sections** that pin a genre to a shelf.
+- **CDs at their real size:** a Kallax cube holds two rows of CDs with a board between them, so each row of CDs is a compartment, drawn low and wide, with every shelf on the map at the same scale.
 - **Guest mode:** a revocable read-only link to your shelf.
-- **Tracklists** from Discogs in the record card; **English, Español, Português**; a **guided tour** for first-time users.
+- **Tracklists** from Discogs in the record card; **English, Español, Português**; a **guided tour** for first-time users, which **Help** in the header shows again.
 - **Hardening and a security pass:** a Content-Security-Policy for Clerk, generic error messages, a nightly purge of Discogs data from inactive accounts, a Clerk webhook that deletes an account's rows, the shared Discogs budget split fairly between imports and searches, per-account quotas so nobody can fill the free database, and cross-site checks on the import routes ([details](docs/security-pass.md)).
 
 ## What you can do
 
 1. **Open it without an account** and try the demo collection: 1,000 real records from a public Discogs collection, on two prebuilt shelves (a Kallax 4×4 with two compartments blocked by the turntable, and a 1×5 tower for CDs).
 2. **Import your own collection** by typing your Discogs username (the collection must be public). You create an account right before the import; it runs in steps of 100 records and resumes if you close the tab. Started with the demo? Import yours later from "Shelves & order": it replaces the demo, and you set up your shelves for it.
-3. **Build your shelf from templates:** Kallax 4×4, Kallax 5×5, low unit 2×4, tower 1×5, crates in a row, record box, or custom. Edit rows and columns, tap compartments to block them, set the capacity per shelf or per compartment, choose whether it's read by rows or by columns, and whether it holds LPs (12″ and 10″), singles (7″), or CDs, and optionally pin a section (a genre or a tag). Several shelves, in order. How many records fit updates as you edit.
-4. **Pick the sort order:** up to three levels from genre, tag, artist, year, label, and title, with "ignore articles", free space, and thickness by format.
+3. **Build your shelf from templates:** Kallax 4×4, Kallax 5×5, low unit 2×4, tower 1×5, crates in a row, record box, or custom. Edit rows and columns, tap compartments to block them, set the capacity per shelf or per compartment, choose whether it's read by rows or by columns, and whether it holds LPs (12″ and 10″), singles (7″), or CDs (two rows per cube), and optionally pin a section (a genre). Several shelves, in order. How many records fit updates as you edit.
+4. **Pick the sort order:** up to three levels from genre, artist, year, label, and title, with "ignore articles", free space, and thickness by format.
 5. **See the map:** walnut furniture where every compartment shows its letters on a brass plate, how full it is, and a drawing of its records; a brass rail per format shows the whole collection. Open a compartment to see the same drawing up close and its records in order.
 6. **Search a record:** shelf, row, column, how far into the compartment ("about 40% in from the left"), the two records on each side, and its tracklist.
 7. **Calibrate:** "This is the first record in this compartment" or "There are 74 records here" moves one boundary so the map matches the real shelf.
 8. **Add a new record.** Search Discogs for a new purchase, see where it goes and what has to move (with minimum moves), and add it.
-9. **Take a record out** to a temporary place and **put it back** in its spot; **share** a read-only link with guests; **tag** artists your own way.
+9. **Take a record out** to a temporary place and **put it back** in its spot; **share** a read-only link with guests.
 
 Signing up is only needed to save your shelf or to import your own collection.
 
@@ -92,7 +93,7 @@ This application uses Discogs' API but is not affiliated with, sponsored or endo
 - Data shown in the app is provided by Discogs and links back to each release.
 - Covers are displayed straight from Discogs' image URLs with `<img loading="lazy">`; they are never downloaded, proxied, or optimized through our server.
 - Collection data is refreshed when it's more than 6 hours old. The demo for visitors without an account is cached on the server for at most 2 hours and kept in the visitor's browser until it's 6 hours old.
-- What we store per user: the records of their collection (to compute the shelf), their shelves, their sort settings, where each record is, temporary locations, tags, guest links, preferences, and a log of layout changes. Records of accounts that haven't opened the app in 90 days are deleted every night (`pg_cron`); deleting a Clerk account deletes its rows (once the webhook is configured).
+- What we store per user: the records of their collection (to compute the shelf), their shelves, their sort settings, where each record is, temporary locations, guest links, preferences, and a log of layout changes. Records of accounts that haven't opened the app in 90 days are deleted every night (`pg_cron`); deleting a Clerk account deletes its rows (once the webhook is configured).
 - Tracklists are fetched from Discogs when a record card opens and cached on the server for at most 6 hours; they're never stored in the database.
 - Guest links show a shelf only while its Discogs data is less than 6 hours old.
 - Only public collections can be imported (no Discogs OAuth), and nothing is ever written to Discogs.

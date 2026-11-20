@@ -6,7 +6,7 @@
  */
 import { createClient } from "@supabase/supabase-js";
 import type { Placement } from "@/lib/layout";
-import { decorateRecords, type ArtistTags, type FurnitureConfig, type ShelfConfig, type StoredRecord, type Tag, type TempLocation } from "@/lib/shelf/model";
+import { withoutRemovedOptions, type FurnitureConfig, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
 import { DEFAULT_SETTINGS } from "@/lib/shelf/model";
 import { mediaFromDb } from "./remote";
 import type { TemplateId } from "@/lib/shelf/templates";
@@ -40,8 +40,6 @@ type Row = {
   placements: Array<[string, string]>;
   records: StoredRecord[];
   locations: TempLocation[];
-  tags: Array<{ id: string; name: string; sort_index: number }>;
-  artist_tags: ArtistTags;
 };
 
 export async function loadSharedShelf(token: string): Promise<SharedShelf | null> {
@@ -76,10 +74,9 @@ export async function loadSharedShelf(token: string): Promise<SharedShelf | null
         thicknessByFormat: row.settings.thickness_by_format,
       }
     : DEFAULT_SETTINGS;
-  const tags: Tag[] = row.tags.map((t) => ({ id: t.id, name: t.name, sortIndex: t.sort_index }));
   return {
-    records: decorateRecords(row.records, tags, row.artist_tags),
-    config: furniture.length ? { furniture, settings } : null,
+    records: row.records,
+    config: furniture.length ? withoutRemovedOptions({ furniture, settings }) : null,
     placement: new Map(row.placements),
     locations: row.locations,
     lastSyncedAt: row.last_synced_at,

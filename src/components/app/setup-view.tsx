@@ -38,12 +38,11 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
   }, [records, thickness]);
 
   const furniture = [...draft.furniture].sort((a, b) => a.sortIndex - b.sortIndex);
-  // Sections a shelf can hold: the genres in the collection and the user's tags.
+  // Sections a shelf can hold: the genres in the collection.
   const sectionOptions = useMemo(() => {
     const genres = [...new Set(records.map((r) => r.genre).filter((g): g is string => !!g))].sort((a, b) => a.localeCompare(b));
-    const tagNames = [...(app.data?.tags ?? [])].sort((a, b) => a.sortIndex - b.sortIndex).map((tg) => tg.name);
-    return { genres, tags: tagNames };
-  }, [records, app.data?.tags]);
+    return { genres };
+  }, [records]);
 
   const update = (key: string, change: (f: FurnitureConfig) => FurnitureConfig) =>
     setDraft((d) => ({ ...d, furniture: d.furniture.map((f) => (f.key === key ? change(f) : f)) }));
@@ -243,7 +242,7 @@ function ShelfBuilder({
   onClose,
 }: {
   furniture: FurnitureConfig;
-  sectionOptions: { genres: string[]; tags: string[] };
+  sectionOptions: { genres: string[] };
   all: FurnitureConfig[];
   counts: Counts;
   slackPct: number;
@@ -373,11 +372,6 @@ function ShelfBuilder({
               {sectionOptions.genres.map((g) => (
                 <option key={`genre:${g}`} value={`genre:${g}`}>
                   {t("builder.sectionGenre", { name: genreName(locale, g) })}
-                </option>
-              ))}
-              {sectionOptions.tags.map((tg) => (
-                <option key={`tag:${tg}`} value={`tag:${tg}`}>
-                  {t("builder.sectionTag", { name: tg })}
                 </option>
               ))}
             </select>

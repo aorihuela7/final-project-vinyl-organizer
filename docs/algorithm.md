@@ -133,10 +133,13 @@ A setting counts double albums and box sets by their number of discs (`format_qt
 
 Off, everything counts one place per record, exactly as in v1 (the v1 tests run unchanged).
 
-### 7d. Tags and sections (v2)
+### 7e. CD shelves: two rows per cube (v2)
 
-- **Tags** are the user's own groups, in their own order, assigned per artist (by the artist's identity, so "The Beatles" and "Beatles" share one). "Tag" is a sort level: records sort by their tag's position in the user's order, untagged last, then by the next level.
-- **Sections** pin a genre or a tag to a shelf ("genre:Jazz", "tag:Sunday morning"). Within a format group, each section is laid out on its own shelves (sorted inside it, with its own proportional free space), and records that match no section flow through the shelves without one. A record belongs to the first section it matches, in shelf order. Insertion and calibration run inside the record's (or the compartment's) section, so contiguity and capacity hold per section (`sections.ts`, tested in `sections.test.ts`).
+A CD is about 12.5 cm tall, so a 33 cm Kallax cube with a CD insert holds two rows of CDs with a board between them. On CD shelves each row of CDs is its own compartment (30 CDs, so 60 per cube as in v1): a Kallax 4×4 for CDs has 8 rows of compartments. The algorithm doesn't change, because each row of CDs is a continuous range like any compartment, read in the shelf's traversal order. Switching a shelf to CDs splits each row in two (a blocked cube blocks both of its rows), and switching back joins them (`changeMedia` in `src/lib/shelf/model.ts`).
+
+### 7d. Sections (v2)
+
+- **Sections** pin a genre to a shelf ("genre:Jazz"). Within a format group, each section is laid out on its own shelves (sorted inside it, with its own proportional free space), and records that match no section flow through the shelves without one. A record belongs to the first section it matches, in shelf order. Insertion and calibration run inside the record's (or the compartment's) section, so contiguity and capacity hold per section (`sections.ts`, tested in `sections.test.ts`).
 
 ## 8. Finding a record (`query.ts`)
 

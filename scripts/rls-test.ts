@@ -142,14 +142,9 @@ async function main() {
   check("The database rejects non-Discogs links and covers", badLink.error?.code === "23514", badLink.error?.code);
 
   // ------------------------------------------------------------- v2 tables
-  await a.from("tags").delete().like("name", "RLS test%");
   await a.from("temporary_locations").delete().like("name", "RLS test%");
   await a.from("share_links").delete().like("token", "rlstest%");
 
-  const tagA = await a.from("tags").insert({ name: "RLS test tag", sort_index: 0 }).select().single();
-  check("A can create a tag", !tagA.error, tagA.error?.message);
-  const artistTagA = await a.from("artist_tags").insert({ artist_key: "rls test artist", tag_id: tagA.data?.id }).select().single();
-  check("A can tag an artist", !artistTagA.error, artistTagA.error?.message);
   const locA = await a.from("temporary_locations").insert({ name: "RLS test bag" }).select().single();
   check("A can create a temporary location", !locA.error, locA.error?.message);
   const prefsA = await a.from("user_preferences").upsert({ user_id: userA, locale: "es" }, { onConflict: "user_id" }).select().single();
@@ -158,14 +153,23 @@ async function main() {
   const linkA = await a.from("share_links").insert({ token: linkToken }).select().single();
   check("A can create a guest link", !linkA.error, linkA.error?.message);
 
-  for (const table of ["tags", "artist_tags", "temporary_locations", "user_preferences", "share_links"] as const) {
+  for (const table of ["temporary_locations", "user_preferences", "share_links"] as const) {
     const seen = await b.from(table).select("user_id").eq("user_id", userA);
     check(`B can't read A's ${table}`, !seen.error && seen.data?.length === 0, seen.error?.message);
     const anonSeen = await anon.from(table).select("user_id");
     check(`Anonymous requests can't read ${table}`, !!anonSeen.error || anonSeen.data?.length === 0, anonSeen.error?.code);
   }
-  const crossTag = await b.from("artist_tags").insert({ artist_key: "rls cross", tag_id: tagA.data?.id });
-  check("B can't use A's tag", !!crossTag.error, crossTag.error?.code);
+
+  // Tags were removed: no table, no tag sort level, no tag section.
+  const noTags = await a.from("tags").select("id").limit(1);
+  check("The tags table is gone", !!noTags.error, noTags.error?.code ?? "still there");
+  const tagLevel = await a.from("shelf_settings").insert({ sort_levels: ["tag", "artist"] });
+  check("The database refuses the tag sort level", tagLevel.error?.code === "23514", tagLevel.error?.code ?? "accepted");
+  const tagSection = await a
+    .from("furniture")
+    .insert({ name: "RLS test tag section", template: "custom", rows: 1, cols: 1, default_capacity: 10, sort_index: 9200, section: "tag:Sunday morning" });
+  check("The database refuses a tag section", tagSection.error?.code === "23514", tagSection.error?.code ?? "accepted");
+  await a.from("furniture").delete().like("name", "RLS test tag section");
 
   // The guest link returns data only while A's Discogs data is less than 6 hours old.
   const before = await a.from("collections").select("id, last_synced_at").maybeSingle();
@@ -237,7 +241,6 @@ async function main() {
   if (before.data) await a.from("collections").update({ last_synced_at: before.data.last_synced_at }).eq("id", before.data.id);
   else await a.from("collections").delete().eq("id", collection!.id);
 
-  await a.from("tags").delete().eq("id", tagA.data?.id);
   await a.from("temporary_locations").delete().eq("id", locA.data?.id);
   await a.from("share_links").delete().eq("token", linkToken);
   await a.from("user_preferences").delete().eq("user_id", userA);

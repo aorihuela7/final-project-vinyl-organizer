@@ -81,7 +81,7 @@ export function MapView({ config, views, byId, foundId, foundSlot, lifted, onOpe
   const furniture = [...config.furniture].sort((a, b) => a.sortIndex - b.sortIndex);
   const multipleGroups = groups.filter((g) => furniture.some((f) => f.media === g.view.media)).length > 1;
   const genre = (g: string) => genreName(locale, g);
-  const genresCount = (count: number) => (config.settings.sortLevels[0] === "tag" ? t("map.tagsCount", { count }) : t("map.genresCount", { count }));
+  const genresCount = (count: number) => t("map.genresCount", { count });
 
   // Every shelf at the same scale, so LPs, singles, and CDs keep their real proportions.
   const cell = sharedCell(Math.max(1, ...furniture.map((f) => f.cols)));
@@ -218,10 +218,7 @@ function ShelfFurniture({
   );
 }
 
-/** "Jazz" for "genre:Jazz", "Sunday morning" for "tag:Sunday morning". */
+/** "Jazz" (translated) for "genre:Jazz". */
 function sectionLabel(section: string, genre: (g: string) => string): string {
-  const i = section.indexOf(":");
-  const kind = section.slice(0, i);
-  const value = section.slice(i + 1);
-  return kind === "genre" ? genre(value) : value;
+  return genre(section.slice(section.indexOf(":") + 1));
 }

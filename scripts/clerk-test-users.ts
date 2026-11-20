@@ -26,8 +26,6 @@ const E2E_EMAIL = /^e2e-[a-z0-9-]+\+clerk_test@example\.com$/;
 // Children before parents (some links have no cascade).
 const TABLES = [
   "share_links",
-  "artist_tags",
-  "tags",
   "layout_events",
   "placements",
   "records",

@@ -58,27 +58,4 @@ describe("sections pinned to shelves", () => {
     expect(towerIds.has(result.target!)).toBe(true);
     assertSectionInvariants([...records, added], result.placement, slots, byArtist);
   });
-
-  it("pins a tag the same way", () => {
-    const tagged = records.map((r, i) => ({ ...r, tag: i < 6 ? "Sunday morning" : null, tagRank: i < 6 ? 0 : null }));
-    const pinned = [shelves[0]!, { ...shelves[1]!, section: "tag:Sunday morning" }];
-    const slots = traverse(pinned, "lp");
-    const result = initialLayout(tagged, pinned, byArtist, 10);
-    assertSectionInvariants(tagged, result.placement, slots, byArtist);
-    const towerIds = new Set(slots.filter((s) => s.shelfKey === "tower").map((s) => s.id));
-    expect(tagged.filter((r) => towerIds.has(result.placement.get(r.id)!)).every((r) => r.tag === "Sunday morning")).toBe(true);
-  });
-});
-
-describe("tags as a sort level", () => {
-  it("sorts by the user's tag order, untagged last, then by the next level", () => {
-    const settings: SortSettings = { levels: ["tag", "artist"], ignoreArticles: false };
-    const records = [
-      rec("Zappa", { id: "z", tag: "House", tagRank: 1 }),
-      rec("Abba", { id: "a" }),
-      rec("Miles", { id: "m", tag: "Sunday morning", tagRank: 0 }),
-      rec("Bowie", { id: "b", tag: "House", tagRank: 1 }),
-    ];
-    expect(sortRecords(records, settings).map((r) => r.id)).toEqual(["m", "b", "z", "a"]);
-  });
 });

@@ -281,3 +281,24 @@ They also work with the deployed v1, which uses the same database. One slip: a n
 - The 90-day purge.
 - The 25,000-record quota.
 - Reviewing the Spanish, and finding a Portuguese reviewer.
+
+## After Ale's review (November 20, afternoon)
+
+Ale asked for six changes; three needed a decision, and these were the answers:
+- **CD compartments:** each row of CDs is its own compartment (option a). A Kallax cube with a CD insert holds two rows with a board between them.
+- **Language of each record as a sort level:** not done (option d). Discogs has no language field. The other sources, MusicBrainz or a model, are out of scope, and inferring it from genres and styles would leave more than half of Ale's collection undetermined: 539 records are Latin by primary genre, 364 have clearly Spanish styles, 14 Portuguese, and 9 French, but the 679 rock records can't be told apart.
+- **Help:** visible in the header for everyone (option a).
+
+What changed:
+1. **Demo order:** artist, then album title (it was genre, then artist). Only new demos; a saved one keeps its order.
+2. **Tour and Help:** the language step is gone (7 steps). "Take the tour" became "Help" ("Ayuda", "Ajuda"): one button in the header on every page, with or without an account. It replaces the account-menu item and the link next to the view tabs. Before the first map, Help starts the tour as soon as the shelf is ready. Also fixed: the tour ended inside a state updater, which caused a React warning.
+3. **Lean:** at least the first half of a compartment's records stand upright against the wall, and only the last ones lean, each resting on the one before it. Four singles in a box of 100 are now two upright and two leaning; before, all of them reclined against the wall.
+4. **CDs:**
+   - Each row of CDs is a compartment of 30 (60 per cube, as before). A Kallax 4×4 for CDs has 8 rows, and the demo's tower has 10.
+   - Switching a shelf to or from CDs splits or joins its rows, and a blocked cube blocks both of its rows.
+   - Rows of CDs are drawn low and wide (2.1:1). A CD is about 40% of an LP's height, and thicker because a row holds 30 CDs against 80 LPs per cube.
+   - Every shelf on the map now shares one compartment width (`sharedCell`), so a one-column tower isn't drawn bigger than a Kallax.
+   - CD shelves already saved keep their rows until they're rebuilt in Shelves & order. Before this change there were 2 in the database.
+5. **Tags removed:** the tags card, the tag sort level, tag sections, and the data in the browser demo and the guest link. Migration `20261120223524_v2_remove_tags` drops `tags` and `artist_tags`. It was checked first, read-only: 0 tags, 0 artist tags, and 0 shelves or sort orders using them. It also limits sections to genres and recreates `shared_shelf` and `delete_user_data` without the tag tables. A demo saved with tags still loads (`withoutRemovedOptions`).
+
+Checks: `npm run test` passes (195 unit tests); `npm run build` passes; RLS 46/46 against the real database, with 11 tables, all with RLS; migrations are in sync. The tour e2e (7 steps, then Help again without an account) passes at desktop and mobile size.

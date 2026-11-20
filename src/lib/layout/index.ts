@@ -3,7 +3,7 @@
  * See docs/algorithm.md for the explanation and a worked example.
  */
 export * from "./types";
-export { DEFAULT_ARTICLES, displayArtist, normalizeArtist, stripArticle, stripDisambiguation, NO_GENRE, NO_TAG, artistIdentity } from "./normalize";
+export { DEFAULT_ARTICLES, displayArtist, normalizeArtist, stripArticle, stripDisambiguation, NO_GENRE, artistIdentity } from "./normalize";
 export { matchesSection, parseSection, restrictToSection, restrictToSlotSection, sectionKeyOf, sectionSlots, sectionsOf } from "./sections";
 export { compareRecords, sortRecords, sortKeyOf } from "./sort";
 export { traverse, positionKey } from "./traversal";

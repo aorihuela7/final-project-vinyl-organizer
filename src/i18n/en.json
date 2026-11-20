@@ -113,8 +113,7 @@
     "artist": "artist",
     "year": "year",
     "label": "label",
-    "title": "title",
-    "tag": "tag"
+    "title": "title"
   },
   "landing": {
     "title": "Know where every record is, and where the next one goes.",
@@ -222,8 +221,7 @@
     "Reggae": "Reggae",
     "Rock": "Rock",
     "Stage & Screen": "Stage & Screen",
-    "No genre": "No genre",
-    "No tag": "No tag"
+    "No genre": "No genre"
   },
   "map": {
     "holdsOf": "{count} of {capacity}",
@@ -242,11 +240,7 @@
     "shelfTitle": "{name}, {media}",
     "groupTitle": "{media}",
     "legend": "Each compartment shows its letters; the full range is in the compartment view.",
-    "shelfTitleSection": "{name}, {media}, {section} section",
-    "tagsCount": {
-      "one": "{count} tag",
-      "other": "{count} tags"
-    }
+    "shelfTitleSection": "{name}, {media}, {section} section"
   },
   "place": {
     "rowCol": "row {row}, column {col}",
@@ -305,8 +299,7 @@
     "artist": "Artist",
     "year": "Year",
     "label": "Label",
-    "title": "Title",
-    "tag": "Tag"
+    "title": "Title"
   },
   "builder": {
     "yourShelves": "Your shelves",
@@ -396,7 +389,6 @@
     "section": "Section",
     "sectionNone": "Everything else",
     "sectionGenre": "Genre: {name}",
-    "sectionTag": "Tag: {name}",
     "sectionHint": "Records of a section go only on shelves with that section, sorted inside it."
   },
   "record": {
@@ -604,27 +596,6 @@
     "show": "Show",
     "searchOut": "In {location}. Its spot: {place}",
     "elsewhere": "Somewhere else"
-  },
-  "tags": {
-    "title": "Tags",
-    "text": "Group artists your own way (“Sunday morning”, “house”, “120–125 bpm”). A tag goes on the artist, so every record by that artist gets it. Use Tag as a sort level, or pin a tag to a shelf.",
-    "newTag": "New tag",
-    "placeholder": "For example, Sunday morning",
-    "add": "Add tag",
-    "moveUp": "Move {name} up",
-    "moveDown": "Move {name} down",
-    "remove": "Remove {name}",
-    "assignLabel": "Tag an artist",
-    "assignPlaceholder": "Search an artist in your collection",
-    "none": "No tag",
-    "artists": {
-      "one": "{count} artist",
-      "other": "{count} artists"
-    },
-    "recompute": "Tags changed. Generate the map again in Shelves & order to sort or pin by them.",
-    "failed": "Couldn't save the tags.",
-    "empty": "No tags yet.",
-    "tagFor": "Tag for {artist}"
   },
   "guest": {
     "title": "A shared shelf",

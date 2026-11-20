@@ -14,7 +14,6 @@ export function rec(artist: string, extra: Partial<LayoutRecord> = {}): LayoutRe
     genre: "genre" in extra ? (extra.genre ?? null) : "Rock",
     media: extra.media ?? "lp",
     ...(extra.weight !== undefined ? { weight: extra.weight } : {}),
-    ...(extra.tag !== undefined ? { tag: extra.tag, tagRank: extra.tagRank ?? null } : {}),
   };
 }
 

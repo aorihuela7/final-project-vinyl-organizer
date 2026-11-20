@@ -5,10 +5,11 @@
 import type { RecordInput } from "@/lib/discogs/map";
 import { groupOfRecord, sizeOfRecord } from "@/lib/discogs/format";
 import {
-  artistIdentity,
   SHELF_MEDIA,
+  SORT_LEVELS,
   buildIndex,
   initialLayout,
+  parseSection,
   positionKey,
   traverse,
   type LayoutRecord,
@@ -31,15 +32,7 @@ export type StoredRecord = Omit<RecordInput, "size_inches" | "format_group"> & P
   /** Taken out to a temporary location (its placement stays: that's its home spot). */
   temp_location_id?: string | null;
   taken_out_at?: string | null;
-  /** Derived, never saved: the tag of this record's artist and its place in the user's order. */
-  tag?: string | null;
-  tag_rank?: number | null;
 };
-
-/** A user-defined tag, in the user's order. */
-export type Tag = { id: string; name: string; sortIndex: number };
-/** artist identity → tag id. */
-export type ArtistTags = Array<[string, string]>;
 
 /** A place outside the sort order: next to the turntable, the gig bag, the discards box… */
 export type TempLocation = { id: string; name: string };
@@ -65,7 +58,7 @@ export type FurnitureConfig = {
   defaultCapacity: number;
   sortIndex: number;
   compartments: CompartmentConfig[];
-  /** A genre or tag pinned to this shelf: "genre:Jazz" or "tag:Sunday morning". */
+  /** A genre pinned to this shelf: "genre:Jazz". */
   section?: string | null;
 };
 
@@ -80,6 +73,20 @@ export type SettingsConfig = {
 export type ShelfConfig = { furniture: FurnitureConfig[]; settings: SettingsConfig };
 
 export const DEFAULT_SETTINGS: SettingsConfig = { sortLevels: ["artist"], ignoreArticles: false, slackPct: DEFAULT_SLACK_PCT };
+
+/**
+ * Drops options that no longer exist: the "tag" sort level and tag sections
+ * (tags were removed during v2). A browser demo saved before then still loads.
+ */
+export function withoutRemovedOptions(config: ShelfConfig): ShelfConfig {
+  const levels = (config.settings.sortLevels as string[]).filter((l): l is SortLevel => (SORT_LEVELS as readonly string[]).includes(l));
+  const sections = config.furniture.some((f) => f.section && parseSection(f.section) === null);
+  if (levels.length === config.settings.sortLevels.length && !sections) return config;
+  return {
+    settings: { ...config.settings, sortLevels: levels.length > 0 ? levels : [...DEFAULT_SETTINGS.sortLevels] },
+    furniture: config.furniture.map((f) => (f.section && parseSection(f.section) === null ? { ...f, section: null } : f)),
+  };
+}
 
 export function toSortSettings(settings: SettingsConfig): SortSettings {
   return { levels: settings.sortLevels, ignoreArticles: settings.ignoreArticles, thicknessByFormat: !!settings.thicknessByFormat };
@@ -133,23 +140,7 @@ export function toLayoutRecord(r: StoredRecord): LayoutRecord {
     genre: r.genre,
     media: groupOfRecord(r),
     weight: discsOf(r),
-    tag: r.tag ?? null,
-    tagRank: r.tag_rank ?? null,
   };
-}
-
-/** Each record gets its artist's tag (by artist identity), so the layout can sort and pin by tag. */
-export function decorateRecords(records: readonly StoredRecord[], tags: readonly Tag[], artistTags: ArtistTags): StoredRecord[] {
-  const byId = new Map(tags.map((t) => [t.id, t]));
-  const rank = new Map([...tags].sort((a, b) => a.sortIndex - b.sortIndex).map((t, i) => [t.id, i]));
-  const tagOfArtist = new Map(artistTags);
-  return records.map((r) => {
-    const tagId = tagOfArtist.get(artistIdentity(r.artist));
-    const tag = tagId ? byId.get(tagId) : undefined;
-    const name = tag?.name ?? null;
-    const tagRank = tag ? (rank.get(tag.id) ?? null) : null;
-    return r.tag === name && r.tag_rank === tagRank ? r : { ...r, tag: name, tag_rank: tagRank };
-  });
 }
 
 let localCounter = 0;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { changeMedia, changeTemplate, demoConfig, drawingSize, newFurniture, type StoredRecord } from "./model";
+import { changeMedia, changeTemplate, demoConfig, drawingSize, newFurniture, withoutRemovedOptions, type ShelfConfig, type StoredRecord } from "./model";
 import { CD_ROW_ASPECT, compartmentAspect, rowsPerCube } from "./templates";
 import { shelfHolds } from "./capacity";
 
@@ -84,5 +84,25 @@ describe("drawingSize", () => {
     expect(drawingSize(vinyl(10), "lp")).toBe(10);
     expect(drawingSize(vinyl(null), "lp")).toBe(12);
     expect(drawingSize(undefined, "single")).toBe(7);
+  });
+});
+
+describe("withoutRemovedOptions", () => {
+  it("drops the tag sort level and tag sections from a config saved while tags existed", () => {
+    const shelf = newFurniture("kallax_4x4", 0, "lp");
+    const old = {
+      furniture: [{ ...shelf, section: "tag:Sunday morning" }, { ...newFurniture("tower_1x5", 1, "lp"), section: "genre:Jazz" }],
+      settings: { sortLevels: ["tag", "artist"], ignoreArticles: false, slackPct: 10 },
+    } as unknown as ShelfConfig;
+    const clean = withoutRemovedOptions(old);
+    expect(clean.settings.sortLevels).toEqual(["artist"]);
+    expect(clean.furniture.map((f) => f.section)).toEqual([null, "genre:Jazz"]);
+  });
+
+  it("falls back to artist when tag was the only level, and leaves a clean config untouched", () => {
+    const onlyTag = { furniture: [], settings: { sortLevels: ["tag"], ignoreArticles: false, slackPct: 10 } } as unknown as ShelfConfig;
+    expect(withoutRemovedOptions(onlyTag).settings.sortLevels).toEqual(["artist"]);
+    const clean = demoConfig();
+    expect(withoutRemovedOptions(clean)).toBe(clean);
   });
 });

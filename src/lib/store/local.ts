@@ -9,11 +9,10 @@ import {
   toLayoutRecord,
   toShelfSpecs,
   toSortSettings,
+  withoutRemovedOptions,
   type FurnitureConfig,
   type ShelfConfig,
-  type ArtistTags,
   type StoredRecord,
-  type Tag,
   type TempLocation,
 } from "@/lib/shelf/model";
 
@@ -30,8 +29,6 @@ export type LocalSnapshot = {
   events: Array<{ kind: string; movedCount: number; at: string }>;
   /** Temporary locations (the records carry temp_location_id). */
   locations?: TempLocation[];
-  tags?: Tag[];
-  artistTags?: ArtistTags;
 };
 
 type SnapshotV1 = Omit<LocalSnapshot, "version" | "config"> & {
@@ -91,7 +88,7 @@ export function loadLocalWithMigration(singlesBoxName?: string): { snapshot: Loc
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as LocalSnapshot | SnapshotV1;
-    if (parsed.version === 2) return { snapshot: parsed, migration: null };
+    if (parsed.version === 2) return { snapshot: withoutTags(parsed), migration: null };
     if (parsed.version === 1) {
       const { snapshot, migration } = migrateV1(parsed, singlesBoxName);
       saveLocal(snapshot);
@@ -101,6 +98,13 @@ export function loadLocalWithMigration(singlesBoxName?: string): { snapshot: Loc
   } catch {
     return null;
   }
+}
+
+/** A demo saved while tags existed (removed during v2): their data goes, and so do the options that used them. */
+function withoutTags(snapshot: LocalSnapshot & { tags?: unknown; artistTags?: unknown }): LocalSnapshot {
+  const { tags: _tags, artistTags: _artistTags, ...rest } = snapshot;
+  void [_tags, _artistTags];
+  return { ...rest, config: withoutRemovedOptions(rest.config) };
 }
 
 export function saveLocal(snapshot: LocalSnapshot): boolean {

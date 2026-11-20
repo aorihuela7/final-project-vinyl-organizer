@@ -6,7 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RecordInput } from "@/lib/discogs/map";
 import type { Move, Placement, ShelfMedia } from "@/lib/layout";
-import type { ArtistTags, CompartmentConfig, FurnitureConfig, ShelfConfig, StoredRecord, Tag, TempLocation } from "@/lib/shelf/model";
+import { withoutRemovedOptions, type CompartmentConfig, type FurnitureConfig, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
 import { DEFAULT_SETTINGS } from "@/lib/shelf/model";
 import type { TemplateId } from "@/lib/shelf/templates";
 
@@ -43,8 +43,6 @@ export type RemoteState = {
   /** Whether the user has ever calibrated a compartment. */
   calibrated: boolean;
   locations: TempLocation[];
-  tags: Tag[];
-  artistTags: ArtistTags;
 };
 
 const RECORD_COLUMNS =
@@ -86,7 +84,7 @@ export function mediaToDb(media: ShelfMedia): FurnitureRow["media"] {
 type CompartmentRow = { id: string; furniture_id: string; row: number; col: number; status: "available" | "blocked"; capacity: number | null };
 
 export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState> {
-  const [records, furnitureRes, compartments, settingsRes, placements, collectionRes, jobsRes, eventRes, calibrateRes, locationsRes, tagsRes, artistTags] = await Promise.all([
+  const [records, furnitureRes, compartments, settingsRes, placements, collectionRes, jobsRes, eventRes, calibrateRes, locationsRes] = await Promise.all([
     fetchAll<StoredRecord>(supabase, "records", RECORD_COLUMNS, "id"),
     supabase.from("furniture").select("id, name, template, media, rows, cols, traversal, default_capacity, sort_index, section").order("sort_index"),
     fetchAll<CompartmentRow>(supabase, "compartments", "id, furniture_id, row, col, status, capacity", "id"),
@@ -97,10 +95,8 @@ export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState>
     supabase.from("layout_events").select("created_at").in("kind", ["initial", "relayout"]).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("layout_events").select("id").eq("kind", "calibrate").limit(1),
     supabase.from("temporary_locations").select("id, name").order("created_at"),
-    supabase.from("tags").select("id, name, sort_index").order("sort_index"),
-    fetchAll<{ artist_key: string; tag_id: string }>(supabase, "artist_tags", "artist_key, tag_id", "artist_key"),
   ]);
-  for (const res of [furnitureRes, settingsRes, collectionRes, jobsRes, eventRes, calibrateRes, locationsRes, tagsRes]) {
+  for (const res of [furnitureRes, settingsRes, collectionRes, jobsRes, eventRes, calibrateRes, locationsRes]) {
     if (res.error) throw new Error(res.error.message);
   }
 
@@ -137,7 +133,7 @@ export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState>
   const jobs = (jobsRes.data ?? []) as JobRow[];
   return {
     records,
-    config: furniture.length > 0 ? { furniture, settings } : null,
+    config: furniture.length > 0 ? withoutRemovedOptions({ furniture, settings }) : null,
     placement: new Map(placements.map((p) => [p.record_id, p.compartment_id])),
     collection: (collectionRes.data as CollectionRow | null) ?? null,
     activeJob: jobs.find((j) => j.status === "queued" || j.status === "running") ?? null,
@@ -145,8 +141,6 @@ export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState>
     layoutAt: (eventRes.data as { created_at: string } | null)?.created_at ?? null,
     calibrated: (calibrateRes.data?.length ?? 0) > 0,
     locations: (locationsRes.data ?? []) as TempLocation[],
-    tags: ((tagsRes.data ?? []) as Array<{ id: string; name: string; sort_index: number }>).map((t) => ({ id: t.id, name: t.name, sortIndex: t.sort_index })),
-    artistTags: artistTags.map((a) => [a.artist_key, a.tag_id] as [string, string]),
   };
 }
 
@@ -255,36 +249,6 @@ export async function setRecordLocationRemote(supabase: SupabaseClient, recordId
 
 export async function deleteLocationRemote(supabase: SupabaseClient, locationId: string) {
   const { error } = await supabase.from("temporary_locations").delete().eq("id", locationId);
-  if (error) throw new Error(error.message);
-}
-
-export async function createTagRemote(supabase: SupabaseClient, userId: string, name: string, sortIndex: number): Promise<Tag> {
-  const { data, error } = await supabase.from("tags").insert({ user_id: userId, name, sort_index: sortIndex }).select("id, name, sort_index").single();
-  if (error) throw new Error(error.message);
-  const row = data as { id: string; name: string; sort_index: number };
-  return { id: row.id, name: row.name, sortIndex: row.sort_index };
-}
-
-export async function deleteTagRemote(supabase: SupabaseClient, tagId: string) {
-  const { error } = await supabase.from("tags").delete().eq("id", tagId);
-  if (error) throw new Error(error.message);
-}
-
-export async function reorderTagsRemote(supabase: SupabaseClient, tags: readonly Tag[]) {
-  for (const t of tags) {
-    const { error } = await supabase.from("tags").update({ sort_index: t.sortIndex }).eq("id", t.id);
-    if (error) throw new Error(error.message);
-  }
-}
-
-/** Tags an artist (by identity), or untags it (null). */
-export async function setArtistTagRemote(supabase: SupabaseClient, userId: string, artistKey: string, tagId: string | null) {
-  if (tagId === null) {
-    const { error } = await supabase.from("artist_tags").delete().eq("artist_key", artistKey);
-    if (error) throw new Error(error.message);
-    return;
-  }
-  const { error } = await supabase.from("artist_tags").upsert({ user_id: userId, artist_key: artistKey, tag_id: tagId }, { onConflict: "user_id,artist_key" });
   if (error) throw new Error(error.message);
 }
 

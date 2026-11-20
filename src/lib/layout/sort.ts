@@ -4,7 +4,7 @@
  * stable. Strings compare with Intl.Collator('en', { sensitivity: 'base',
  * numeric: true }): case- and accent-insensitive, and "Vol 2" < "Vol 10".
  */
-import { NO_TAG, artistAliases, artistIdentity, normalizeArtist, normalizeGenre, normalizeLabel, normalizeTitle } from "./normalize";
+import { artistAliases, artistIdentity, normalizeArtist, normalizeGenre, normalizeLabel, normalizeTitle } from "./normalize";
 import type { LayoutRecord, SortLevel, SortSettings } from "./types";
 
 /** identity → the spelling every variant of that artist sorts under (see artistAliases). */
@@ -36,9 +36,6 @@ export const collator = new Intl.Collator("en", { sensitivity: "base", numeric: 
 /** The normalized values of one record, computed once per sort. */
 export type SortKey = {
   genre: string;
-  /** The artist's tag ("No tag" when untagged) and its place in the user's order (untagged last). */
-  tag: string;
-  tagRank: number;
   artist: string;
   label: string;
   title: string;
@@ -49,8 +46,6 @@ export type SortKey = {
 export function sortKeyOf(record: LayoutRecord, settings: SortSettings, aliases?: ArtistAliases): SortKey {
   return {
     genre: normalizeGenre(record.genre),
-    tag: record.tag?.trim() || NO_TAG,
-    tagRank: record.tag && record.tagRank !== null && record.tagRank !== undefined ? record.tagRank : Number.MAX_SAFE_INTEGER,
     artist: artistSortName(record.artist, settings, aliases),
     label: normalizeLabel(record.label),
     title: normalizeTitle(record.title, settings.ignoreArticles, settings.articles),
@@ -68,7 +63,6 @@ function compareYear(a: number | null, b: number | null): number {
 
 function compareLevel(a: SortKey, b: SortKey, level: SortLevel): number {
   if (level === "year") return compareYear(a.year, b.year);
-  if (level === "tag") return a.tagRank - b.tagRank || collator.compare(a.tag, b.tag);
   return collator.compare(a[level], b[level]);
 }
 

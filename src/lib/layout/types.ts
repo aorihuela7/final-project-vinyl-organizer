@@ -1,7 +1,7 @@
 /** Types for the layout algorithm. Pure TypeScript: no Next or Supabase imports. */
 
-export type SortLevel = "genre" | "tag" | "artist" | "year" | "label" | "title";
-export const SORT_LEVELS: readonly SortLevel[] = ["genre", "tag", "artist", "year", "label", "title"];
+export type SortLevel = "genre" | "artist" | "year" | "label" | "title";
+export const SORT_LEVELS: readonly SortLevel[] = ["genre", "artist", "year", "label", "title"];
 
 /**
  * Format groups (v2). Each group is laid out on its own shelves with the same
@@ -27,9 +27,6 @@ export type LayoutRecord = {
    * takes 2). Missing means 1, and then everything works by record count.
    */
   weight?: number;
-  /** The user's tag for this record's artist, and that tag's position in the user's order. */
-  tag?: string | null;
-  tagRank?: number | null;
 };
 
 /** A record's weight (its number of discs, 1 if unknown). */
@@ -74,7 +71,7 @@ export type ShelfSpec = {
   /** Missing positions are available with the default capacity. */
   compartments: CompartmentSpec[];
   /**
-   * A section pinned to this shelf: "genre:Jazz" or "tag:Sunday morning".
+   * A section pinned to this shelf: a genre, as "genre:Jazz".
    * Matching records go only on shelves of their section; the rest flow
    * through the shelves without one.
    */

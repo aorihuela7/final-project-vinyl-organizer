@@ -98,8 +98,6 @@ function describe(record: LayoutRecord, key: SortKey, level: SortLevel, noYear: 
       return key.year === null ? noYear : String(key.year);
     case "genre":
       return key.genre;
-    case "tag":
-      return key.tag;
   }
 }
 
@@ -129,8 +127,8 @@ export function plateLabels(index: ShelfIndex, settings: SortSettings, options: 
 
     let lines: PlateLine[];
     let full: string;
-    // Genre and tag group the compartment by name; the other levels show letters or years.
-    if (top !== "genre" && top !== "tag") {
+    // Genre groups the compartment by name; the other levels show letters or years.
+    if (top !== "genre") {
       lines = [{ kind: "range", text: rangeOn(top, F, L, P, N, noYear) }];
       const a = describe(firstRecord, F, top, noYear);
       const b = describe(lastRecord, L, top, noYear);
