@@ -51,7 +51,7 @@ Answered by Ale on 2026-11-20, before the run. Each item is the question as aske
 | 3. Format groups | Done | Classifier `src/lib/discogs/format.ts` (17 tests with real description arrays); migrations `20261120094123_v2_format_groups` and `20261120094124_v2_user_preferences` applied with `supabase db push --remote --yes` and verified read-only (0 records without a group, 0 singles on LP shelves, 37 `format_split` events with 1,678 moves); layout groups `lp`/`single`/`cd` with tests (a 7″ never on an LP shelf, invariants per group); browser demo snapshot v2 with migration test (no LP moves); Record box template; demo Singles box; banner for singles without a shelf; screenshot `p3-demo-groups-*` (13 singles in the Singles box, none on Living room) |
 | 4. Map | Done | Walnut furniture with legs (`furniture.tsx`), one memoized SVG drawing per compartment with sizes (`compartment-drawing.tsx`), letter plates (`src/lib/visual/plates.ts`, 17 tests with every plan example), count badge (mustard from 90%), found outline and lift, keyboard access (`role=button`, full range in `aria-label`), one section per format group; screenshots `p4-map-*` (1280 and 375). The found outline is checked again in phase 7, once the record detail stops covering the map |
 | 5. Search row and "Add a new record" | Done | `SearchRow` (search, "or", "+ Add a new record"; one row from 700 px, stacked and centered below), search as an accessible combobox (arrows, Enter, Escape), "Add a new record" everywhere (button, dialog, README, comments, e2e selectors) with the three steps "Find it on Discogs" / "It goes in …, between … and …" (with the target compartment drawn and the new record in mustard) / "Add record" → "Record added"; groups decide the shelves; screenshots `p5-search-row-*`, `p5-add-*`, `p5-added-*` |
-| 6. Shelf builder with live capacity | Todo | |
+| 6. Shelf builder with live capacity | Done | Shelves & order rebuilt: shelves as cards with "Holds 1,280" and a mini walnut drawing, one open in the builder (form, walnut box "This shelf holds 910 LPs / 13 compartments × 70 records, 3 blocked", one meter per format group with "won't fit" warnings in mustard, the preview as walnut furniture with "910 places"), template picker drawn as small furniture, sort order card; pure `src/lib/shelf/capacity.ts` with 3 tests; checked live in Playwright (capacity 80 → 70 and one more blocked compartment); screenshots `p6-builder-*` |
 | 7. Record detail card and tracklist | Todo | |
 | 8. Compartment view and brass rail | Todo | |
 | 9. Other screens | Todo | |
@@ -112,6 +112,9 @@ Rule 4 (several formats, the largest size wins) needs every format, which only t
 - **The search placeholder on phones.** The plan's placeholder is 50 characters and gets cut at 375 px. Taken: the placeholder is 13 px under 420 px wide (the typed text stays 16 px, so iOS doesn't zoom).
 - **Place names in plain words.** "Living room · row 4, column 4" is now "Living room, row 4, column 4" everywhere, and record boxes say "box 2".
 
+- **One shelf open at a time.** The mockup shows a single "New shelf" builder. Taken: saved shelves are cards with Edit, and only one is open in the builder; a new shelf from the template picker opens right away. On first setup (no map yet) the first suggested shelf starts open.
+- **Changing "Holds" keeps a hand-set capacity.** Switching a shelf between LPs, singles, and CDs updates the records per compartment to the new default only if it was still the old default.
+
 ## Blocked: needs Ale
 
 (none yet)
@@ -128,6 +131,7 @@ If the session stops on a usage limit, a recurring session job (created when the
 
 - 2026-11-20 02:34 CST · Kickoff answers recorded, fonts approved, branch `v2-design` created from `main`.
 - 2026-11-20 03:27 CST · Phase 0 done: 20 GitHub issues (#4–#23) with labels fix-first, v2, nogal, hardening; CLAUDE.md updated for v2. Resume job scheduled (every 30 min while idle).
+- 2026-11-20 05:50 CST · Phase 6 done: shelf builder with live capacity.
 - 2026-11-20 05:20 CST · Phase 5 done: search row and Add a new record.
 - 2026-11-20 04:55 CST · Phase 4 done: Nogal map with drawings and letter plates.
 - 2026-11-20 04:20 CST · Phase 3 done: format groups end to end, migrations applied.

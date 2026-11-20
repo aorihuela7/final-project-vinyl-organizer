@@ -286,5 +286,96 @@
     "add": "Add record",
     "adding": "Adding…",
     "discogsUnchanged": "Adding saves it here only; your Discogs collection doesn't change."
+  },
+  "levelNames": {
+    "genre": "Genre",
+    "artist": "Artist",
+    "year": "Year",
+    "label": "Label",
+    "title": "Title"
+  },
+  "builder": {
+    "yourShelves": "Your shelves",
+    "flowOrder": "Records flow through them in this order.",
+    "addOne": "Add at least one shelf to generate the map.",
+    "generate": "Generate map",
+    "generateShort": "Generate",
+    "recompute": "Recompute",
+    "recomputeTitle": "Recompute the whole map?",
+    "generateTitle": "Generate the map?",
+    "willChange": {
+      "one": "{count} record will change compartment. Calibrations you made are replaced by the new layout.",
+      "other": "{count} records will change compartment. Calibrations you made are replaced by the new layout."
+    },
+    "willPlace": {
+      "one": "{count} record will be placed.",
+      "other": "{count} records will be placed."
+    },
+    "leftover": {
+      "one": "{count} record doesn't fit. It will be listed as not on the shelf.",
+      "other": "{count} records don't fit. They'll be listed as not on the shelf."
+    },
+    "slackReduced": "It only fits by using part of the free space you asked for.",
+    "notPlaced": {
+      "one": "{count} cassette, file, or other format stays off the shelves.",
+      "other": "{count} cassettes, files, or other formats stay off the shelves."
+    },
+    "cardLine": "{media}, {template}, {rows} × {cols}",
+    "holds": "Holds {count}",
+    "edit": "Edit",
+    "moveUp": "Move {name} up",
+    "moveDown": "Move {name} down",
+    "remove": "Remove {name}",
+    "newShelf": "New shelf",
+    "name": "Name",
+    "template": "Template",
+    "holdsLabel": "Holds",
+    "rows": "Rows",
+    "cols": "Columns",
+    "perCompartment": "Records per compartment",
+    "freeSpace": "Free space to leave (all shelves)",
+    "readIt": "Read it",
+    "byRows": "By rows (left to right)",
+    "byColumns": "By columns (top to bottom)",
+    "thisHolds": "This shelf holds {count} {media}",
+    "arithmetic": {
+      "one": "{open} compartment × {capacity} records",
+      "other": "{open} compartments × {capacity} records"
+    },
+    "arithmeticMixed": {
+      "one": "{open} compartment, {overrides} with its own capacity",
+      "other": "{open} compartments, {overrides} with their own capacity"
+    },
+    "withBlocked": {
+      "one": "{text}, {count} blocked",
+      "other": "{text}, {count} blocked"
+    },
+    "importing": "Importing: {done} of {total} so far",
+    "fill": "{media}: your {count} records would fill {pct}% of {places} places",
+    "fillWithThis": "{media}: your {count} records would fill {pct}% of {places} places, with this shelf",
+    "fillNoShelf": "{media}: your {count} records have no shelf yet",
+    "wontFit": "{count} won't fit with {slack}% free space. Add compartments or raise the capacity.",
+    "tapMode": "What tapping a compartment does",
+    "tapBlock": "Tap to block",
+    "tapCapacity": "Tap to set capacity",
+    "tapToBlockHint": "Tap a compartment to block it (a turntable, speakers).",
+    "tapCapacityHint": "Tap a compartment to give it its own capacity.",
+    "capacityOf": "Capacity of {place}",
+    "capacityEmpty": "Leave it empty to use the shelf's {count}.",
+    "preview": "Preview",
+    "blocked": "blocked",
+    "available": "available",
+    "capacityN": "capacity {count}",
+    "addShelf": "Add a shelf",
+    "sortOrder": "Sort order",
+    "firstBy": "First by",
+    "thenBy": "Then by",
+    "none": "None",
+    "ties": "Ties are always broken by artist, then year, then title.",
+    "ignoreArticles": "Ignore leading articles (“The Beatles” under B instead of T, “Los Lobos” under L)",
+    "suggestedLp": "Kallax",
+    "suggestedLpN": "Kallax {n}",
+    "suggestedSingles": "Singles",
+    "suggestedCds": "CD shelf"
   }
 }

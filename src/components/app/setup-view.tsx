@@ -1,44 +1,40 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { SORT_LEVELS, type SortLevel } from "@/lib/layout";
-import {
-  newFurniture,
-  resizeFurniture,
-  type FurnitureConfig,
-  type ShelfConfig,
-  type StoredRecord,
-} from "@/lib/shelf/model";
+import { SORT_LEVELS, type ShelfMedia, type SortLevel } from "@/lib/layout";
+import { groupOf, newFurniture, resizeFurniture, type FurnitureConfig, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotPlace } from "@/lib/shelf/describe";
-import { TEMPLATES, defaultCapacity, template, type TemplateId } from "@/lib/shelf/templates";
+import { groupFills, shelfHolds } from "@/lib/shelf/capacity";
+import { TEMPLATES, defaultCapacity, isBoxTemplate, template, type TemplateId } from "@/lib/shelf/templates";
+import { useI18n } from "@/i18n/client";
+import { Banner, btnPrimary, btnSecondary, btnSecondarySm, card } from "../ui";
+import { Compartment, Furniture } from "./furniture";
 import { Sheet } from "./sheet";
 import type { MapPreview, ShelfApp } from "./use-shelf-app";
-import { useI18n } from "@/i18n/client";
-import { groupOf } from "@/lib/shelf/model";
-import type { ShelfMedia } from "@/lib/layout";
-
-const LEVEL_LABEL: Record<SortLevel, string> = { genre: "Genre", artist: "Artist", year: "Year", label: "Label", title: "Title" };
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, Number.isFinite(n) ? Math.round(n) : min));
 
-/** Shelf configurator and sort order: a form with a live preview, no drag and drop. */
+const field = "flex flex-col gap-1 text-sm text-muted";
+const control = "rounded-[18px] border border-input-line bg-white px-3.5 py-2 text-[15px] text-ink disabled:opacity-50";
+
+type Counts = Record<ShelfMedia | "other", number>;
+
+/** Shelves & order: the shelves as walnut furniture, one open in the builder at a time, and the sort order. No drag and drop. */
 export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; initial: ShelfConfig; records: StoredRecord[]; onDone: () => void }) {
+  const { t } = useI18n();
   const [draft, setDraft] = useState<ShelfConfig>(() => structuredClone(initial));
   const [preview, setPreview] = useState<MapPreview | null>(null);
-  const [adding, setAdding] = useState<TemplateId>("kallax_4x4");
+  const [openKey, setOpenKey] = useState<string | null>(() =>
+    initial.furniture.length > 0 && !app.data?.config ? [...initial.furniture].sort((a, b) => a.sortIndex - b.sortIndex)[0]!.key : null,
+  );
 
-  const { t } = useI18n();
-  const counts = useMemo(() => {
-    const c = { lp: 0, single: 0, cd: 0, other: 0 };
+  const counts = useMemo<Counts>(() => {
+    const c: Counts = { lp: 0, single: 0, cd: 0, other: 0 };
     for (const r of records) c[groupOf(r)]++;
     return c;
   }, [records]);
 
   const furniture = [...draft.furniture].sort((a, b) => a.sortIndex - b.sortIndex);
-  const capacityOf = (media: ShelfMedia) =>
-    furniture
-      .filter((f) => f.media === media)
-      .reduce((sum, f) => sum + f.compartments.filter((c) => c.status === "available").reduce((s, c) => s + (c.capacity ?? f.defaultCapacity), 0), 0);
 
   const update = (key: string, change: (f: FurnitureConfig) => FurnitureConfig) =>
     setDraft((d) => ({ ...d, furniture: d.furniture.map((f) => (f.key === key ? change(f) : f)) }));
@@ -55,14 +51,19 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
       return { ...d, furniture: reindex(list) };
     });
 
-  const remove = (key: string) =>
+  const remove = (key: string) => {
     setDraft((d) => ({ ...d, furniture: reindex([...d.furniture].sort((a, b) => a.sortIndex - b.sortIndex).filter((f) => f.key !== key)) }));
+    if (openKey === key) setOpenKey(null);
+  };
 
-  const add = () =>
-    setDraft((d) => ({
-      ...d,
-      furniture: [...d.furniture, newFurniture(adding, d.furniture.length, counts.lp === 0 && counts.cd > 0 ? "cd" : "lp", t(`templates.${adding}`))],
-    }));
+  const add = (id: TemplateId) => {
+    const hasSinglesShelf = draft.furniture.some((f) => f.media === "single");
+    const media: ShelfMedia =
+      id === "record_box" && counts.single > 0 && !hasSinglesShelf ? "single" : counts.lp === 0 && counts.cd > 0 ? "cd" : "lp";
+    const shelf = newFurniture(id, draft.furniture.length, media, t(`templates.${id}`));
+    setDraft((d) => ({ ...d, furniture: [...d.furniture, shelf] }));
+    setOpenKey(shelf.key);
+  };
 
   const setLevel = (i: number, value: SortLevel | "") =>
     setDraft((d) => {
@@ -73,152 +74,75 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
       return { ...d, settings: { ...d.settings, sortLevels: unique.length ? unique : ["artist"] } };
     });
 
+  const setSlack = (value: number) => setDraft((d) => ({ ...d, settings: { ...d.settings, slackPct: clamp(value, 0, 50) } }));
   const canGenerate = draft.furniture.length > 0 && draft.furniture.every((f) => f.name.trim());
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-3" aria-labelledby="shelves-heading">
-        <div className="flex items-baseline justify-between gap-2">
-          <h2 id="shelves-heading" className="text-lg font-semibold text-ink">
-            Your shelves
+      <section className="flex flex-col gap-3" aria-labelledby="shelves-heading" data-tour="shelves">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="shelves-heading" className="font-display text-2xl text-ink">
+            {t("builder.yourShelves")}
           </h2>
-          <p className="text-xs text-ink-muted">Records flow through them in this order.</p>
+          <p className="text-sm text-muted">{t("builder.flowOrder")}</p>
         </div>
 
-        {furniture.map((f, i) => (
-          <ShelfEditor
-            key={f.key}
-            furniture={f}
-            first={i === 0}
-            last={i === furniture.length - 1}
-            onChange={(change) => update(f.key, change)}
-            onMove={(delta) => move(f.key, delta)}
-            onRemove={() => remove(f.key)}
-          />
-        ))}
-
-        {furniture.length === 0 && (
-          <p className="rounded-card bg-warning-soft p-3 text-sm text-warning">Add at least one shelf to generate the map.</p>
-        )}
-
-        <div className="flex flex-wrap items-end gap-2 rounded-card border border-dashed border-line-strong p-3">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-ink">Add a shelf</span>
-            <select value={adding} onChange={(e) => setAdding(e.target.value as TemplateId)} className="rounded-control border border-line-strong bg-surface px-2 py-2 text-base">
-              {TEMPLATES.map((tpl) => (
-                <option key={tpl.id} value={tpl.id}>
-                  {t(`templates.${tpl.id}`)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="button" onClick={add} className="rounded-control bg-ink px-3 py-2 text-sm font-semibold text-surface hover:bg-ink/85">
-            Add
-          </button>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 shadow-card" aria-labelledby="order-heading">
-        <h2 id="order-heading" className="text-lg font-semibold text-ink">
-          Sort order
-        </h2>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <label key={i} className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-ink">{i === 0 ? "First by" : "Then by"}</span>
-              <select
-                value={draft.settings.sortLevels[i] ?? ""}
-                disabled={i > draft.settings.sortLevels.length}
-                onChange={(e) => setLevel(i, e.target.value as SortLevel | "")}
-                className="rounded-control border border-line-strong bg-surface px-2 py-2 text-base disabled:opacity-50"
-              >
-                {i > 0 && <option value="">—</option>}
-                {SORT_LEVELS.map((l) => (
-                  <option key={l} value={l}>
-                    {LEVEL_LABEL[l]}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ))}
-        </div>
-        <p className="text-xs text-ink-muted">Ties are always broken by artist, then year, then title.</p>
-        <label className="flex items-center gap-2 text-sm text-ink">
-          <input
-            type="checkbox"
-            checked={draft.settings.ignoreArticles}
-            onChange={(e) => setDraft((d) => ({ ...d, settings: { ...d.settings, ignoreArticles: e.target.checked } }))}
-            className="size-4 accent-[var(--color-accent)]"
-          />
-          Ignore articles (“The Beatles” under B instead of T, “Los Lobos” under L)
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-ink">Free space to leave in every compartment (slack)</span>
-          <span className="flex items-center gap-2">
-            <input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={50}
-              value={draft.settings.slackPct}
-              onChange={(e) => setDraft((d) => ({ ...d, settings: { ...d.settings, slackPct: clamp(Number(e.target.value), 0, 50) } }))}
-              className="w-24 rounded-control border border-line-strong bg-surface px-2 py-2 text-base"
+        {furniture.map((f, i) =>
+          f.key === openKey ? (
+            <ShelfBuilder
+              key={f.key}
+              furniture={f}
+              all={draft.furniture}
+              counts={counts}
+              slackPct={draft.settings.slackPct}
+              onSlack={setSlack}
+              importing={app.syncJob?.items_total ? { done: app.syncJob.items_done, total: app.syncJob.items_total } : null}
+              onChange={(change) => update(f.key, change)}
+              onClose={() => setOpenKey(null)}
             />
-            <span className="text-ink-muted">%</span>
-          </span>
-        </label>
-      </section>
-
-      <section className="rounded-card bg-sunken p-3 text-sm text-ink">
-        <p>
-          LPs: {counts.lp.toLocaleString("en-US")} records for {capacityOf("lp").toLocaleString("en-US")} places
-          {counts.single > 0 && <> · Singles: {counts.single.toLocaleString("en-US")} for {capacityOf("single").toLocaleString("en-US")} places</>}
-          {counts.cd > 0 && (
-            <>
-              {" "}
-              · CDs: {counts.cd.toLocaleString("en-US")} for {capacityOf("cd").toLocaleString("en-US")} places
-            </>
-          )}
-          {counts.other > 0 && <> · {counts.other} in other formats (not placed)</>}
-        </p>
-        {counts.cd > 0 && !furniture.some((f) => f.media === "cd") && (
-          <p className="mt-1 text-ink-muted">Add a shelf that holds CDs to place your {counts.cd} CDs.</p>
+          ) : (
+            <ShelfCard
+              key={f.key}
+              furniture={f}
+              first={i === 0}
+              last={i === furniture.length - 1}
+              onEdit={() => setOpenKey(f.key)}
+              onMove={(delta) => move(f.key, delta)}
+              onRemove={() => remove(f.key)}
+            />
+          ),
         )}
+
+        {furniture.length === 0 && <Banner tone="warning">{t("builder.addOne")}</Banner>}
+
+        <TemplatePicker onAdd={add} />
       </section>
 
-      <div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-line bg-canvas/95 px-4 py-3 backdrop-blur">
-        <button
-          type="button"
-          disabled={!canGenerate || app.busy}
-          onClick={() => setPreview(app.previewMap(draft))}
-          className="flex-1 rounded-control bg-accent px-4 py-3 text-base font-semibold text-on-accent hover:bg-accent-hover disabled:opacity-50"
-        >
-          Generate map
+      <SortOrder
+        levels={draft.settings.sortLevels}
+        ignoreArticles={draft.settings.ignoreArticles}
+        onLevel={setLevel}
+        onIgnoreArticles={(v) => setDraft((d) => ({ ...d, settings: { ...d.settings, ignoreArticles: v } }))}
+      />
+
+      <div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-input-line/60 bg-wall/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+        <button type="button" disabled={!canGenerate || app.busy} onClick={() => setPreview(app.previewMap(draft))} className={`${btnPrimary} flex-1`}>
+          {t("builder.generate")}
         </button>
-        <button type="button" onClick={onDone} className="rounded-control border border-line-strong px-4 py-3 text-sm font-medium text-ink hover:bg-sunken">
-          Cancel
-        </button>
+        {app.data?.config && (
+          <button type="button" onClick={onDone} className={btnSecondary}>
+            {t("common.cancel")}
+          </button>
+        )}
       </div>
 
       {preview && (
-        <Sheet title={preview.hasMap ? "Recompute the whole map?" : "Generate the map?"} onClose={() => setPreview(null)}>
+        <Sheet title={preview.hasMap ? t("builder.recomputeTitle") : t("builder.generateTitle")} onClose={() => setPreview(null)}>
           <div className="flex flex-col gap-3 text-sm text-ink">
-            {preview.hasMap ? (
-              <p>
-                <strong>{preview.changed.toLocaleString("en-US")}</strong> record{preview.changed === 1 ? "" : "s"} will change compartment. Calibrations you made are replaced by the new layout.
-              </p>
-            ) : (
-              <p>{preview.placed.toLocaleString("en-US")} records will be placed.</p>
-            )}
-            {preview.leftover > 0 && (
-              <p className="rounded-card bg-warning-soft p-2 text-warning">
-                {preview.leftover} record{preview.leftover === 1 ? " doesn't" : "s don't"} fit. They&apos;ll be listed as not on the shelf.
-              </p>
-            )}
-            {preview.slackReduced && preview.leftover === 0 && (
-              <p className="rounded-card bg-warning-soft p-2 text-warning">It only fits by using part of the free space you asked for.</p>
-            )}
-            {preview.notPlaced > 0 && <p className="text-ink-muted">{preview.notPlaced} cassettes, files, or other formats stay off the shelves.</p>}
+            {preview.hasMap ? <p>{t("builder.willChange", { count: preview.changed })}</p> : <p>{t("builder.willPlace", { count: preview.placed })}</p>}
+            {preview.leftover > 0 && <Banner tone="warning">{t("builder.leftover", { count: preview.leftover })}</Banner>}
+            {preview.slackReduced && preview.leftover === 0 && <Banner tone="warning">{t("builder.slackReduced")}</Banner>}
+            {preview.notPlaced > 0 && <p className="text-muted">{t("builder.notPlaced", { count: preview.notPlaced })}</p>}
             <div className="flex gap-2">
               <button
                 type="button"
@@ -228,12 +152,12 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
                   setPreview(null);
                   onDone();
                 }}
-                className="flex-1 rounded-control bg-accent px-4 py-3 font-semibold text-on-accent hover:bg-accent-hover disabled:opacity-50"
+                className={`${btnPrimary} flex-1`}
               >
-                {app.busy ? "Saving…" : preview.hasMap ? "Recompute" : "Generate"}
+                {app.busy ? t("common.saving") : preview.hasMap ? t("builder.recompute") : t("builder.generateShort")}
               </button>
-              <button type="button" onClick={() => setPreview(null)} className="rounded-control border border-line-strong px-4 py-3 font-medium hover:bg-sunken">
-                Back
+              <button type="button" onClick={() => setPreview(null)} className={btnSecondary}>
+                {t("common.back")}
               </button>
             </div>
           </div>
@@ -243,162 +167,238 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
   );
 }
 
-function ShelfEditor({
+/** A saved or suggested shelf, closed: what it is and how much it holds. */
+function ShelfCard({
   furniture: f,
   first,
   last,
-  onChange,
+  onEdit,
   onMove,
   onRemove,
 }: {
   furniture: FurnitureConfig;
   first: boolean;
   last: boolean;
-  onChange: (change: (f: FurnitureConfig) => FurnitureConfig) => void;
+  onEdit: () => void;
   onMove: (delta: number) => void;
   onRemove: () => void;
 }) {
-  const { t: tl } = useI18n();
-  const t = tl;
+  const { t } = useI18n();
+  const holds = shelfHolds(f);
+  return (
+    <article className={`${card} flex flex-wrap items-center gap-3 p-3`} aria-label={f.name}>
+      <MiniFurniture
+        rows={f.rows}
+        cols={f.cols}
+        blocked={f.compartments.filter((c) => c.status === "blocked").map((c) => `${c.row}:${c.col}`)}
+        box={isBoxTemplate(f.template)}
+      />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-display text-lg text-ink">{f.name}</p>
+        <p className="truncate text-sm text-muted">
+          {t("builder.cardLine", { media: t(`media.${f.media}`), template: t(`templates.${f.template}`), rows: f.rows, cols: f.cols })}
+        </p>
+      </div>
+      <p className="font-display text-sm text-ink tabular-nums">{t("builder.holds", { count: holds.places })}</p>
+      <div className="flex gap-1">
+        <button type="button" onClick={onEdit} className={btnSecondarySm}>
+          {t("builder.edit")}
+        </button>
+        <button type="button" aria-label={t("builder.moveUp", { name: f.name })} disabled={first} onClick={() => onMove(-1)} className={`${btnSecondarySm} px-3`}>
+          ↑
+        </button>
+        <button type="button" aria-label={t("builder.moveDown", { name: f.name })} disabled={last} onClick={() => onMove(1)} className={`${btnSecondarySm} px-3`}>
+          ↓
+        </button>
+        <button type="button" aria-label={t("builder.remove", { name: f.name })} onClick={onRemove} className={`${btnSecondarySm} border-danger px-3 text-danger`}>
+          ✕
+        </button>
+      </div>
+    </article>
+  );
+}
+
+/** The shelf being created or edited: the form, what it holds (live), and a preview to tap. */
+function ShelfBuilder({
+  furniture: f,
+  all,
+  counts,
+  slackPct,
+  onSlack,
+  importing,
+  onChange,
+  onClose,
+}: {
+  furniture: FurnitureConfig;
+  all: FurnitureConfig[];
+  counts: Counts;
+  slackPct: number;
+  onSlack: (v: number) => void;
+  importing: { done: number; total: number } | null;
+  onChange: (change: (f: FurnitureConfig) => FurnitureConfig) => void;
+  onClose: () => void;
+}) {
+  const { t, n } = useI18n();
   const [tapMode, setTapMode] = useState<"block" | "capacity">("block");
   const [editing, setEditing] = useState<{ row: number; col: number } | null>(null);
   const id = `shelf-${f.key}`;
+  const holds = shelfHolds(f);
+  const fills = groupFills(all, { lp: counts.lp, single: counts.single, cd: counts.cd }, slackPct);
   const editingCell = editing ? f.compartments.find((c) => c.row === editing.row && c.col === editing.col) : undefined;
 
-  const toggle = (row: number, col: number) => {
+  const tap = (row: number, col: number) => {
     if (tapMode === "capacity") {
       setEditing({ row, col });
       return;
     }
     onChange((x) => ({
       ...x,
-      compartments: x.compartments.map((c) =>
-        c.row === row && c.col === col ? { ...c, status: c.status === "blocked" ? "available" : "blocked" } : c,
-      ),
+      compartments: x.compartments.map((c) => (c.row === row && c.col === col ? { ...c, status: c.status === "blocked" ? "available" : "blocked" } : c)),
     }));
   };
 
+  const setMedia = (media: ShelfMedia) =>
+    onChange((x) => ({
+      ...x,
+      media,
+      // Follow the new type's default, unless the capacity was changed by hand.
+      defaultCapacity: x.defaultCapacity === defaultCapacity(x.template, x.media) ? defaultCapacity(x.template, media) : x.defaultCapacity,
+    }));
+
+  const arithmetic =
+    holds.overrides > 0
+      ? t("builder.arithmeticMixed", { count: holds.open, open: holds.open, overrides: holds.overrides })
+      : t("builder.arithmetic", { count: holds.open, open: holds.open, capacity: f.defaultCapacity });
+
   return (
-    <article className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 shadow-card" aria-labelledby={`${id}-name`}>
-      <div className="flex items-start gap-2">
-        <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm">
-          <span id={`${id}-name`} className="font-medium text-ink">
-            Name
-          </span>
-          <input
-            value={f.name}
-            maxLength={60}
-            onChange={(e) => onChange((x) => ({ ...x, name: e.target.value }))}
-            className="rounded-control border border-line-strong bg-surface px-3 py-2 text-base"
-          />
-        </label>
-        <div className="flex shrink-0 gap-1 pt-6">
-          <button type="button" aria-label={`Move ${f.name} up`} disabled={first} onClick={() => onMove(-1)} className="rounded-control border border-line px-2.5 py-2 text-sm disabled:opacity-30">
-            ↑
-          </button>
-          <button type="button" aria-label={`Move ${f.name} down`} disabled={last} onClick={() => onMove(1)} className="rounded-control border border-line px-2.5 py-2 text-sm disabled:opacity-30">
-            ↓
-          </button>
-          <button type="button" aria-label={`Remove ${f.name}`} onClick={onRemove} className="rounded-control border border-line px-2.5 py-2 text-sm text-danger">
-            ✕
+    <article className="grid items-start gap-[22px] min-[900px]:grid-cols-2" aria-labelledby={`${id}-title`}>
+      <div className={`${card} flex flex-col gap-3.5 p-[18px]`}>
+        <div className="flex items-start justify-between gap-2">
+          <h3 id={`${id}-title`} className="font-display text-xl text-ink">
+            {f.name.trim() || t("builder.newShelf")}
+          </h3>
+          <button type="button" onClick={onClose} className={btnSecondarySm}>
+            {t("common.done")}
           </button>
         </div>
-      </div>
+        <div className="grid grid-cols-2 gap-3">
+          <label className={`${field} col-span-2`}>
+            {t("builder.name")}
+            <input value={f.name} maxLength={60} onChange={(e) => onChange((x) => ({ ...x, name: e.target.value }))} className={control} />
+          </label>
+          <label className={field}>
+            {t("builder.template")}
+            <select
+              value={f.template}
+              onChange={(e) => {
+                const tpl = template(e.target.value as TemplateId);
+                onChange((x) => resizeFurniture({ ...x, template: tpl.id, traversal: tpl.traversal, defaultCapacity: defaultCapacity(tpl.id, x.media) }, tpl.rows, tpl.cols));
+              }}
+              className={control}
+            >
+              {TEMPLATES.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {t(`templates.${tpl.id}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={field}>
+            {t("builder.holdsLabel")}
+            <select value={f.media} onChange={(e) => setMedia(e.target.value as ShelfMedia)} className={control}>
+              {(["lp", "single", "cd"] as const).map((m) => (
+                <option key={m} value={m}>
+                  {t(`media.${m}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={field}>
+            {t("builder.rows")}
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={12}
+              value={f.rows}
+              onChange={(e) => onChange((x) => resizeFurniture(x, clamp(Number(e.target.value), 1, 12), x.cols))}
+              className={control}
+            />
+          </label>
+          <label className={field}>
+            {t("builder.cols")}
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={24}
+              value={f.cols}
+              onChange={(e) => onChange((x) => resizeFurniture(x, x.rows, clamp(Number(e.target.value), 1, 24)))}
+              className={control}
+            />
+          </label>
+          <label className={field}>
+            {t("builder.perCompartment")}
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={1000}
+              value={f.defaultCapacity}
+              onChange={(e) => onChange((x) => ({ ...x, defaultCapacity: clamp(Number(e.target.value), 1, 1000) }))}
+              className={control}
+            />
+          </label>
+          <label className={field}>
+            {t("builder.freeSpace")}
+            <span className="flex items-center gap-2">
+              <input type="number" inputMode="numeric" min={0} max={50} value={slackPct} onChange={(e) => onSlack(Number(e.target.value))} className={`${control} w-full`} />
+              <span aria-hidden>%</span>
+            </span>
+          </label>
+          <fieldset className={`${field} col-span-2`}>
+            <legend className="mb-1">{t("builder.readIt")}</legend>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-ink">
+              {(["rows", "columns"] as const).map((tr) => (
+                <label key={tr} className="flex items-center gap-1.5">
+                  <input type="radio" name={`${id}-traversal`} checked={f.traversal === tr} onChange={() => onChange((x) => ({ ...x, traversal: tr }))} className="accent-ink" />
+                  {t(tr === "rows" ? "builder.byRows" : "builder.byColumns")}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <label className="col-span-2 flex flex-col gap-1 text-sm">
-          <span className="font-medium text-ink">Template</span>
-          <select
-            value={f.template}
-            onChange={(e) => {
-              const t = template(e.target.value as TemplateId);
-              onChange((x) => ({ ...resizeFurniture({ ...x, template: t.id, traversal: t.traversal, defaultCapacity: defaultCapacity(t.id, x.media) }, t.rows, t.cols) }));
-            }}
-            className="rounded-control border border-line-strong bg-surface px-2 py-2 text-base"
-          >
-            {TEMPLATES.map((tpl) => (
-              <option key={tpl.id} value={tpl.id}>
-                {tl(`templates.${tpl.id}`)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-ink">Rows</span>
-          <input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={12}
-            value={f.rows}
-            onChange={(e) => onChange((x) => resizeFurniture(x, clamp(Number(e.target.value), 1, 12), x.cols))}
-            className="rounded-control border border-line-strong bg-surface px-2 py-2 text-base"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-ink">Columns</span>
-          <input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={24}
-            value={f.cols}
-            onChange={(e) => onChange((x) => resizeFurniture(x, x.rows, clamp(Number(e.target.value), 1, 24)))}
-            className="rounded-control border border-line-strong bg-surface px-2 py-2 text-base"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-ink">Records per compartment</span>
-          <input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={1000}
-            value={f.defaultCapacity}
-            onChange={(e) => onChange((x) => ({ ...x, defaultCapacity: clamp(Number(e.target.value), 1, 1000) }))}
-            className="rounded-control border border-line-strong bg-surface px-2 py-2 text-base"
-          />
-        </label>
-        <fieldset className="flex flex-col gap-1 text-sm">
-          <legend className="font-medium text-ink">Holds</legend>
-          <div className="flex gap-3 pt-1">
-            {(["lp", "single", "cd"] as const).map((m) => (
-              <label key={m} className="flex items-center gap-1.5">
-                <input
-                  type="radio"
-                  name={`${id}-media`}
-                  checked={f.media === m}
-                  onChange={() => onChange((x) => ({ ...x, media: m, defaultCapacity: defaultCapacity(x.template, m) }))}
-                  className="accent-[var(--color-accent)]"
-                />
-                {tl(`media.${m}`)}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-        <fieldset className="col-span-2 flex flex-col gap-1 text-sm">
-          <legend className="font-medium text-ink">Read it</legend>
-          <div className="flex flex-wrap gap-3 pt-1">
-            {(["rows", "columns"] as const).map((t) => (
-              <label key={t} className="flex items-center gap-1.5">
-                <input
-                  type="radio"
-                  name={`${id}-traversal`}
-                  checked={f.traversal === t}
-                  onChange={() => onChange((x) => ({ ...x, traversal: t }))}
-                  className="accent-[var(--color-accent)]"
-                />
-                {t === "rows" ? "By rows (left to right)" : "By columns (top to bottom)"}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <p className="surface-walnut m-0 rounded-[4px] px-3.5 py-3" aria-live="polite">
+          <strong className="block font-display text-[22px] font-normal">{t("builder.thisHolds", { count: holds.places, media: t(`mediaShort.${f.media}`) })}</strong>
+          <span className="text-[13px] opacity-85">{holds.blocked > 0 ? t("builder.withBlocked", { text: arithmetic, count: holds.blocked }) : arithmetic}</span>
+        </p>
+
+        <div className="grid gap-2.5" aria-live="polite">
+          {importing && <p className="text-sm text-muted">{t("builder.importing", { done: importing.done, total: importing.total })}</p>}
+          {fills.map((g) => {
+            const over = g.wontFit > 0;
+            return (
+              <div key={g.media} className="grid gap-1 text-sm text-ink">
+                <div>
+                  {g.places > 0
+                    ? t(g.media === f.media ? "builder.fillWithThis" : "builder.fill", { media: t(`media.${g.media}`), count: g.records, pct: g.pct, places: g.places })
+                    : t("builder.fillNoShelf", { media: t(`media.${g.media}`), count: g.records })}
+                </div>
+                <div className="h-3 overflow-hidden rounded-[6px] bg-meter-track shadow-[inset_0_1px_2px_rgb(0_0_0/0.15)]" aria-hidden>
+                  <div className="h-full" style={{ width: `${Math.min(100, g.pct)}%`, background: over ? "var(--color-mustard)" : "var(--gradient-meter)" }} />
+                </div>
+                {over && <p className="font-semibold text-warning">{t("builder.wontFit", { count: g.wontFit, slack: slackPct })}</p>}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm font-medium text-ink">Preview</p>
-          <div className="flex rounded-control border border-line p-0.5 text-xs" role="group" aria-label="What tapping a compartment does">
+          <p className="text-sm text-muted">{tapMode === "block" ? t("builder.tapToBlockHint") : t("builder.tapCapacityHint")}</p>
+          <div className="flex rounded-pill border border-input-line bg-paper p-0.5 text-xs" role="group" aria-label={t("builder.tapMode")}>
             {(["block", "capacity"] as const).map((m) => (
               <button
                 key={m}
@@ -408,18 +408,18 @@ function ShelfEditor({
                   setTapMode(m);
                   setEditing(null);
                 }}
-                className={`rounded px-2 py-1 ${tapMode === m ? "bg-ink text-surface" : "text-ink-muted"}`}
+                className={`rounded-pill px-3 py-1 font-semibold ${tapMode === m ? "bg-ink text-paper" : "text-muted"}`}
               >
-                {m === "block" ? "Tap to block" : "Tap to set capacity"}
+                {t(m === "block" ? "builder.tapBlock" : "builder.tapCapacity")}
               </button>
             ))}
           </div>
         </div>
-        <TraversalPreview furniture={f} onTap={toggle} editing={editing} />
+        <PreviewFurniture furniture={f} onTap={tap} editing={editing} places={holds.places} tapMode={tapMode} />
         {editing && editingCell && (
-          <div className="flex flex-wrap items-end gap-2 rounded-card bg-sunken p-2 text-sm">
-            <label className="flex flex-col gap-1">
-              <span className="font-medium text-ink">Capacity of {slotPlace(editing, f, t)}</span>
+          <div className={`${card} flex flex-wrap items-end gap-2 p-3 text-sm`}>
+            <label className={field}>
+              {t("builder.capacityOf", { place: slotPlace(editing, f, t) })}
               <input
                 type="number"
                 inputMode="numeric"
@@ -435,13 +435,13 @@ function ShelfEditor({
                     compartments: x.compartments.map((c) => (c.row === editing.row && c.col === editing.col ? { ...c, capacity: value } : c)),
                   }));
                 }}
-                className="w-28 rounded-control border border-line-strong bg-surface px-2 py-1.5 text-base"
+                className={`${control} w-28`}
               />
             </label>
-            <button type="button" onClick={() => setEditing(null)} className="rounded-control px-2 py-1.5 font-medium text-ink-muted hover:bg-surface">
-              Done
+            <button type="button" onClick={() => setEditing(null)} className={btnSecondarySm}>
+              {t("common.done")}
             </button>
-            <p className="w-full text-xs text-ink-muted">Leave it empty to use the shelf&apos;s {f.defaultCapacity}.</p>
+            <p className="w-full text-xs text-muted">{t("builder.capacityEmpty", { count: n(f.defaultCapacity) })}</p>
           </div>
         )}
       </div>
@@ -449,39 +449,151 @@ function ShelfEditor({
   );
 }
 
-/** The grid with the traversal order numbered, so you can check it matches how you read your shelf. */
-function TraversalPreview({ furniture: f, onTap, editing }: { furniture: FurnitureConfig; onTap: (row: number, col: number) => void; editing: { row: number; col: number } | null }) {
+/** The shelf as walnut furniture, numbered in the order records flow, so you can check it matches how you read it. */
+function PreviewFurniture({
+  furniture: f,
+  onTap,
+  editing,
+  places,
+  tapMode,
+}: {
+  furniture: FurnitureConfig;
+  onTap: (row: number, col: number) => void;
+  editing: { row: number; col: number } | null;
+  places: number;
+  tapMode: "block" | "capacity";
+}) {
   const { t } = useI18n();
   const order = new Map<string, number>();
-  let n = 0;
+  let count = 0;
   const visit = (row: number, col: number) => {
     const c = f.compartments.find((x) => x.row === row && x.col === col);
-    if (c && c.status !== "blocked") order.set(`${row}:${col}`, ++n);
+    if (c && c.status !== "blocked") order.set(`${row}:${col}`, ++count);
   };
   if (f.traversal === "columns") for (let col = 0; col < f.cols; col++) for (let row = 0; row < f.rows; row++) visit(row, col);
   else for (let row = 0; row < f.rows; row++) for (let col = 0; col < f.cols; col++) visit(row, col);
+  const aspect = isBoxTemplate(f.template) ? 1.25 : 1;
 
   return (
-    <div className="grid max-w-md gap-1" style={{ gridTemplateColumns: `repeat(${f.cols}, minmax(0, 1fr))` }}>
+    <Furniture cols={f.cols} title={t("builder.preview")} aside={t("map.places", { count: places })} maxCell={110}>
       {f.compartments.map((c) => {
         const blocked = c.status === "blocked";
         const isEditing = editing?.row === c.row && editing?.col === c.col;
-        return (
-          <button
+        const place = slotPlace(c, f, t);
+        const label = `${place}: ${blocked ? t("builder.blocked") : t("builder.available")}${c.capacity ? `, ${t("builder.capacityN", { count: c.capacity })}` : ""}`;
+        return blocked ? (
+          <Compartment
             key={`${c.row}:${c.col}`}
-            type="button"
-            onClick={() => onTap(c.row, c.col)}
-            aria-pressed={blocked}
-            aria-label={`${slotPlace(c, f, t)}: ${blocked ? "blocked" : "available"}${c.capacity ? `, capacity ${c.capacity}` : ""}`}
-            className={`relative flex aspect-square flex-col items-center justify-center rounded-cell border text-xs ${
-              blocked ? "border-transparent bg-blocked text-ink-faint" : "border-line-strong bg-canvas text-ink"
-            } ${isEditing ? "ring-2 ring-accent" : ""}`}
+            aspect={aspect}
+            blocked={t("map.blocked")}
+            interactive
+            ariaLabel={label}
+            ariaPressed={tapMode === "block" ? true : undefined}
+            onActivate={() => onTap(c.row, c.col)}
+            plate={null}
+          />
+        ) : (
+          <Compartment
+            key={`${c.row}:${c.col}`}
+            aspect={aspect}
+            interactive
+            found={isEditing}
+            ariaLabel={label}
+            ariaPressed={tapMode === "block" ? false : undefined}
+            onActivate={() => onTap(c.row, c.col)}
+            plate={null}
           >
-            {blocked ? "—" : order.get(`${c.row}:${c.col}`)}
-            {!blocked && c.capacity !== null && <span className="text-[9px] text-ink-muted">{c.capacity}</span>}
-          </button>
+            <span className="absolute top-1 left-1.5 text-2xs text-on-walnut/80 tabular-nums">{order.get(`${c.row}:${c.col}`)}</span>
+            {c.capacity !== null && (
+              <span className="absolute right-1 bottom-1 rounded-[3px] bg-(--color-badge) px-1 text-2xs text-on-walnut tabular-nums">{c.capacity}</span>
+            )}
+          </Compartment>
         );
       })}
+    </Furniture>
+  );
+}
+
+/** A tiny walnut drawing of a template: its grid, blocked cells, and legs. */
+function MiniFurniture({ rows, cols, blocked = [], box = false }: { rows: number; cols: number; blocked?: string[]; box?: boolean }) {
+  const cell = Math.max(5, Math.min(12, Math.floor(56 / Math.max(rows, cols))));
+  const w = cols * cell * (box ? 1.25 : 1) + (cols - 1) * 2 + 8;
+  const h = rows * cell + (rows - 1) * 2 + 8;
+  return (
+    <span aria-hidden className="relative inline-block shrink-0 pb-2" style={{ width: w }}>
+      <span className="surface-walnut grid gap-[2px] rounded-[2px] p-1" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, height: h }}>
+        {Array.from({ length: rows * cols }, (_, i) => {
+          const key = `${Math.floor(i / cols)}:${i % cols}`;
+          return <span key={i} className={blocked.includes(key) ? "bg-walnut-blocked" : "surface-interior"} />;
+        })}
+      </span>
+      <span className="absolute bottom-0 left-1.5 h-2 w-1 -skew-x-[8deg] rounded-b-sm" style={{ background: "var(--gradient-leg)" }} />
+      <span className="absolute right-1.5 bottom-0 h-2 w-1 skew-x-[8deg] rounded-b-sm" style={{ background: "var(--gradient-leg)" }} />
+    </span>
+  );
+}
+
+/** "Add a shelf": every template drawn as small walnut furniture. */
+function TemplatePicker({ onAdd }: { onAdd: (id: TemplateId) => void }) {
+  const { t } = useI18n();
+  return (
+    <div className={`${card} flex flex-col gap-3 p-4`}>
+      <h3 className="font-display text-lg text-ink">{t("builder.addShelf")}</h3>
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+        {TEMPLATES.map((tpl) => (
+          <li key={tpl.id}>
+            <button
+              type="button"
+              onClick={() => onAdd(tpl.id)}
+              className="flex h-full w-full flex-col items-center gap-2 rounded-card border border-input-line bg-paper px-2 py-3 text-center hover:border-ink"
+            >
+              <MiniFurniture rows={tpl.rows} cols={tpl.cols} box={tpl.kind === "box"} />
+              <span className="text-sm font-semibold text-ink">{t(`templates.${tpl.id}`)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
+  );
+}
+
+function SortOrder({
+  levels,
+  ignoreArticles,
+  onLevel,
+  onIgnoreArticles,
+}: {
+  levels: SortLevel[];
+  ignoreArticles: boolean;
+  onLevel: (i: number, v: SortLevel | "") => void;
+  onIgnoreArticles: (v: boolean) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <section className={`${card} flex flex-col gap-3 p-[18px]`} aria-labelledby="order-heading">
+      <h2 id="order-heading" className="font-display text-2xl text-ink">
+        {t("builder.sortOrder")}
+      </h2>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <label key={i} className={field}>
+            {i === 0 ? t("builder.firstBy") : t("builder.thenBy")}
+            <select value={levels[i] ?? ""} disabled={i > levels.length} onChange={(e) => onLevel(i, e.target.value as SortLevel | "")} className={control}>
+              {i > 0 && <option value="">{t("builder.none")}</option>}
+              {SORT_LEVELS.map((l) => (
+                <option key={l} value={l}>
+                  {t(`levelNames.${l}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
+      </div>
+      <p className="text-xs text-muted">{t("builder.ties")}</p>
+      <label className="flex items-center gap-2 text-sm text-ink">
+        <input type="checkbox" checked={ignoreArticles} onChange={(e) => onIgnoreArticles(e.target.checked)} className="size-4 accent-ink" />
+        {t("builder.ignoreArticles")}
+      </label>
+    </section>
   );
 }

@@ -129,7 +129,7 @@ export function ShelfApp() {
             <h1 className="font-display text-2xl text-ink">{t("app.buildTitle")}</h1>
             <p className="text-sm text-muted">{t("app.buildText", { count: data.records.length })}</p>
           </div>
-          <SetupView app={app} initial={suggestedConfig(data.records)} records={data.records} onDone={() => setTab("map")} />
+          <SetupView app={app} initial={suggestedConfig(data.records, { lp: (n) => (n === null ? t("builder.suggestedLp") : t("builder.suggestedLpN", { n })), single: t("builder.suggestedSingles"), cd: t("builder.suggestedCds") })} records={data.records} onDone={() => setTab("map")} />
           <CollectionPanel app={app} />
         </div>
       ) : (
