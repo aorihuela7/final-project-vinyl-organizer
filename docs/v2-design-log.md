@@ -199,7 +199,7 @@ Times from the commits (`git log`), CST.
 - 05:00 · Phase 18: calibration by count, thickness by format.
 - 05:09 · Phase 19: tags and sections.
 - 05:13 · Phase 20: guest mode.
-- 05:24 · Phase 21: CSP, generic import errors, nightly purge, deletion webhook (needs Ale's setup).
+- 05:18 · Phase 21: CSP, generic import errors, nightly purge, deletion webhook (needs Ale's setup).
 
 ## Morning summary
 

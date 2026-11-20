@@ -140,6 +140,50 @@ async function main() {
   });
   check("The database rejects non-Discogs links and covers", badLink.error?.code === "23514", badLink.error?.code);
 
+  // ------------------------------------------------------------- v2 tables
+  await a.from("tags").delete().like("name", "RLS test%");
+  await a.from("temporary_locations").delete().like("name", "RLS test%");
+  await a.from("share_links").delete().like("token", "rlstest%");
+
+  const tagA = await a.from("tags").insert({ name: "RLS test tag", sort_index: 0 }).select().single();
+  check("A can create a tag", !tagA.error, tagA.error?.message);
+  const artistTagA = await a.from("artist_tags").insert({ artist_key: "rls test artist", tag_id: tagA.data?.id }).select().single();
+  check("A can tag an artist", !artistTagA.error, artistTagA.error?.message);
+  const locA = await a.from("temporary_locations").insert({ name: "RLS test bag" }).select().single();
+  check("A can create a temporary location", !locA.error, locA.error?.message);
+  const prefsA = await a.from("user_preferences").upsert({ user_id: userA, locale: "es" }, { onConflict: "user_id" }).select().single();
+  check("A can save its preferences", !prefsA.error, prefsA.error?.message);
+  const linkToken = `rlstest${Date.now().toString(36)}abcdefghijkl`;
+  const linkA = await a.from("share_links").insert({ token: linkToken }).select().single();
+  check("A can create a guest link", !linkA.error, linkA.error?.message);
+
+  for (const table of ["tags", "artist_tags", "temporary_locations", "user_preferences", "share_links"] as const) {
+    const seen = await b.from(table).select("user_id").eq("user_id", userA);
+    check(`B can't read A's ${table}`, !seen.error && seen.data?.length === 0, seen.error?.message);
+    const anonSeen = await anon.from(table).select("user_id");
+    check(`Anonymous requests can't read ${table}`, !!anonSeen.error || anonSeen.data?.length === 0, anonSeen.error?.code);
+  }
+  const crossTag = await b.from("artist_tags").insert({ artist_key: "rls cross", tag_id: tagA.data?.id });
+  check("B can't use A's tag", !!crossTag.error, crossTag.error?.code);
+
+  const guest = await anon.rpc("shared_shelf", { p_token: linkToken });
+  check("A guest link returns A's shelf to an anonymous caller", !guest.error && !!guest.data, guest.error?.message);
+  const wrong = await anon.rpc("shared_shelf", { p_token: "rlstest-not-a-real-token-123" });
+  check("A wrong guest token returns nothing", !wrong.error && wrong.data === null, wrong.error?.message);
+  await a.from("share_links").update({ revoked_at: new Date().toISOString() }).eq("token", linkToken);
+  const revoked = await anon.rpc("shared_shelf", { p_token: linkToken });
+  check("A revoked guest link returns nothing", !revoked.error && revoked.data === null, revoked.error?.message);
+
+  const anonSave = await anon.rpc("save_setup", { p_furniture: [], p_settings: null, p_placements: [], p_event: null });
+  check("Anonymous requests can't call save_setup", !!anonSave.error, anonSave.error?.code);
+  const anonDelete = await anon.rpc("delete_user_data", { p_user_id: userA, p_secret: "guess" });
+  check("delete_user_data refuses without the secret", !!anonDelete.error, anonDelete.error?.code);
+
+  await a.from("tags").delete().eq("id", tagA.data?.id);
+  await a.from("temporary_locations").delete().eq("id", locA.data?.id);
+  await a.from("share_links").delete().eq("token", linkToken);
+  await a.from("user_preferences").delete().eq("user_id", userA);
+
   await a.from("furniture").delete().eq("id", furnitureId!);
 
   console.log(failures === 0 ? "\nAll RLS checks passed." : `\n${failures} check(s) failed.`);
