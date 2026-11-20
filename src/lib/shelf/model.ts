@@ -202,7 +202,8 @@ const DEMO_NAMES: DemoNames = { living: "Living room", studio: "Studio", singles
 /**
  * The demo's prebuilt shelves (CLAUDE.md): "Living room" Kallax 4×4 for LPs with
  * two blocked cubes (the turntable), "Studio" tower 1×5 for CDs, and a
- * "Singles box" record box 1×3 when the collection has singles.
+ * "Singles box" record box 1×3 when the collection has singles. Sorted by
+ * artist, then album title.
  */
 export function demoConfig(records: readonly StoredRecord[] = [], names: DemoNames = DEMO_NAMES): ShelfConfig {
   const living = newFurniture("kallax_4x4", 0, "lp", names.living);
@@ -212,7 +213,7 @@ export function demoConfig(records: readonly StoredRecord[] = [], names: DemoNam
   const studio = newFurniture("tower_1x5", 1, "cd", names.studio);
   const furniture = [living, studio];
   if (records.some((r) => groupOf(r) === "single")) furniture.push(newFurniture("record_box", 2, "single", names.singles));
-  return { furniture, settings: { sortLevels: ["genre", "artist"], ignoreArticles: false, slackPct: DEFAULT_SLACK_PCT } };
+  return { furniture, settings: { sortLevels: ["artist", "title"], ignoreArticles: false, slackPct: DEFAULT_SLACK_PCT } };
 }
 
 export type SuggestedNames = { lp: (n: number | null) => string; single: string; cd: string };

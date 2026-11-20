@@ -135,7 +135,7 @@
   "notices": {
     "replaced": "The Discogs collection of “{username}” replaced the previous one. Build your shelf for it.",
     "localSaveFailed": "This browser couldn't save the demo. It will reset when you leave.",
-    "demoReady": "Demo ready: {lps} LPs and {cds} CDs on prebuilt shelves, sorted by genre, then artist.",
+    "demoReady": "Demo ready: {lps} LPs and {cds} CDs on prebuilt shelves, sorted by artist, then title.",
     "demoFailed": "Couldn't load the demo collection. Try again in a minute.",
     "demoSaved": "Your demo shelf is saved to your account.",
     "relaidOut": "Most records were new, so the whole shelf was laid out again with your settings.",
@@ -175,7 +175,7 @@
       "other": "Record added: {count} moves."
     },
     "addFailed": "Couldn't add the record.",
-    "demoReadySingles": "Demo ready: {lps} LPs, {singles} singles, and {cds} CDs on prebuilt shelves, sorted by genre, then artist.",
+    "demoReadySingles": "Demo ready: {lps} LPs, {singles} singles, and {cds} CDs on prebuilt shelves, sorted by artist, then title.",
     "singlesBoxAdded": {
       "one": "Singles (7″) now go on their own shelves. We added a Singles box for your {count} single, and no LP moved.",
       "other": "Singles (7″) now go on their own shelves. We added a Singles box for your {count} singles, and no LP moved."

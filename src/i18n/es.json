@@ -135,7 +135,7 @@
   "notices": {
     "replaced": "La colección de Discogs de “{username}” reemplazó a la anterior. Arma tu repisa para ella.",
     "localSaveFailed": "Este navegador no pudo guardar la demostración. Se va a reiniciar cuando salgas.",
-    "demoReady": "Demostración lista: {lps} LP y {cds} CD en repisas ya armadas, ordenados por género, luego artista.",
+    "demoReady": "Demostración lista: {lps} LP y {cds} CD en repisas ya armadas, ordenados por artista, luego título.",
     "demoFailed": "No se pudo cargar la colección de demostración. Intenta de nuevo en un minuto.",
     "demoSaved": "Tu repisa de demostración quedó guardada en tu cuenta.",
     "relaidOut": "La mayoría de los discos eran nuevos, así que se volvió a ordenar toda la repisa con tu configuración.",
@@ -175,7 +175,7 @@
       "other": "Disco agregado: {count} movimientos."
     },
     "addFailed": "No se pudo agregar el disco.",
-    "demoReadySingles": "Demostración lista: {lps} LP, {singles} singles y {cds} CD en repisas ya armadas, ordenados por género, luego artista.",
+    "demoReadySingles": "Demostración lista: {lps} LP, {singles} singles y {cds} CD en repisas ya armadas, ordenados por artista, luego título.",
     "singlesBoxAdded": {
       "one": "Los singles (7″) ahora van en sus propias repisas. Agregamos una caja de singles para tu {count} single, y ningún LP se movió.",
       "other": "Los singles (7″) ahora van en sus propias repisas. Agregamos una caja de singles para tus {count} singles, y ningún LP se movió."

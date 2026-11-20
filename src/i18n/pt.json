@@ -135,7 +135,7 @@
   "notices": {
     "replaced": "A coleção do Discogs de “{username}” substituiu a anterior. Monte sua estante para ela.",
     "localSaveFailed": "Este navegador não conseguiu salvar a demonstração. Ela vai reiniciar quando você sair.",
-    "demoReady": "Demonstração pronta: {lps} LPs e {cds} CDs em estantes já montadas, ordenados por gênero, depois artista.",
+    "demoReady": "Demonstração pronta: {lps} LPs e {cds} CDs em estantes já montadas, ordenados por artista, depois título.",
     "demoFailed": "Não foi possível carregar a coleção de demonstração. Tente de novo em um minuto.",
     "demoSaved": "Sua estante de demonstração está salva na sua conta.",
     "relaidOut": "A maioria dos discos era nova, então a estante inteira foi organizada de novo com suas configurações.",
@@ -175,7 +175,7 @@
       "other": "Disco adicionado: {count} mudanças."
     },
     "addFailed": "Não foi possível adicionar o disco.",
-    "demoReadySingles": "Demonstração pronta: {lps} LPs, {singles} compactos e {cds} CDs em estantes já montadas, ordenados por gênero, depois artista.",
+    "demoReadySingles": "Demonstração pronta: {lps} LPs, {singles} compactos e {cds} CDs em estantes já montadas, ordenados por artista, depois título.",
     "singlesBoxAdded": {
       "one": "Os compactos (7″) agora vão em estantes próprias. Adicionamos uma caixa de compactos para o seu {count} compacto, e nenhum LP mudou de lugar.",
       "other": "Os compactos (7″) agora vão em estantes próprias. Adicionamos uma caixa de compactos para os seus {count} compactos, e nenhum LP mudou de lugar."
