@@ -1,26 +1,43 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useSupabase } from "@/lib/supabase/browser";
+import { START_TOUR_EVENT, TourOffer, TourOverlay, TourWaiting, useTourState, type TourStep } from "./tour";
 import { useSearchParams } from "next/navigation";
 import { SignUpButton } from "@clerk/nextjs";
 import { displayArtist, type Slot } from "@/lib/layout";
-import { suggestedConfig, type StoredRecord } from "@/lib/shelf/model";
+import { groupOf, suggestedConfig, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotTitle } from "@/lib/shelf/describe";
 import { CompartmentSheet } from "./compartment-sheet";
 import { ImportProgress } from "./import-progress";
 import { MapView } from "./map-view";
+import { BrassRail } from "./brass-rail";
+import { CalibrationHint } from "./calibration-hint";
+import { SimulatorCard } from "./simulator-card";
+import { OutOfShelfPanel } from "./temporary";
+import { ShareCard } from "./share-card";
+import { toSortSettings } from "@/lib/shelf/model";
 import { Onboarding } from "./onboarding";
-import { RecordDetails, findLocation } from "./record-details";
-import { SearchPanel } from "./search-panel";
+import { RecordCard, RecordCardEmpty, findLocation } from "./record-details";
+import { useMediaQuery } from "./use-media-query";
+import { SearchRow } from "./search-panel";
 import { SetupView } from "./setup-view";
 import { Sheet } from "./sheet";
 import { AddRecord } from "./add-record";
 import { CollectionPanel } from "./collection-panel";
 import { useShelfApp, type Notice } from "./use-shelf-app";
+import { useI18n } from "@/i18n/client";
+import { renderMsg } from "@/i18n/core";
+import { Banner, btnPrimary, btnPrimarySm, btnSecondary, btnText, card } from "../ui";
+import { collectionSummary } from "./summary";
 
 export function ShelfApp() {
   const params = useSearchParams();
   const app = useShelfApp(params.get("start"));
+  const { t } = useI18n();
+  // Larger screens show the record card in a column next to the shelves; phones open it as a bottom sheet.
+  const wide = useMediaQuery("(min-width: 900px)");
   const [tab, setTab] = useState<"map" | "setup">("map");
   const [openSlot, setOpenSlot] = useState<Slot | null>(null);
   const [openRecord, setOpenRecordState] = useState<string | null>(null);
@@ -30,33 +47,150 @@ export function ShelfApp() {
     setOpenRecordState(id);
     if (id) setLastRecord(id);
   };
-  const [highlight, setHighlight] = useState<string | null>(null);
+  // The found record: its compartment gets the mustard outline and the record lifts (the "found moment").
+  const [found, setFound] = useState<string | null>(null);
+  const [lifted, setLifted] = useState(false);
+  // A compartment highlighted briefly after jumping to it from the rail.
+  const [flashSlot, setFlashSlot] = useState<string | null>(null);
+  const jumpTo = useCallback((slotId: string) => {
+    document.querySelector(`[data-slot="${CSS.escape(slotId)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    setFlashSlot(slotId);
+    setTimeout(() => setFlashSlot((s) => (s === slotId ? null : s)), 1600);
+  }, []);
+  const showFound = useCallback((id: string | null) => {
+    setFound(id);
+    setLifted(false);
+    if (!id) return;
+    // Two frames later, so the lift and the outline animate from the resting state.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        setLifted(true);
+        document.querySelector('[data-map] [data-found="true"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
+      }),
+    );
+  }, []);
+
   const [adding, setAdding] = useState(false);
+  const [calibrateOnOpen, setCalibrateOnOpen] = useState(false);
+  // The calibration hint can be put off; it also goes away after the first calibration.
+  const [hintDismissed, setHintDismissed] = useState(true);
+  useEffect(() => {
+    let dismissed = false;
+    try {
+      dismissed = localStorage.getItem("ro:calibration-hint") === "dismissed";
+    } catch {
+      // keep showing it
+    }
+    void Promise.resolve().then(() => setHintDismissed(dismissed));
+  }, []);
+  const dismissHint = () => {
+    setHintDismissed(true);
+    try {
+      localStorage.setItem("ro:calibration-hint", "dismissed");
+    } catch {
+      // nothing to do
+    }
+  };
 
   const byId = useMemo(() => new Map((app.data?.records ?? []).map((r) => [r.id, r])), [app.data?.records]);
 
+  // ------------------------------------------------------------ guided tour
+  const { userId } = useAuth();
+  const supabase = useSupabase();
+  const hasMap = !!app.data?.config && app.views.some((v) => v.index.sorted.length > 0);
+  const tour = useTourState({
+    mode: app.mode,
+    userId,
+    supabase,
+    // The first demo visit, or right after signing up (even before there are records).
+    ready: app.status.kind === "ready" || (app.mode === "remote" && app.status.kind === "onboarding"),
+    hasMap,
+  });
+  const { start: startTour, accept: acceptTour } = tour;
+  const startTourOnMap = useCallback(() => {
+    // Before the first map (onboarding, an import): start as soon as the shelf is ready.
+    if (!hasMap) return acceptTour();
+    setTab("map");
+    setOpenSlot(null);
+    setAdding(false);
+    startTour();
+  }, [hasMap, startTour, acceptTour]);
+  // "Help" in the header, or /app?tour=1 from another page.
+  useEffect(() => {
+    const onStart = () => startTourOnMap();
+    window.addEventListener(START_TOUR_EVENT, onStart);
+    return () => window.removeEventListener(START_TOUR_EVENT, onStart);
+  }, [startTourOnMap]);
+  const wantsTour = params.get("tour") === "1";
+  const tourReady = app.status.kind !== "loading";
+  // Once per visit with ?tour=1, not again each time the map changes.
+  const tourParamHandled = useRef(false);
+  useEffect(() => {
+    if (!wantsTour || !tourReady || tourParamHandled.current) return;
+    const timer = setTimeout(() => {
+      tourParamHandled.current = true;
+      startTourOnMap();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [wantsTour, tourReady, startTourOnMap]);
+  const sample = app.views.find((v) => v.index.sorted.length > 0)?.index.sorted[0]?.id ?? null;
+  const tourSteps: TourStep[] = [
+    { id: "search", target: '[data-tour="search"]' },
+    { id: "rail", target: '[data-map] nav[data-tour="rail"]' },
+    { id: "compartment", target: "[data-map] [data-slot]" },
+    {
+      id: "record",
+      target: wide ? '[data-tour="record"]' : "[data-sheet]",
+      enter: () => {
+        if (sample) {
+          setOpenRecord(sample);
+          showFound(sample);
+        }
+      },
+      leave: () => setOpenRecord(null),
+    },
+    { id: "add", target: '[data-tour="add"]' },
+    { id: "setup", target: '[data-tour="setup"]' },
+    { id: "done" },
+  ];
+  const tourOffer = tour.offer ? <TourOffer onAccept={tour.accept} onDecline={tour.decline} /> : null;
+  const tourWaiting = tour.waiting ? <TourWaiting /> : null;
+
   if (app.status.kind === "loading") {
     return (
-      <div className="flex flex-col items-center gap-3 py-16 text-ink-muted" role="status" aria-live="polite">
-        <span className="size-8 animate-spin rounded-full border-4 border-line border-t-accent" aria-hidden />
-        <p>{app.status.message}</p>
+      <div className="flex flex-col items-center gap-3 py-16 text-muted" role="status" aria-live="polite">
+        <span className="size-8 animate-spin rounded-full border-4 border-brass-light border-t-walnut" aria-hidden />
+        <p>{renderMsg(t, app.status.message)}</p>
       </div>
     );
   }
-  if (app.status.kind === "onboarding") return <Onboarding app={app} />;
-  if (app.status.kind === "importing") return <ImportProgress job={app.status.job} message={app.status.message} />;
+  if (app.status.kind === "onboarding")
+    return (
+      <div className="flex flex-col gap-4">
+        {tourOffer}
+        {tourWaiting}
+        <Onboarding app={app} />
+      </div>
+    );
+  if (app.status.kind === "importing")
+    return (
+      <div className="flex flex-col gap-4">
+        {tourWaiting}
+        <ImportProgress job={app.status.job} message={renderMsg(t, app.status.message)} />
+      </div>
+    );
   if (app.status.kind === "error" || !app.data) {
     return (
-      <div className="mx-auto flex max-w-md flex-col gap-3 rounded-card border border-line bg-surface p-5 shadow-card" role="alert">
-        <h1 className="text-lg font-semibold text-ink">Something went wrong</h1>
-        <p className="text-sm text-ink-muted">{app.status.kind === "error" ? app.status.message : "Nothing to show yet."}</p>
+      <div className={`${card} mx-auto flex max-w-md flex-col gap-3 p-5`} role="alert">
+        <h1 className="font-display text-lg text-ink">{t("app.errorTitle")}</h1>
+        <p className="text-sm text-muted">{app.status.kind === "error" ? renderMsg(t, app.status.message) : t("app.nothingYet")}</p>
         <div className="flex gap-2">
-          <button type="button" onClick={() => window.location.reload()} className="rounded-control bg-ink px-4 py-2 text-sm font-semibold text-surface">
-            Try again
+          <button type="button" onClick={() => window.location.reload()} className={btnPrimary}>
+            {t("common.tryAgain")}
           </button>
           {app.mode === "local" && (
-            <button type="button" onClick={app.resetLocal} className="rounded-control border border-line-strong px-4 py-2 text-sm font-medium">
-              Start over
+            <button type="button" onClick={app.resetLocal} className={btnSecondary}>
+              {t("app.startOver")}
             </button>
           )}
         </div>
@@ -68,126 +202,189 @@ export function ShelfApp() {
   const config = data.config;
   const views = app.views;
   const leftover = views.reduce((n, v) => n + v.unplaced.length, 0);
-  const others = data.records.filter((r) => r.media === "other").length;
-  const cdsWithoutShelf = config && !config.furniture.some((f) => f.media === "cd") ? data.records.filter((r) => r.media === "cd").length : 0;
+  const others = data.records.filter((r) => groupOf(r) === "other").length;
+  const cdsWithoutShelf = config && !config.furniture.some((f) => f.media === "cd") ? data.records.filter((r) => groupOf(r) === "cd").length : 0;
+  // Singles (7″) only go on singles shelves: without one, they stay off the map, and every count says so.
+  const singlesWithoutShelf = config && !config.furniture.some((f) => f.media === "single") ? data.records.filter((r) => groupOf(r) === "single").length : 0;
   const recordInSheet = openRecord ? byId.get(openRecord) : undefined;
   const slotName = (id: string | null) => {
-    if (id === null) return "off the shelf";
+    if (id === null) return t("app.offTheShelf");
     for (const v of views) {
       const slot = v.index.slotById.get(id);
-      if (slot) return slotTitle(slot, config?.furniture.find((f) => f.key === slot.shelfKey));
+      if (slot) return slotTitle(slot, config?.furniture.find((f) => f.key === slot.shelfKey), t);
     }
-    return "another compartment";
+    return t("app.anotherCompartment");
   };
   const sheetLocation = openRecord ? findLocation(views, openRecord) : null;
+  const sortSettings = toSortSettings(config?.settings ?? { sortLevels: ["artist"], ignoreArticles: false, slackPct: 10 });
 
   return (
     <div className="flex flex-col gap-4">
+      {tourOffer}
+      {tourWaiting}
+      {tour.active && hasMap && <TourOverlay steps={tourSteps} onEnd={tour.end} />}
       {app.mode === "local" && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-accent/30 bg-accent-soft px-3 py-2 text-sm text-ink">
-          <span>This demo lives only in this browser. Sign up to save it and to import your own collection.</span>
+        <Banner className="flex flex-wrap items-center justify-between gap-2">
+          <span>{t("app.demoBanner")}</span>
           <SignUpButton mode="modal" forceRedirectUrl="/app">
-            <button type="button" className="rounded-control bg-accent px-3 py-1.5 font-semibold text-on-accent hover:bg-accent-hover">
-              Sign up to save
+            <button type="button" className={btnPrimarySm}>
+              {t("app.signUpToSave")}
             </button>
           </SignUpButton>
-        </div>
+        </Banner>
       )}
       {app.syncJob && (
-        <p className="flex items-center gap-2 rounded-card bg-sunken px-3 py-2 text-sm text-ink" role="status" aria-live="polite">
-          <span className="size-3 animate-spin rounded-full border-2 border-line-strong border-t-accent" aria-hidden />
-          Updating from Discogs…
-          {app.syncJob.items_total ? ` ${app.syncJob.items_done} of ${app.syncJob.items_total}` : ""}
-        </p>
+        <Banner className="flex items-center gap-2">
+          <span className="size-3 animate-spin rounded-full border-2 border-brass-light border-t-walnut" aria-hidden />
+          {app.syncJob.items_total ? t("app.updatingCount", { done: app.syncJob.items_done, total: app.syncJob.items_total }) : t("app.updating")}
+        </Banner>
       )}
       {app.notice && <NoticeBar notice={app.notice} byId={byId} slotName={slotName} onDismiss={app.dismissNotice} />}
 
       {!config ? (
         <div className="flex flex-col gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-ink">Build your shelf</h1>
-            <p className="text-sm text-ink-muted">
-              {data.records.length.toLocaleString("en-US")} records imported. Pick your furniture and your sort order; the app computes where every record goes.
-            </p>
+            <h1 className="font-display text-2xl text-ink">{t("app.buildTitle")}</h1>
+            <p className="text-sm text-muted">{t("app.buildText", { count: data.records.length })}</p>
           </div>
-          <SetupView app={app} initial={suggestedConfig(data.records)} records={data.records} onDone={() => setTab("map")} />
+          <SetupView app={app} initial={suggestedConfig(data.records, { lp: (n) => (n === null ? t("builder.suggestedLp") : t("builder.suggestedLpN", { n })), single: t("builder.suggestedSingles"), cd: t("builder.suggestedCds") })} records={data.records} onDone={() => setTab("map")} />
           <CollectionPanel app={app} />
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-1 rounded-control border border-line bg-surface p-1 text-sm" role="group" aria-label="Views">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1 rounded-pill border border-input-line bg-paper p-1 text-sm" role="group" aria-label={t("app.views")}>
             {(
               [
-                ["map", "Map"],
-                ["setup", "Shelves & order"],
+                ["map", t("app.tabMap")],
+                ["setup", t("app.tabSetup")],
               ] as const
             ).map(([id, label]) => (
               <button
                 key={id}
                 type="button"
+                data-tour={id === "setup" ? "setup" : undefined}
                 aria-pressed={tab === id}
                 onClick={() => setTab(id)}
-                className={`flex-1 rounded px-3 py-2 font-medium ${tab === id ? "bg-ink text-surface" : "text-ink-muted hover:text-ink"}`}
+                className={`rounded-pill px-4 py-1.5 font-semibold ${tab === id ? "bg-ink text-paper" : "text-muted hover:text-ink"}`}
               >
                 {label}
               </button>
             ))}
           </div>
+          </div>
 
           {tab === "setup" ? (
             <>
               <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} />
+              <h2 className="mt-4 border-t border-input-line/60 pt-6 font-display text-2xl text-ink">{t("app.toolsTitle")}</h2>
+              <p className="-mt-2 text-sm text-muted">{t("app.toolsText")}</p>
+              <SimulatorCard records={data.records} config={config} />
+              <ShareCard signedIn={app.mode === "remote"} />
               <CollectionPanel app={app} />
             </>
           ) : (
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <div className="flex-1">
-                  <SearchPanel
-                    records={data.records}
-                    views={views}
-                    config={config}
-                    onPick={(id) => {
-                      setOpenRecord(id);
-                      setHighlight(findLocation(views, id)?.slot.id ?? null);
-                    }}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAdding(true)}
-                  className="rounded-control border border-line-strong bg-surface px-4 py-3 text-sm font-semibold text-ink shadow-card hover:bg-sunken"
-                >
-                  Where does this record go?
-                </button>
-              </div>
+              <SearchRow
+                records={data.records}
+                views={views}
+                config={config}
+                locations={data.locations ?? []}
+                onPick={(id) => {
+                  setOpenRecord(id);
+                  showFound(id);
+                }}
+                onAdd={() => setAdding(true)}
+              />
 
-              <p className="text-sm text-ink-muted">
-                {data.records.length.toLocaleString("en-US")} records · sorted by{" "}
-                {config.settings.sortLevels.map((l) => l[0]!.toUpperCase() + l.slice(1)).join(" → ")}
-                {config.settings.ignoreArticles ? ", ignoring articles" : ""} · {config.settings.slackPct}% slack
-              </p>
+              <p className="text-sm text-muted">{collectionSummary(t, data.records.length, config.settings)}</p>
+              {singlesWithoutShelf > 0 && (
+                <Banner className="flex flex-wrap items-center justify-between gap-2">
+                  <span>{t("app.singlesOff", { count: singlesWithoutShelf })}</span>
+                  <button type="button" onClick={() => setTab("setup")} className={btnPrimarySm}>
+                    {t("app.addSinglesShelf")}
+                  </button>
+                </Banner>
+              )}
               {(leftover > 0 || others > 0 || cdsWithoutShelf > 0) && (
                 <ul className="flex flex-col gap-1 text-sm">
                   {leftover > 0 && (
-                    <li className="rounded-card bg-warning-soft px-3 py-2 text-warning">
-                      {leftover} record{leftover === 1 ? " isn't" : "s aren't"} on the shelf because {leftover === 1 ? "it doesn't" : "they don't"} fit. Add a shelf or raise the capacity in “Shelves &amp; order”.
+                    <li>
+                      <Banner tone="warning">{t("app.leftover", { count: leftover })}</Banner>
                     </li>
                   )}
-                  {cdsWithoutShelf > 0 && <li className="text-ink-muted">{cdsWithoutShelf} CDs have no CD shelf yet.</li>}
-                  {others > 0 && <li className="text-ink-muted">{others} cassette{others === 1 ? "" : "s"} or other formats stay off the shelves.</li>}
+                  {cdsWithoutShelf > 0 && <li className="text-muted">{t("app.cdsWithoutShelf", { count: cdsWithoutShelf })}</li>}
+                  {others > 0 && <li className="text-muted">{t("app.others", { count: others })}</li>}
                 </ul>
               )}
 
-              <MapView
-                config={config}
-                views={views}
-                highlight={highlight}
-                onOpen={(slot) => {
-                  setOpenSlot(slot);
-                  setHighlight(slot.id);
+              {hasMap && !data.calibrated && !hintDismissed && (
+                <CalibrationHint
+                  capacity={commonCapacity(config)}
+                  onCalibrate={() => {
+                    const first = views.find((v) => v.index.sorted.length > 0)?.index.slots[1] ?? views.find((v) => v.index.sorted.length > 0)?.index.slots[0];
+                    if (!first) return;
+                    setCalibrateOnOpen(true);
+                    setOpenSlot(first);
+                  }}
+                  onDismiss={dismissHint}
+                />
+              )}
+              <OutOfShelfPanel
+                records={data.records}
+                locations={data.locations ?? []}
+                busy={app.busy}
+                onPutBack={(id) => void app.putBack(id).then((ok) => ok && showFound(id))}
+                onShow={(id) => {
+                  setOpenRecord(id);
+                  showFound(id);
                 }}
               />
+              <div className={wide ? "grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-start gap-[22px]" : ""}>
+                <MapView
+                  config={config}
+                  views={views}
+                  byId={byId}
+                  foundId={found}
+                  foundSlot={found ? (findLocation(views, found)?.slot.id ?? null) : null}
+                  lifted={lifted}
+                  onOpen={(slot) => setOpenSlot(slot)}
+                  flashSlot={flashSlot}
+                  railFor={(view) => (
+                    <BrassRail
+                      view={view}
+                      settings={sortSettings}
+                      foundId={found && view.index.positionOf.has(found) ? found : null}
+                      onJump={jumpTo}
+                    />
+                  )}
+                />
+                {wide && (
+                  <aside className="sticky top-4 max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-card" aria-live="polite" data-tour="record">
+                    {recordInSheet ? (
+                      <RecordCard
+                        key={recordInSheet.id}
+                        record={recordInSheet}
+                        location={sheetLocation}
+                        views={views}
+                        config={config}
+                        byId={byId}
+                        onPickRecord={(id) => {
+                          setOpenRecord(id);
+                          showFound(id);
+                        }}
+                        onShowOnMap={() => showFound(recordInSheet.id)}
+                        locations={data.locations ?? []}
+                        busy={app.busy}
+                        onTakeOut={(name) => void app.takeOut(recordInSheet.id, name)}
+                        onPutBack={() => void app.putBack(recordInSheet.id).then((ok) => ok && showFound(recordInSheet.id))}
+                      />
+                    ) : (
+                      <RecordCardEmpty />
+                    )}
+                  </aside>
+                )}
+              </div>
             </div>
           )}
         </>
@@ -201,7 +398,11 @@ export function ShelfApp() {
           byId={byId}
           app={app}
           highlightId={lastRecord}
-          onClose={() => setOpenSlot(null)}
+          startCalibrating={calibrateOnOpen}
+          onClose={() => {
+            setOpenSlot(null);
+            setCalibrateOnOpen(false);
+          }}
           onPickRecord={(id) => {
             setOpenSlot(null);
             setOpenRecord(id);
@@ -209,26 +410,37 @@ export function ShelfApp() {
         />
       )}
 
-      {recordInSheet && config && (
-        <Sheet
-          title={
-            <>
-              {displayArtist(recordInSheet.artist)} <span className="font-normal text-ink-muted">· {recordInSheet.title}</span>
-            </>
-          }
-          onClose={() => setOpenRecord(null)}
-        >
-          <RecordDetails
+      {recordInSheet && config && !wide && (
+        <Sheet bare title={recordInSheet.title} labelledBy="record-sheet-title" onClose={() => setOpenRecord(null)}>
+          <RecordCard
+            key={recordInSheet.id}
+            headingId="record-sheet-title"
             record={recordInSheet}
             location={sheetLocation}
+            views={views}
             config={config}
             byId={byId}
+            onClose={() => setOpenRecord(null)}
+            onPickRecord={(id) => {
+              setOpenRecord(id);
+              showFound(id);
+            }}
             onShowOnMap={() => {
               setOpenRecord(null);
               setTab("map");
-              setHighlight(sheetLocation?.slot.id ?? null);
-              requestAnimationFrame(() => document.querySelector("[class*='ring-accent']")?.scrollIntoView({ block: "center", behavior: "smooth" }));
+              showFound(recordInSheet.id);
             }}
+            locations={data.locations ?? []}
+            busy={app.busy}
+            onTakeOut={(name) => void app.takeOut(recordInSheet.id, name)}
+            onPutBack={() =>
+              void app.putBack(recordInSheet.id).then((ok) => {
+                if (!ok) return;
+                setOpenRecord(null);
+                setTab("map");
+                showFound(recordInSheet.id);
+              })
+            }
           />
         </Sheet>
       )}
@@ -241,7 +453,8 @@ export function ShelfApp() {
           onClose={() => setAdding(false)}
           onShowRecord={(id, slotId) => {
             setAdding(false);
-            setHighlight(slotId);
+            void slotId;
+            showFound(id);
             setOpenRecord(id);
           }}
         />
@@ -261,20 +474,19 @@ function NoticeBar({
   slotName: (id: string | null) => string;
   onDismiss: () => void;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const tone =
-    notice.tone === "success" ? "bg-success-soft text-success" : notice.tone === "warning" ? "bg-warning-soft text-warning" : "bg-sunken text-ink";
   return (
-    <div className={`rounded-card px-3 py-2 text-sm ${tone}`} role="status" aria-live="polite">
+    <Banner tone={notice.tone === "warning" ? "warning" : "info"}>
       <div className="flex items-start justify-between gap-2">
-        <p>{notice.text}</p>
-        <div className="flex shrink-0 gap-2">
+        <p>{renderMsg(t, notice.msg)}</p>
+        <div className="flex shrink-0 gap-1">
           {notice.moves && notice.moves.length > 0 && (
-            <button type="button" onClick={() => setOpen((o) => !o)} className="font-medium underline">
-              {open ? "Hide moves" : "See moves"}
+            <button type="button" onClick={() => setOpen((o) => !o)} className={btnText}>
+              {open ? t("app.hideMoves") : t("app.seeMoves")}
             </button>
           )}
-          <button type="button" onClick={onDismiss} aria-label="Dismiss" className="font-medium">
+          <button type="button" onClick={onDismiss} aria-label={t("common.dismiss")} className={btnText}>
             ✕
           </button>
         </div>
@@ -285,12 +497,23 @@ function NoticeBar({
             const r = byId.get(m.recordId);
             return (
               <li key={m.recordId}>
-                {r ? `${displayArtist(r.artist)} – ${r.title}` : "Record"}: {m.from === null ? "new" : slotName(m.from)} → {slotName(m.to)}
+                {t("app.moveLine", {
+                  record: r ? `${displayArtist(r.artist)}, ${r.title}` : t("app.recordFallback"),
+                  from: m.from === null ? t("app.moveNew") : slotName(m.from),
+                  to: slotName(m.to),
+                })}
               </li>
             );
           })}
         </ol>
       )}
-    </div>
+    </Banner>
   );
+}
+
+/** The records per compartment most shelves use (for the calibration hint). */
+function commonCapacity(config: ShelfConfig): number {
+  const counts = new Map<number, number>();
+  for (const f of config.furniture) counts.set(f.defaultCapacity, (counts.get(f.defaultCapacity) ?? 0) + f.rows * f.cols);
+  return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 80;
 }

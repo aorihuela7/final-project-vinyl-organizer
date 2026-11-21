@@ -1,70 +1,118 @@
 /*
- * Design tokens: the single source for colors, type, radii, and shadows.
+ * Design tokens: the single source for colors, type, radii, shadows, and gradients.
+ * Nogal mid-century: a sage wall, walnut furniture, brass plates, and mustard
+ * for what you found (docs/v2-design-plan.md, Part 1).
  * Tailwind v4 turns every token in @theme into utilities
- * (bg-canvas, text-ink, rounded-cover, shadow-cover, bg-spine-3, …).
+ * (bg-wall, text-ink, font-display, rounded-pill, shadow-card, …).
  */
 @theme static {
-  /* Neutral, warm-gray interface. The covers bring the color. */
-  --color-canvas: #f6f4f1;
-  --color-surface: #ffffff;
-  --color-sunken: #efebe6;
-  --color-line: #e2ddd6;
-  --color-line-strong: #cbc4ba;
-  --color-ink: #1c1a17;
-  --color-ink-muted: #5f5850;
-  --color-ink-faint: #625a51;
+  /* Nogal palette */
+  --color-wall: #d3dbcd;
+  --color-walnut: #7a4a2b;
+  --color-walnut-dark: #4f2d19;
+  --color-walnut-inside-top: #8a6143;
+  --color-walnut-inside-bottom: #9b7253;
+  --color-walnut-blocked: #6b4329;
+  --color-brass-light: #e2c47a;
+  --color-brass: #c9a557;
+  /* Lighter than the mockup's #9C7C35 so engraved text keeps AA (4.5:1) on the darkest stop. */
+  --color-brass-dark: #a8873c;
+  /* Darker than the mockup's #3E2C0F for the same reason: 4.6:1 on brass-dark, 9.2:1 on brass-light. */
+  --color-engraving: #2e2209;
+  --color-ink: #22302a;
+  --color-muted: #52605a;
+  --color-paper: #fbfaf6;
+  --color-on-walnut: #f1e4d2;
+  --color-mustard: #e8a825;
+  --color-mustard-soft: #fbefd3;
+  --color-input-line: #a9b3a2;
+  --color-meter-track: #e6e1d6;
+  --color-rule: #ece9e1;
 
-  /* The single accent color (burnt orange, like a record label). */
-  --color-accent: #c2410c;
-  --color-accent-hover: #9a3412;
-  --color-accent-soft: #fbe7dc;
-  --color-on-accent: #ffffff;
+  /* Semantic names used across the app, mapped onto the palette. */
+  --color-canvas: var(--color-wall);
+  --color-surface: var(--color-paper);
+  --color-sunken: #ecebe4;
+  --color-line: #d9dcd2;
+  --color-line-strong: var(--color-input-line);
+  --color-ink-muted: var(--color-muted);
+  --color-ink-faint: var(--color-muted);
+  /* Primary actions are ink pills; mustard marks what you found and what's selected. */
+  --color-accent: var(--color-ink);
+  --color-accent-hover: #33453c;
+  --color-accent-soft: var(--color-mustard-soft);
+  --color-on-accent: var(--color-paper);
 
   /* States */
-  --color-blocked: #e6e1da;
-  --color-danger: #b42318;
-  --color-danger-soft: #fdecea;
-  --color-success: #2f6f3e;
-  --color-success-soft: #e5f2e8;
-  --color-warning: #8a5a00;
-  --color-warning-soft: #fbf0d9;
+  --color-blocked: var(--color-walnut-blocked);
+  --color-danger: #a12a1b;
+  --color-danger-soft: #fbe9e5;
+  --color-success: #2f6b3a;
+  --color-success-soft: #e4efe2;
+  --color-warning: #8a4b00;
+  --color-warning-soft: var(--color-mustard-soft);
 
-  /* Spine palette: spines are colored by the first sort level. Light tones so ink text stays readable. */
-  --color-spine-0: #f2d7c9;
-  --color-spine-1: #d9e4d3;
-  --color-spine-2: #d6e0ee;
-  --color-spine-3: #eee1b8;
-  --color-spine-4: #e5d4e8;
-  --color-spine-5: #cfe6e3;
-  --color-spine-6: #f0cfd2;
-  --color-spine-7: #dde3c2;
-  --color-spine-8: #e2d9cc;
-  --color-spine-9: #cddce6;
-  --color-spine-10: #f3ddb6;
-  --color-spine-11: #d8d3ea;
-  /* Vertical spines mix their palette color with this ink, a different amount per record, so neighbors look different. */
-  --color-spine-ink: #2b2622;
+  /* Record palette: mid-century sleeve colors that stand out on walnut. Mustard is never in it. */
+  --color-spine-0: #2f6f6b;
+  --color-spine-1: #c4552d;
+  --color-spine-2: #e8dcc2;
+  --color-spine-3: #6b7a3a;
+  --color-spine-4: #3d3a35;
+  --color-spine-5: #9c3d2e;
+  --color-spine-6: #5e8c8a;
+  --color-spine-7: #d8cbb0;
+  --color-spine-8: #1f4e5a;
 
-  /* Type */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Type: Belleza for display, Nunito Sans for text (both self-hosted by next/font). */
+  --font-display: var(--font-belleza), "Optima", "Candara", "Segoe UI", sans-serif;
+  --font-sans: var(--font-nunito), "Avenir Next", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Radii */
-  --radius-control: 0.5rem;
-  --radius-card: 0.75rem;
-  --radius-cover: 0.375rem;
-  --radius-cell: 0.375rem;
+  /* Type scale: 11, 12, 14, 16, 20, 24, 26 */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1.3;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.3;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.15;
+  --text-brand: 1.625rem;
+  --text-brand--line-height: 1.1;
 
-  /* Shadows: every cover uses the same frame. */
-  --shadow-cover: 0 1px 2px rgb(28 26 23 / 0.14), 0 6px 16px rgb(28 26 23 / 0.1);
-  --shadow-card: 0 1px 2px rgb(28 26 23 / 0.06), 0 2px 8px rgb(28 26 23 / 0.05);
-  --shadow-sheet: 0 -8px 32px rgb(28 26 23 / 0.16);
-  /* A vertical spine: a light left edge and a dark right edge, like a sleeve seen from the side. */
-  --shadow-spine: inset 1px 0 0 rgb(255 255 255 / 0.28), inset -1px 0 0 rgb(28 26 23 / 0.22);
-  --shadow-tooltip: 0 2px 6px rgb(28 26 23 / 0.18), 0 8px 24px rgb(28 26 23 / 0.14);
+  /* Radii */
+  --radius-pill: 999px;
+  --radius-control: 999px;
+  --radius-card: 4px;
+  --radius-plate: 3px;
+  --radius-cover: 2px;
+  --radius-cell: 2px;
+
+  /* Shadows */
+  --shadow-card: 0 10px 24px -16px rgb(0 0 0 / 0.5);
+  --shadow-cover: 0 8px 16px -8px rgb(0 0 0 / 0.55);
+  --shadow-plate: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-sheet: 0 -8px 32px rgb(34 48 42 / 0.25);
+  --shadow-tooltip: 0 2px 6px rgb(34 48 42 / 0.2), 0 8px 24px rgb(34 48 42 / 0.16);
+  --shadow-rail: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 2px 4px rgb(0 0 0 / 0.2);
+  --shadow-interior: inset 0 10px 16px -8px rgb(0 0 0 / 0.55), inset 6px 0 10px -8px rgb(0 0 0 / 0.45);
 }
 
-/* Number of spine palette entries, mirrored in src/lib/design.ts. */
+/* Gradients (not Tailwind colors): used through the surface-* utilities in globals.css. */
 :root {
-  --spine-count: 12;
+  --gradient-walnut: linear-gradient(var(--color-walnut), var(--color-walnut-dark));
+  --gradient-leg: linear-gradient(90deg, var(--color-walnut-dark), var(--color-walnut));
+  --gradient-interior: linear-gradient(var(--color-walnut-inside-top), var(--color-walnut-inside-bottom) 75%);
+  --gradient-brass: linear-gradient(var(--color-brass-light), var(--color-brass) 50%, var(--color-brass-dark));
+  --gradient-rail: linear-gradient(var(--color-brass-light), var(--color-brass) 45%, var(--color-brass-dark));
+  --gradient-meter: linear-gradient(var(--color-brass-light), var(--color-brass-dark));
+  /* Engraved lines between rail segments. */
+  --color-rail-line: rgb(74 54 19 / 0.35);
+  /* Count badge on a compartment. */
+  --color-badge: rgb(34 48 42 / 0.8);
+  /* Thin outline around each record in a drawing. */
+  --color-record-stroke: rgb(0 0 0 / 0.3);
+  --spine-count: 9;
 }

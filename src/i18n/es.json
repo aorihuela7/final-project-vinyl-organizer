@@ -1,0 +1,623 @@
+{
+  "meta": {
+    "pitch": "Arma tu repisa real de discos, compartimiento por compartimiento, y sabe siempre dónde está cada disco y dónde va el próximo.",
+    "myShelf": "Mi repisa"
+  },
+  "common": {
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "back": "Volver",
+    "done": "Listo",
+    "dismiss": "Descartar",
+    "tryAgain": "Intentar de nuevo",
+    "import": "Importar",
+    "saving": "Guardando…",
+    "loading": "Cargando…",
+    "records": {
+      "one": "{count} disco",
+      "other": "{count} discos"
+    },
+    "language": "Idioma"
+  },
+  "header": {
+    "myShelf": "Mi repisa",
+    "signIn": "Iniciar sesión",
+    "signUp": "Crear cuenta",
+    "account": "Cuenta",
+    "help": "Ayuda",
+    "helpLabel": "Ayuda: un recorrido rápido por la app"
+  },
+  "importForm": {
+    "label": "Tu usuario de Discogs",
+    "placeholder": "Por ejemplo, coleccionistadevinilos",
+    "help": "Tu colección tiene que ser pública en Discogs. Vas a crear una cuenta gratis para guardarla.",
+    "checkUsername": "Revisa el usuario."
+  },
+  "validation": {
+    "usernameEmpty": "Escribe tu usuario de Discogs.",
+    "usernameLong": "Es demasiado largo para un usuario de Discogs.",
+    "usernameChars": "Los usuarios de Discogs solo usan letras, números, puntos, guiones y guiones bajos."
+  },
+  "onboarding": {
+    "title": "Armemos el mapa de tu repisa",
+    "demoTitle": "Prueba la colección de demostración",
+    "demoText": "1.000 discos reales en repisas ya armadas.",
+    "demoNoAccount": "No necesitas cuenta.",
+    "demoButton": "Cargar la demostración",
+    "importTitle": "Importa tu colección de Discogs",
+    "importLabel": "Tu usuario de Discogs (la colección tiene que ser pública)",
+    "importAccount": "Primero vas a crear una cuenta gratis, así tu repisa queda guardada."
+  },
+  "importing": {
+    "demoTitle": "Cargando la colección de demostración",
+    "importing": "Importando tu colección…",
+    "starting": "Empezando la importación…",
+    "loadingDemo": "Cargando la colección de demostración…",
+    "progress": "{done} de {total} discos",
+    "progressPages": "{done} de {total} discos, página {page} de {pages}",
+    "talking": "Conectando con Discogs…",
+    "closeTab": "Puedes cerrar esta pestaña: la importación sigue desde aquí cuando vuelvas."
+  },
+  "app": {
+    "loadingShelf": "Cargando tu repisa…",
+    "loadingDemo": "Cargando la colección de demostración desde Discogs…",
+    "errorTitle": "Algo salió mal",
+    "nothingYet": "Todavía no hay nada que mostrar.",
+    "startOver": "Empezar de nuevo",
+    "demoBanner": "Esta demostración vive solo en este navegador. Crea una cuenta para guardarla e importar tu propia colección.",
+    "signUpToSave": "Crear cuenta para guardar",
+    "updating": "Actualizando desde Discogs…",
+    "updatingCount": "Actualizando desde Discogs: {done} de {total}",
+    "buildTitle": "Arma tu repisa",
+    "buildText": "{count} discos importados. Elige tus muebles y tu orden, y la app calcula dónde va cada disco.",
+    "views": "Vistas",
+    "tabMap": "Mapa",
+    "tabSetup": "Repisas y orden",
+    "summary": {
+      "one": "{count} disco, ordenado por {levels}, con {slack}% de espacio libre",
+      "other": "{count} discos, ordenados por {levels}, con {slack}% de espacio libre"
+    },
+    "summaryArticles": "{summary}, sin contar los artículos iniciales",
+    "levelJoin": "{first}, luego {rest}",
+    "leftover": {
+      "one": "{count} disco no está en la repisa porque no cabe. Agrega una repisa o sube la capacidad en Repisas y orden.",
+      "other": "{count} discos no están en la repisa porque no caben. Agrega una repisa o sube la capacidad en Repisas y orden."
+    },
+    "cdsWithoutShelf": {
+      "one": "{count} CD todavía no tiene repisa de CD.",
+      "other": "{count} CD todavía no tienen repisa de CD."
+    },
+    "others": {
+      "one": "{count} casete u otro formato queda fuera de las repisas.",
+      "other": "{count} casetes u otros formatos quedan fuera de las repisas."
+    },
+    "seeMoves": "Ver los movimientos",
+    "hideMoves": "Ocultar los movimientos",
+    "moveLine": "{record}: de {from} a {to}",
+    "moveNew": "nuevo",
+    "offTheShelf": "fuera de la repisa",
+    "anotherCompartment": "otro compartimiento",
+    "recordFallback": "Disco",
+    "levelThen": ", luego ",
+    "crashText": "Tu repisa está a salvo. Intenta de nuevo, y si sigue pasando, recarga la página.",
+    "singlesOff": {
+      "one": "Los singles (7″) ahora van en sus propias repisas. {count} single queda fuera del mapa hasta que agregues una repisa de singles.",
+      "other": "Los singles (7″) ahora van en sus propias repisas. {count} singles quedan fuera del mapa hasta que agregues una repisa de singles."
+    },
+    "addSinglesShelf": "Agregar una repisa de singles",
+    "toolsTitle": "Más para tu colección",
+    "toolsText": "Esto se guarda solo; no necesita “Generar el mapa”."
+  },
+  "levels": {
+    "genre": "género",
+    "artist": "artista",
+    "year": "año",
+    "label": "sello",
+    "title": "título"
+  },
+  "landing": {
+    "title": "Sabe dónde está cada disco, y dónde va el próximo.",
+    "tryDemo": "Probar la colección de demostración",
+    "signUp": "Crear cuenta",
+    "noAccount": "No necesitas cuenta para la demostración. Crea una solo cuando quieras guardar.",
+    "importTitle": "Importa tu colección de Discogs",
+    "heroLabel": "Una repisa de ejemplo",
+    "heroCaption": "Cada compartimiento muestra sus letras y qué tan lleno está. Busca un disco y la app te muestra el compartimiento, qué tan adentro está y los discos de cada lado.",
+    "heroRail": "Una colección de ejemplo de # a Z",
+    "heroShelf": "Kallax, LP (12″ y 10″)",
+    "turntable": "Tocadiscos"
+  },
+  "notFound": {
+    "title": "Esta página no existe",
+    "text": "El enlace puede ser viejo, o la dirección tiene un error.",
+    "home": "Ir al inicio"
+  },
+  "notices": {
+    "replaced": "La colección de Discogs de “{username}” reemplazó a la anterior. Arma tu repisa para ella.",
+    "localSaveFailed": "Este navegador no pudo guardar la demostración. Se va a reiniciar cuando salgas.",
+    "demoReady": "Demostración lista: {lps} LP y {cds} CD en repisas ya armadas, ordenados por artista, luego título.",
+    "demoFailed": "No se pudo cargar la colección de demostración. Intenta de nuevo en un minuto.",
+    "demoSaved": "Tu repisa de demostración quedó guardada en tu cuenta.",
+    "relaidOut": "La mayoría de los discos eran nuevos, así que se volvió a ordenar toda la repisa con tu configuración.",
+    "placeFailed": "No se pudieron ubicar los discos nuevos ({message}). Genera el mapa de nuevo para incluirlos.",
+    "newPlaced": {
+      "one": "{count} disco nuevo ya está en tu repisa, con {moves}.",
+      "other": "{count} discos nuevos ya están en tu repisa, con {moves}."
+    },
+    "moves": {
+      "one": "{count} movimiento",
+      "other": "{count} movimientos"
+    },
+    "newSkipped": {
+      "one": "{count} disco nuevo no cabe donde le toca. Agrega una repisa o genera el mapa de nuevo.",
+      "other": "{count} discos nuevos no caben donde les toca. Agrega una repisa o genera el mapa de nuevo."
+    },
+    "replaceFailed": "No se pudo importar “{username}”: {message} Tu colección actual no cambió.",
+    "syncFailed": "No se pudo actualizar desde Discogs: {message}",
+    "importFailed": "La importación falló. Revisa el usuario y que la colección sea pública.",
+    "loadFailed": "No se pudo cargar tu repisa.",
+    "mapLeftover": {
+      "one": "Mapa generado. {count} disco no cabe: agrega una repisa o sube la capacidad.",
+      "other": "Mapa generado. {count} discos no caben: agrega una repisa o sube la capacidad."
+    },
+    "mapUpdated": {
+      "one": "Mapa actualizado: {count} disco cambió de compartimiento.",
+      "other": "Mapa actualizado: {count} discos cambiaron de compartimiento."
+    },
+    "mapGenerated": {
+      "one": "Mapa generado: {count} disco ubicado.",
+      "other": "Mapa generado: {count} discos ubicados."
+    },
+    "mapSaveFailed": "No se pudo guardar el mapa.",
+    "addedOneMove": "Disco agregado. Solo ponlo en su lugar: 1 movimiento.",
+    "addedMoves": {
+      "one": "Disco agregado: {count} movimiento.",
+      "other": "Disco agregado: {count} movimientos."
+    },
+    "addFailed": "No se pudo agregar el disco.",
+    "demoReadySingles": "Demostración lista: {lps} LP, {singles} singles y {cds} CD en repisas ya armadas, ordenados por artista, luego título.",
+    "singlesBoxAdded": {
+      "one": "Los singles (7″) ahora van en sus propias repisas. Agregamos una caja de singles para tu {count} single, y ningún LP se movió.",
+      "other": "Los singles (7″) ahora van en sus propias repisas. Agregamos una caja de singles para tus {count} singles, y ningún LP se movió."
+    }
+  },
+  "demo": {
+    "living": "Sala",
+    "studio": "Estudio",
+    "singles": "Caja de singles"
+  },
+  "templates": {
+    "kallax_4x4": "Kallax 4×4",
+    "kallax_5x5": "Kallax 5×5",
+    "low_2x4": "Mueble bajo 2×4",
+    "tower_1x5": "Torre 1×5",
+    "crates": "Cajones en fila",
+    "record_box": "Caja de discos",
+    "custom": "A medida"
+  },
+  "media": {
+    "lp": "LP (12″ y 10″)",
+    "single": "Singles (7″)",
+    "cd": "CD"
+  },
+  "mediaShort": {
+    "lp": "LP",
+    "single": "singles",
+    "cd": "CD"
+  },
+  "genres": {
+    "Blues": "Blues",
+    "Brass & Military": "Bandas y música militar",
+    "Children's": "Infantil",
+    "Classical": "Clásica",
+    "Electronic": "Electrónica",
+    "Folk, World, & Country": "Folk, world y country",
+    "Funk / Soul": "Funk y soul",
+    "Hip Hop": "Hip hop",
+    "Jazz": "Jazz",
+    "Latin": "Latina",
+    "Non-Music": "No musical",
+    "Pop": "Pop",
+    "Reggae": "Reggae",
+    "Rock": "Rock",
+    "Stage & Screen": "Cine y teatro",
+    "No genre": "Sin género"
+  },
+  "map": {
+    "holdsOf": "{count} de {capacity}",
+    "places": "{count} lugares",
+    "blocked": "Bloqueado",
+    "empty": "Vacío",
+    "badge": "{count} de {capacity}",
+    "openCompartment": "{range}, {count} de {capacity} discos. Abrir el compartimiento",
+    "openEmpty": "{place}, vacío. Abrir el compartimiento",
+    "overCapacity": "por encima de su capacidad",
+    "genresCount": {
+      "one": "{count} género",
+      "other": "{count} géneros"
+    },
+    "noYear": "Sin año",
+    "shelfTitle": "{name}, {media}",
+    "groupTitle": "{media}",
+    "legend": "Cada compartimiento muestra sus letras; el rango completo está en la vista del compartimiento.",
+    "shelfTitleSection": "{name}, {media}, sección {section}"
+  },
+  "place": {
+    "rowCol": "fila {row}, columna {col}",
+    "crate": "cajón {n}",
+    "box": "caja {n}",
+    "column": "columna {n}",
+    "fromTop": "estante {n} desde arriba",
+    "title": "{shelf}, {place}"
+  },
+  "search": {
+    "placeholder": "Busca un artista o un título en tu colección",
+    "results": "Resultados de la búsqueda",
+    "noMatch": "Ningún disco coincide con “{query}”.",
+    "where": "{place}, a un {pct}% desde la izquierda",
+    "notPlaced": "{format}: este formato no va en una repisa",
+    "noSinglesShelf": "Fuera del mapa hasta que agregues una repisa de singles",
+    "noCdShelf": "Fuera del mapa hasta que agregues una repisa de CD",
+    "noLpShelf": "Fuera del mapa hasta que agregues una repisa de LP",
+    "notOnShelf": "No está en la repisa: no cabe",
+    "or": "o",
+    "addNew": "+ Agregar un disco nuevo"
+  },
+  "add": {
+    "title": "Agregar un disco nuevo",
+    "step1": "Búscalo en Discogs",
+    "step2": "Mira dónde va",
+    "step3": "Agregar disco",
+    "searchLabel": "Busca en Discogs el disco que acabas de comprar.",
+    "searchPlaceholder": "Artista y título, por ejemplo Kind of Blue Miles Davis",
+    "searching": "Buscando en Discogs…",
+    "searchFailed": "La búsqueda falló.",
+    "releaseFailed": "No se pudo cargar esa edición.",
+    "noResults": "Ninguna edición coincide. Prueba con el artista y el título.",
+    "change": "Elegir otro",
+    "goesBetween": "Va en {place}, entre {left} y {right}",
+    "goesAfter": "Va en {place}, justo después de {left}",
+    "goesBefore": "Va en {place}, justo antes de {right}",
+    "goesIn": "Va en {place}",
+    "notPlaced": "Esta edición es en {format}, así que no va en una repisa.",
+    "noShelf": "Todavía no tienes una repisa para {group}. Agrega una en Repisas y orden.",
+    "full": "Tus repisas están llenas: no hay lugar para él en ningún lado.",
+    "fits": "Cabe. Solo ponlo en su lugar: 1 movimiento.",
+    "moves": {
+      "one": "Ese compartimiento está lleno: {count} movimiento.",
+      "other": "Ese compartimiento está lleno: {count} movimientos."
+    },
+    "putItIn": "ponerlo",
+    "overflow": "El último disco ya no cabe en tus repisas.",
+    "fallback": "({error} Se muestran los datos del resultado de búsqueda.)",
+    "add": "Agregar disco",
+    "adding": "Agregando…",
+    "discogsUnchanged": "Agregarlo lo guarda solo aquí; tu colección de Discogs no cambia."
+  },
+  "levelNames": {
+    "genre": "Género",
+    "artist": "Artista",
+    "year": "Año",
+    "label": "Sello",
+    "title": "Título"
+  },
+  "builder": {
+    "yourShelves": "Tus repisas",
+    "flowOrder": "Los discos las recorren en este orden.",
+    "addOne": "Agrega al menos una repisa para generar el mapa.",
+    "generate": "Generar el mapa",
+    "generateShort": "Generar",
+    "recompute": "Recalcular",
+    "recomputeTitle": "¿Recalcular todo el mapa?",
+    "generateTitle": "¿Generar el mapa?",
+    "willChange": {
+      "one": "{count} disco va a cambiar de compartimiento. Las calibraciones que hiciste se reemplazan por el nuevo orden.",
+      "other": "{count} discos van a cambiar de compartimiento. Las calibraciones que hiciste se reemplazan por el nuevo orden."
+    },
+    "willPlace": {
+      "one": "Se va a ubicar {count} disco.",
+      "other": "Se van a ubicar {count} discos."
+    },
+    "leftover": {
+      "one": "{count} disco no cabe. Va a aparecer como fuera de la repisa.",
+      "other": "{count} discos no caben. Van a aparecer como fuera de la repisa."
+    },
+    "slackReduced": "Solo cabe usando parte del espacio libre que pediste.",
+    "notPlaced": {
+      "one": "{count} casete, archivo u otro formato queda fuera de las repisas.",
+      "other": "{count} casetes, archivos u otros formatos quedan fuera de las repisas."
+    },
+    "cardLine": "{media}, {template}, {rows} × {cols}",
+    "holds": "Caben {count}",
+    "edit": "Editar",
+    "moveUp": "Subir {name}",
+    "moveDown": "Bajar {name}",
+    "remove": "Quitar {name}",
+    "newShelf": "Repisa nueva",
+    "name": "Nombre",
+    "template": "Modelo",
+    "holdsLabel": "Guarda",
+    "rows": "Filas",
+    "cdRows": "Los CD van en dos filas por cubo (con un separador al medio), así que cada fila de CD es un compartimiento con su propia placa.",
+    "cols": "Columnas",
+    "perCompartment": "Discos por compartimiento",
+    "freeSpace": "Espacio libre (todas las repisas)",
+    "readIt": "Se lee",
+    "byRows": "Por filas (de izquierda a derecha)",
+    "byColumns": "Por columnas (de arriba a abajo)",
+    "thisHolds": "En esta repisa caben {count} {media}",
+    "arithmetic": {
+      "one": "{open} compartimiento × {capacity} discos",
+      "other": "{open} compartimientos × {capacity} discos"
+    },
+    "arithmeticMixed": {
+      "one": "{open} compartimiento, {overrides} con su propia capacidad",
+      "other": "{open} compartimientos, {overrides} con su propia capacidad"
+    },
+    "withBlocked": {
+      "one": "{text}, {count} bloqueado",
+      "other": "{text}, {count} bloqueados"
+    },
+    "importing": "Importando: {done} de {total} hasta ahora",
+    "fill": "{media}: tus {count} discos llenarían el {pct}% de {places} lugares",
+    "fillWithThis": "{media}: tus {count} discos llenarían el {pct}% de {places} lugares, con esta repisa",
+    "fillNoShelf": "{media}: tus {count} discos todavía no tienen repisa",
+    "wontFit": "{count} no van a caber con {slack}% de espacio libre. Agrega compartimientos o sube la capacidad.",
+    "tapMode": "Qué hace tocar un compartimiento",
+    "tapBlock": "Tocar para bloquear",
+    "tapCapacity": "Tocar para poner capacidad",
+    "tapToBlockHint": "Toca un compartimiento para bloquearlo (un tocadiscos, parlantes).",
+    "tapCapacityHint": "Toca un compartimiento para darle su propia capacidad.",
+    "capacityOf": "Capacidad de {place}",
+    "capacityEmpty": "Déjalo vacío para usar los {count} de la repisa.",
+    "preview": "Vista previa",
+    "blocked": "bloqueado",
+    "available": "disponible",
+    "capacityN": "capacidad {count}",
+    "addShelf": "Agregar una repisa",
+    "sortOrder": "Orden",
+    "firstBy": "Primero por",
+    "thenBy": "Luego por",
+    "none": "Ninguno",
+    "ties": "Los empates siempre se resuelven por artista, luego año, luego título.",
+    "ignoreArticles": "No contar los artículos iniciales (“The Beatles” en la B en vez de la T, “Los Lobos” en la L)",
+    "suggestedLp": "Kallax",
+    "suggestedLpN": "Kallax {n}",
+    "suggestedSingles": "Singles",
+    "suggestedCds": "Repisa de CD",
+    "thickness": "Contar los discos dobles y las cajas por su cantidad de discos (un LP doble ocupa dos lugares)",
+    "section": "Sección",
+    "sectionNone": "Todo lo demás",
+    "sectionGenre": "Género: {name}",
+    "sectionHint": "Los discos de una sección van solo en las repisas con esa sección, ordenados dentro de ella."
+  },
+  "record": {
+    "offMap": "Fuera del mapa",
+    "otherFormat": "Una edición en {format}: este formato no va en una repisa",
+    "doesntFit": "No cabe en tus repisas. Agrega una repisa o sube la capacidad.",
+    "position": "Disco {index} de {total}, a un {pct}% desde la izquierda",
+    "yearUnknown": "año desconocido",
+    "formatUnknown": "Formato desconocido",
+    "drawingLabel": "El compartimiento, con este disco resaltado: disco {index} de {total}",
+    "showOnMap": "Mostrar en el mapa",
+    "twoLeft": "Dos a la izquierda",
+    "justLeft": "Justo a la izquierda",
+    "thisOne": "Este",
+    "justRight": "Justo a la derecha",
+    "twoRight": "Dos a la derecha",
+    "inPlace": "en {place}",
+    "neighbors": "Los discos de cada lado",
+    "tracklist": "Lista de canciones",
+    "tracklistFailed": "No se pudo cargar la lista de canciones.",
+    "noTracklist": "Discogs no tiene lista de canciones para esta edición.",
+    "side": "Lado {side}",
+    "disc": "Disco {n}",
+    "emptyTitle": "Encuentra un disco",
+    "emptyText": "Busca un artista o un título para ver dónde está un disco, los discos de cada lado y su lista de canciones. Haz clic en un compartimiento para ver qué hay adentro."
+  },
+  "rail": {
+    "label": "Tus {media} de {first} a {last}",
+    "decade": "Años {decade}",
+    "segment": {
+      "one": "{label}: {count} disco",
+      "other": "{label}: {count} discos"
+    },
+    "segmentGo": {
+      "one": "{label}: {count} disco. Ir a donde empieza",
+      "other": "{label}: {count} discos. Ir a donde empiezan"
+    }
+  },
+  "compartment": {
+    "count": {
+      "one": "{count} de {capacity} discos",
+      "other": "{count} de {capacity} discos"
+    },
+    "over": "Marcaste este compartimiento como más lleno que su capacidad. Está bien: el mapa sigue a tu repisa real.",
+    "calibrate": "El primer disco de aquí es otro…",
+    "drawingHint": "Pasa el puntero por un disco para verlo; haz clic para ver los detalles y la portada.",
+    "list": "Discos de este compartimiento, de izquierda a derecha",
+    "empty": "Este compartimiento está vacío.",
+    "added": "agregado por ti",
+    "position": "{index} de {total}",
+    "calibrateLabel": "¿Cuál es realmente el primer disco de este compartimiento?",
+    "calibratePlaceholder": "Busca en este compartimiento y en el anterior",
+    "calibrateNoMatch": "No hay coincidencias en este compartimiento ni en el anterior.",
+    "calibrateHint": "Solo se mueve el límite con el compartimiento anterior. Todo lo demás queda donde está.",
+    "calibrateFailed": "No se pudo guardar la calibración.",
+    "refusal": {
+      "unavailable": "Ese compartimiento no está disponible.",
+      "notOnShelf": "Ese disco no está en esta repisa.",
+      "firstCompartment": "Este es el primer compartimiento, así que los discos anteriores no tienen adónde ir.",
+      "notAdjacent": "Elige un disco de este compartimiento o del inmediatamente anterior: la calibración solo mueve el límite entre ellos.",
+      "lastCompartment": "Este es el último compartimiento, así que los discos siguientes no tienen adónde ir.",
+      "notEnough": "El compartimiento siguiente no tiene tantos discos para dar.",
+      "badCount": "Escribe un número entero."
+    },
+    "countButton": "Contar los discos de aquí",
+    "countLabel": "¿Cuántos discos hay ahora en este compartimiento?",
+    "countSave": "Guardar el conteo",
+    "countHint": "Solo se mueve el límite con el compartimiento siguiente: los discos de más pasan a él, o los que faltan vienen de él.",
+    "places": "{count} de {capacity} lugares"
+  },
+  "collection": {
+    "title": "Colección",
+    "demoLocal": {
+      "one": "La colección de demostración: {count} disco, guardado en este navegador.",
+      "other": "La colección de demostración: {count} discos, guardados en este navegador."
+    },
+    "demo": {
+      "one": "La colección de demostración: {count} disco.",
+      "other": "La colección de demostración: {count} discos."
+    },
+    "discogs": {
+      "one": "La colección de Discogs de “{username}”: {count} disco.",
+      "other": "La colección de Discogs de “{username}”: {count} discos."
+    },
+    "already": "Esa ya es tu colección. Se actualiza sola desde Discogs.",
+    "importOwn": "Importa tu propia colección de Discogs en su lugar",
+    "importOther": "Importa otra colección de Discogs",
+    "placeholder": "Usuario de Discogs",
+    "waitSync": "Espera a que termine la actualización desde Discogs.",
+    "confirmTitle": "¿Reemplazar tu colección por la de “{username}”?",
+    "confirmText": {
+      "one": "Se reemplazan tu {count} disco y tus repisas, incluidos los discos que agregaste a mano. Vas a armar tus repisas de nuevo para la colección nueva. Nada cambia en Discogs.",
+      "other": "Se reemplazan tus {count} discos y tus repisas, incluidos los discos que agregaste a mano. Vas a armar tus repisas de nuevo para la colección nueva. Nada cambia en Discogs."
+    },
+    "accountFirst": "Primero vas a crear una cuenta gratis.",
+    "replace": "Reemplazar mi colección"
+  },
+  "cover": {
+    "none": "{artist}, {title} (sin portada)"
+  },
+  "tour": {
+    "offerTitle": "¿Quieres un recorrido rápido?",
+    "offerText": "Toma más o menos un minuto.",
+    "showMe": "Muéstrame",
+    "notNow": "Ahora no",
+    "waiting": "Te mostramos todo apenas tu repisa esté lista.",
+    "back": "Volver",
+    "next": "Siguiente",
+    "skip": "Saltar el recorrido",
+    "finish": "Listo",
+    "progress": "{n} de {total}",
+    "label": "Recorrido",
+    "steps": {
+      "search": {
+        "title": "Buscar",
+        "text": "Escribe un artista o un título para encontrar dónde está un disco."
+      },
+      "rail": {
+        "title": "El riel de latón",
+        "text": "Toda tu colección de principio a fin. El marcador mostaza muestra dónde cae un disco."
+      },
+      "compartment": {
+        "title": "Un compartimiento",
+        "text": "Cada compartimiento muestra su rango. Haz clic en uno para ver los discos que tiene."
+      },
+      "record": {
+        "title": "La ficha del disco",
+        "text": "Dónde está, los discos de cada lado y su lista de canciones."
+      },
+      "add": {
+        "title": "Agregar un disco nuevo",
+        "text": "¿Compraste algo nuevo? Búscalo en Discogs y mira dónde va."
+      },
+      "setup": {
+        "title": "Repisas y orden",
+        "text": "Arma tus muebles. Los LP y los singles van en repisas separadas, y vas viendo cuántos discos caben mientras armas."
+      },
+      "done": {
+        "title": "Listo",
+        "text": "Eso es todo. Puedes ver este recorrido de nuevo desde Ayuda, arriba en la página."
+      }
+    }
+  },
+  "calibration": {
+    "hint": "El mapa supone unos {capacity} discos por compartimiento, una estimación. Si en tu repisa real un compartimiento empieza con otro disco, dile a la app cuál: el mapa sigue a tu repisa.",
+    "start": "Ajustar un compartimiento",
+    "later": "Ahora no"
+  },
+  "simulator": {
+    "title": "Simulador de compras",
+    "text": {
+      "one": "Repite {count} compra en tu colección y tus repisas, con la inserción de v1 (solo empuja discos hacia adelante) y con la de mínimos movimientos de v2 (corre discos hacia el lugar libre más cercano, adelante o atrás).",
+      "other": "Repite {count} compras en tu colección y tus repisas, con la inserción de v1 (solo empuja discos hacia adelante) y con la de mínimos movimientos de v2 (corre discos hacia el lugar libre más cercano, adelante o atrás)."
+    },
+    "run": {
+      "one": "Repetir {count} compra",
+      "other": "Repetir {count} compras"
+    },
+    "running": "Calculando…",
+    "naive": "v1, ingenua",
+    "minimum": "v2, mínimos movimientos",
+    "moved": {
+      "one": "{count} disco movido",
+      "other": "{count} discos movidos"
+    },
+    "fewer": {
+      "one": "{scenario}, {purchases} compras mueven {count} disco menos con v2.",
+      "other": "{scenario}, {purchases} compras mueven {count} discos menos con v2."
+    },
+    "same": "{scenario}, {purchases} compras mueven los mismos discos con los dos métodos: el espacio libre las absorbe.",
+    "details": "Entraron directo: {naiveDirect} con v1, {minimumDirect} con v2. Más movimientos en una sola compra: {naiveWorst} con v1, {minimumWorst} con v2.",
+    "howFull": "Qué tan llenas quedan tus repisas",
+    "asIs": "Como están ahora",
+    "fullPct": "Llenas al {pct}% después de las compras",
+    "scenarioNow": "Con tus repisas como están",
+    "scenarioFull": "Con repisas llenas al {pct}% después de las compras"
+  },
+  "mediaHeader": {
+    "lp": "LP (12″ y 10″)",
+    "single": "7″",
+    "cd": "CD"
+  },
+  "temp": {
+    "takenOut": "Lo sacaste a {location}. Su lugar en la repisa queda reservado.",
+    "putBack": "De vuelta en la repisa. Su lugar está resaltado en el mapa.",
+    "failed": "No se pudo guardar. Intenta de nuevo.",
+    "outBanner": "Fuera de la repisa: en {location}.",
+    "outHint": "Su lugar queda reservado. Cuando vuelva, ponlo en el compartimiento de arriba, entre los discos de cada lado.",
+    "putBackButton": "Devolverlo",
+    "takeOut": "Sacarlo…",
+    "chooseTitle": "¿A dónde va?",
+    "suggestions": {
+      "turntable": "Junto al tocadiscos",
+      "gigBag": "Bolso de las fechas",
+      "discards": "Caja de descartes",
+      "display": "En exhibición",
+      "pile": "Pila sin ordenar"
+    },
+    "otherPlaceholder": "Ponle nombre al lugar",
+    "confirm": "Sacarlo",
+    "panelTitle": {
+      "one": "{count} disco fuera de la repisa",
+      "other": "{count} discos fuera de la repisa"
+    },
+    "show": "Ver",
+    "searchOut": "En {location}. Su lugar: {place}",
+    "elsewhere": "Otro lugar"
+  },
+  "guest": {
+    "title": "Una repisa compartida",
+    "intro": "Busca un disco para ver dónde está y dónde se devuelve.",
+    "readOnly": "Esta es una vista de solo lectura que compartió el dueño de la repisa. Desde aquí no se puede cambiar nada.",
+    "loading": "Cargando la repisa…",
+    "missing": "Este enlace ya no funciona. Pídele uno nuevo al dueño.",
+    "stale": "Esta repisa no se actualizó en las últimas seis horas, así que no se puede mostrar ahora. Vuelve a verse cuando su dueño abra Record Organizer.",
+    "error": "No se pudo cargar la repisa. Intenta de nuevo en un minuto."
+  },
+  "share": {
+    "title": "Comparte tu repisa",
+    "text": "Un enlace de solo lectura para invitados: pueden buscar y ver dónde está un disco y dónde se devuelve, sin cuenta. No pueden cambiar nada.",
+    "create": "Crear un enlace",
+    "new": "Crear un enlace nuevo",
+    "copy": "Copiar el enlace",
+    "copied": "Copiado",
+    "revoke": "Desactivar el enlace",
+    "revoked": "El enlace está desactivado.",
+    "signUp": "Crea una cuenta para compartir tu repisa con un enlace.",
+    "failed": "No se pudo cambiar el enlace. Intenta de nuevo.",
+    "label": "Enlace para invitados",
+    "freshness": "Los invitados ven la repisa mientras sus datos de Discogs tengan menos de seis horas; abrir la app los actualiza."
+  }
+}

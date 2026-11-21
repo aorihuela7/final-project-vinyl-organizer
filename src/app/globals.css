@@ -6,19 +6,51 @@ html {
 }
 
 body {
-  background: var(--color-canvas);
+  background: var(--color-wall);
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
 
+/* Visible on sage, walnut, brass, and paper alike: an ink ring with a paper halo. */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-ink);
   outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-paper);
+}
+
+/* Belleza ships one weight: never let the browser fake a bold. */
+.font-display {
+  font-synthesis: none;
+  font-weight: 400;
+}
+
+@utility surface-walnut {
+  background: var(--gradient-walnut);
+  color: var(--color-on-walnut);
+}
+
+@utility surface-interior {
+  background: var(--gradient-interior);
+  box-shadow: var(--shadow-interior);
+}
+
+@utility surface-brass {
+  background: var(--gradient-brass);
+  color: var(--color-engraving);
+}
+
+@utility surface-rail {
+  background: var(--gradient-rail);
+  color: var(--color-engraving);
+  box-shadow: var(--shadow-rail);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation: none !important;
     transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

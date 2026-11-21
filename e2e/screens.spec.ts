@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 /** Screenshots of the main screens for review (saved locally in docs/screenshots/, not committed). */
 test("captures the main screens", async ({ page }, testInfo) => {
@@ -13,9 +13,9 @@ test("captures the main screens", async ({ page }, testInfo) => {
   await page.getByRole("button", { name: "Shelves & order" }).click();
   await shot("configurator", true);
   await page.getByRole("button", { name: "Map", exact: true }).click();
-  await page.getByRole("button", { name: "Where does this record go?" }).click();
+  await page.getByRole("button", { name: "+ Add a new record" }).click();
   await page.getByRole("dialog").getByRole("searchbox").fill("Thriller Michael Jackson");
   await page.getByRole("dialog").getByRole("button", { name: /Michael Jackson/ }).first().click({ timeout: 30_000 });
-  await expect(page.getByRole("dialog").getByText(/from the left/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("dialog").getByText(/It goes in/)).toBeVisible({ timeout: 30_000 });
   await shot("where-does-it-go");
 });

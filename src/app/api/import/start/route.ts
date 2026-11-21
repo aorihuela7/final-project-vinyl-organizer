@@ -1,10 +1,14 @@
 import { getServerSession } from "@/lib/supabase/server";
-import { ImportError, startImport } from "@/lib/import/service";
+import { startImport } from "@/lib/import/service";
+import { publicError } from "@/lib/import/errors";
 import { startImportSchema } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
+import { refuseCrossSite } from "@/lib/same-origin";
 
 /** Starts an import of a public Discogs collection (or the demo), or returns the active one. */
 export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
   const session = await getServerSession();
   if (!session) return Response.json({ error: "Sign in to import a collection." }, { status: 401 });
 
@@ -21,7 +25,7 @@ export async function POST(request: Request) {
     const job = await startImport(session.supabase, session.userId, parsed.data);
     return Response.json({ job });
   } catch (err) {
-    const status = err instanceof ImportError ? err.status : 500;
-    return Response.json({ error: err instanceof Error ? err.message : "Couldn't start the import." }, { status });
+    const { status, message } = publicError(err, "Couldn't start the import. Try again in a minute.", "import/start");
+    return Response.json({ error: message }, { status });
   }
 }

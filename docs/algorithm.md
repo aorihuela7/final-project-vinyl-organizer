@@ -71,7 +71,42 @@ There are three cases:
 
 **Special case, aliases:** if the new record is "The X" and the shelf already has records by "X" (articles kept), those records now sort as "The X" and belong somewhere else. They are taken off, the new record goes in, and each of them is put back with the same steps 1–4; their moves are counted and listed like any other. If records leave instead (a re-sync deletes the only "The X"), the remaining "X" records keep their place until the next full layout. Neither case appears in the demo collection: Discogs always writes an artist the same way.
 
-The result is a list of moves ("Fleetwood Mac: C2 → C3") and their count, saved as a `layout_event`. This is the **baseline** for v2: the minimum-moves method will be measured against it on the same purchases.
+The result is a list of moves ("Fleetwood Mac: C2 → C3") and their count, saved as a `layout_event`. This is the **baseline** for v2: the minimum-moves method (6b) is measured against it on the same purchases.
+
+## 6b. Minimum-move insertion (v2, `insert.ts` with `strategy: "minimum"`)
+
+The naive method only ever pushes forward. When the compartment is full and the nearest room is *behind* it, it still cascades all the way forward. v2 looks both ways.
+
+1. **Where the record may go.** As in v1, the new record sorts between prev and next. Any compartment from prev's to next's keeps the range continuous (the ones strictly between them are empty). If one of them has room: **1 move**, done.
+2. **If they're all full, find the nearest room on each side:** the first compartment with room after next's (distance f) and the last one with room before prev's (distance b), counted in boundaries.
+3. **Shift toward the nearer one.** Forward (f ≤ b): the record goes into next's compartment and each full compartment passes its *last* record to the start of the next one, as in v1. Backward (b < f): the record goes into prev's compartment and each full compartment passes its *first* record to the end of the one before. Cost = 1 + min(f, b).
+
+**Why that's the minimum.** Every compartment between the record and the nearest room is full, so it can't keep one more record. Records keep their order (contiguity), so the extra record has to leave that run of full compartments through one of its two ends, and it can't jump: a record can only change compartment by crossing the boundary next to it, and every full compartment in the way is non-empty. So each boundary between the insertion point and the compartment that absorbs the record is crossed by at least one existing record, and different boundaries need different records. The cheapest plan therefore crosses min(f, b) boundaries, which is exactly what step 3 does. The tests check this against a brute-force search over every contiguous layout of small shelves (`minmove.test.ts`).
+
+It's optimal for **one** insertion. For a sequence of purchases it's greedy: each purchase takes its cheapest plan, which isn't always the cheapest plan for all of them together.
+
+The app uses minimum moves for "Add a new record" and for new records found by a re-sync. The naive method stays as the baseline.
+
+### The purchase simulator (`simulate.ts`)
+
+Take a real collection, hold out 100 records at random as purchases, lay out the rest with the initial layout, and replay the purchases in a random order with each method on its own copy of the shelf. "Records moved" counts existing records that changed compartment; "moves" also counts putting each purchase on the shelf (what `layout_events` logs).
+
+Ale's collection (`aorihuelar`, 1,725 records: 1,242 LPs, 150 singles, 327 CDs) on the shelves the app suggests (two Kallax 4×4 for LPs, a record box for singles, a Kallax for CDs), averaged over 10 seeds of 100 purchases (`scripts/simulate.ts`):
+
+| Sort order | Shelves | Naive: records moved | Minimum: records moved |
+| --- | --- | --- | --- |
+| artist | as suggested, 10% free space | 0.0 | 0.0 |
+| artist | 95% full after the purchases | 4.6 | 3.6 |
+| artist | 98% full after the purchases | 17.5 | 13.4 |
+| genre → artist | as suggested, 10% free space | 0.0 | 0.0 |
+| genre → artist | 98% full after the purchases | 16.5 | 15.1 |
+| genre → artist | 100% full after the purchases | 89.4 | 60.6 |
+
+What it shows:
+
+- **The free space is the big win.** With the initial layout spreading 10% free space over every compartment (the library-sort idea), 100 purchases go straight in with either method: not one existing record moves.
+- **Minimum moves matter when the shelf is nearly full.** At 98% full, v2 moves about 23% fewer records sorted by artist; at 100% sorted by genre, about 32% fewer.
+- **Greedy has a cost on single purchases.** In one 100%-full run, v2's worst single purchase moved more records than v1's worst, because earlier cheap choices left the room in worse places. The totals were still lower.
 
 ## 7. Calibration (`calibrate.ts`): "This is the first record in this compartment"
 
@@ -82,6 +117,29 @@ The computed map can drift from the real shelf (double albums, box sets, a 10" h
 - Anything else (X two compartments away) is refused, because it would move other boundaries too.
 
 **Reality beats capacity:** if C or P ends up with more records than its capacity, it's flagged on the map, not blocked. The shelf in front of the user is the truth.
+
+### 7b. Calibration by count (v2, `calibrateCount`)
+
+"There are 74 records in compartment C right now." Like the first-record calibration, it moves **only one boundary**, this time the one between C and the next available compartment Q: if C holds more than 74 on the map, its last records move to the front of Q; if it holds fewer, Q's first records move to the end of C. Reality beats capacity: going over is flagged, not blocked. It's refused when it would need another boundary (C is the last compartment, or Q doesn't have enough records to give).
+
+### 7c. Thickness by format (v2, optional)
+
+A setting counts double albums and box sets by their number of discs (`format_qty` from Discogs, 1 to 12), so a compartment's capacity is measured in **places**: an 80-place cube holds 80 single LPs or 40 doubles. With it on:
+
+- **Initial layout** (`distributeWeighted`): each compartment's share of the collection's places is proportional to its effective capacity, as before. Records are walked in sort order; a record stays in the current compartment while its midpoint stays inside that compartment's cumulative share and it fits. Contiguity holds by construction, and no compartment goes over its capacity in places (a record thicker than a whole compartment goes alone in an empty one, flagged).
+- **Insertion** checks room in places, and a cascade moves as many records as it takes to make room. The minimum-move proof (6b) is for one place per record; with weights it's the same nearest-room rule, used as a heuristic.
+- **Calibration** flags over capacity in places.
+- **Drawings** make each record as wide as its places.
+
+Off, everything counts one place per record, exactly as in v1 (the v1 tests run unchanged).
+
+### 7e. CD shelves: two rows per cube (v2)
+
+A CD is about 12.5 cm tall, so a 33 cm Kallax cube with a CD insert holds two rows of CDs with a board between them. On CD shelves each row of CDs is its own compartment (30 CDs, so 60 per cube as in v1): a Kallax 4×4 for CDs has 8 rows of compartments. The algorithm doesn't change, because each row of CDs is a continuous range like any compartment, read in the shelf's traversal order. Switching a shelf to CDs splits each row in two (a blocked cube blocks both of its rows), and switching back joins them (`changeMedia` in `src/lib/shelf/model.ts`).
+
+### 7d. Sections (v2)
+
+- **Sections** pin a genre to a shelf ("genre:Jazz"). Within a format group, each section is laid out on its own shelves (sorted inside it, with its own proportional free space), and records that match no section flow through the shelves without one. A record belongs to the first section it matches, in shelf order. Insertion and calibration run inside the record's (or the compartment's) section, so contiguity and capacity hold per section (`sections.ts`, tested in `sections.test.ts`).
 
 ## 8. Finding a record (`query.ts`)
 

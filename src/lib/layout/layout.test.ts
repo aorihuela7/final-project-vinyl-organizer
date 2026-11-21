@@ -4,7 +4,7 @@ import { traverse } from "./traversal";
 import { buildIndex } from "./query";
 import { sortRecords } from "./sort";
 import { numbered, rec, shelf } from "./test-helpers";
-import type { LayoutRecord, Placement, ShelfSpec, SortSettings } from "./types";
+import type { LayoutRecord, Placement, ShelfMedia, ShelfSpec, SortSettings } from "./types";
 
 const byArtist: SortSettings = { levels: ["artist"], ignoreArticles: true };
 
@@ -23,8 +23,8 @@ function kallaxWithTurntable(traversal: "rows" | "columns", capacity = 10): Shel
 }
 
 /** Asserts both invariants for one media group. */
-function assertInvariants(records: LayoutRecord[], placement: Placement, shelves: ShelfSpec[], settings: SortSettings) {
-  const slots = traverse(shelves, "vinyl");
+function assertInvariants(records: LayoutRecord[], placement: Placement, shelves: ShelfSpec[], settings: SortSettings, media: ShelfMedia = "lp") {
+  const slots = traverse(shelves, media);
   const slotIndex = new Map(slots.map((s) => [s.id, s.index]));
   const index = buildIndex(records, placement, slots, settings);
   // Invariant 1, contiguity: walking the sorted collection, the traversal index never decreases.
@@ -41,7 +41,7 @@ function assertInvariants(records: LayoutRecord[], placement: Placement, shelves
 
 describe("traversal", () => {
   it("walks a Kallax 4×4 by rows, left to right and top to bottom, skipping blocked compartments", () => {
-    const slots = traverse([kallaxWithTurntable("rows")], "vinyl");
+    const slots = traverse([kallaxWithTurntable("rows")], "lp");
     expect(slots).toHaveLength(14);
     expect(slots.map((s) => `${s.row}${s.col}`)).toEqual([
       "00", "01", "02", "03",
@@ -53,7 +53,7 @@ describe("traversal", () => {
   });
 
   it("walks the same Kallax by columns, top to bottom, then the next column", () => {
-    const slots = traverse([kallaxWithTurntable("columns")], "vinyl");
+    const slots = traverse([kallaxWithTurntable("columns")], "lp");
     expect(slots.map((s) => `${s.row}${s.col}`)).toEqual([
       "00", "10", "20", "30",
       "01", "21", "31",
@@ -62,13 +62,13 @@ describe("traversal", () => {
     ]);
   });
 
-  it("walks several shelves in sort_index order and keeps vinyl and CD shelves apart", () => {
+  it("walks several shelves in sort_index order and keeps LP and CD shelves apart", () => {
     const shelves = [
       shelf({ key: "studio", rows: 5, cols: 1, sortIndex: 2, traversal: "columns" }),
       shelf({ key: "cds", rows: 1, cols: 2, sortIndex: 1, media: "cd" }),
       shelf({ key: "living", rows: 1, cols: 2, sortIndex: 0 }),
     ];
-    const vinyl = traverse(shelves, "vinyl");
+    const vinyl = traverse(shelves, "lp");
     expect(vinyl.map((s) => s.shelfKey)).toEqual(["living", "living", "studio", "studio", "studio", "studio", "studio"]);
     expect(vinyl.map((s) => s.index)).toEqual([0, 1, 2, 3, 4, 5, 6]);
     expect(traverse(shelves, "cd").map((s) => s.shelfKey)).toEqual(["cds", "cds"]);
@@ -76,19 +76,19 @@ describe("traversal", () => {
 
   it("uses the per-compartment capacity override", () => {
     const s = shelf({ rows: 1, cols: 3, defaultCapacity: 80, compartments: [{ row: 0, col: 1, status: "available", capacity: 40 }] });
-    expect(traverse([s], "vinyl").map((x) => x.capacity)).toEqual([80, 40, 80]);
+    expect(traverse([s], "lp").map((x) => x.capacity)).toEqual([80, 40, 80]);
   });
 });
 
 describe("initial layout", () => {
   it("distributes proportionally to effective capacity, spreading the gaps (library sort)", () => {
     // 3 compartments of 100 with 10% slack hold 270; 135 records fill each to 45.
-    const slots = traverse([shelf({ rows: 1, cols: 3, defaultCapacity: 100 })], "vinyl");
+    const slots = traverse([shelf({ rows: 1, cols: 3, defaultCapacity: 100 })], "lp");
     expect(distribute(135, slots, 10)).toEqual({ counts: [45, 45, 45], leftover: 0, slackReduced: false });
     // Uneven capacities: proportional, not first-fit.
     const uneven = traverse(
       [shelf({ rows: 1, cols: 3, defaultCapacity: 100, compartments: [{ row: 0, col: 1, status: "available", capacity: 50 }] })],
-      "vinyl",
+      "lp",
     );
     expect(distribute(100, uneven, 10).counts).toEqual([40, 20, 40]);
   });
@@ -98,7 +98,7 @@ describe("initial layout", () => {
     for (const traversal of ["rows", "columns"] as const) {
       const shelves = [kallaxWithTurntable(traversal)];
       const result = initialLayout(records, shelves, byArtist, 10);
-      expect(result.groups.vinyl.leftover).toEqual([]);
+      expect(result.groups.lp.leftover).toEqual([]);
       const { slots, index } = assertInvariants(records, result.placement, shelves, byArtist);
       // 120 records over 14 compartments of 10 (9 effective): 8 or 9 each, never in a blocked one.
       for (const s of slots) expect([8, 9]).toContain(index.bySlot.get(s.id)?.length ?? 0);
@@ -115,33 +115,33 @@ describe("initial layout", () => {
       const records = numbered(n);
       const result = initialLayout(records, shelves, byArtist, 15);
       assertInvariants(records.filter((r) => result.placement.has(r.id)), result.placement, shelves, byArtist);
-      expect(result.placement.size + result.groups.vinyl.leftover.length).toBe(n);
+      expect(result.placement.size + result.groups.lp.leftover.length).toBe(n);
     }
   });
 
   it("uses the slack when the collection doesn't fit in effective capacity, and says so", () => {
     const shelves = [shelf({ rows: 1, cols: 2, defaultCapacity: 10 })];
     const result = initialLayout(numbered(19), shelves, byArtist, 20); // effective 16, raw 20
-    expect(result.groups.vinyl.leftover).toEqual([]);
-    expect(result.groups.vinyl.slackReduced).toBe(true);
-    expect([...result.groups.vinyl.counts.values()]).toEqual([10, 9]);
+    expect(result.groups.lp.leftover).toEqual([]);
+    expect(result.groups.lp.slackReduced).toBe(true);
+    expect([...result.groups.lp.counts.values()]).toEqual([10, 9]);
   });
 
   it("reports the records left over when the collection doesn't fit, never dropping them silently", () => {
     const shelves = [shelf({ rows: 1, cols: 3, defaultCapacity: 10 })];
     const records = numbered(35);
     const result = initialLayout(records, shelves, byArtist, 10);
-    expect(result.groups.vinyl.leftover).toHaveLength(5);
+    expect(result.groups.lp.leftover).toHaveLength(5);
     // The leftovers are the last five in sort order, and every compartment is full.
-    expect(result.groups.vinyl.leftover).toEqual(records.slice(30).map((r) => r.id));
-    expect([...result.groups.vinyl.counts.values()]).toEqual([10, 10, 10]);
+    expect(result.groups.lp.leftover).toEqual(records.slice(30).map((r) => r.id));
+    expect([...result.groups.lp.counts.values()]).toEqual([10, 10, 10]);
   });
 
-  it("puts vinyl on vinyl shelves, CDs on CD shelves, and leaves other formats off the shelf", () => {
+  it("puts LPs on LP shelves, CDs on CD shelves, and leaves other formats off the shelf", () => {
     const shelves = [shelf({ key: "v", rows: 1, cols: 2 }), shelf({ key: "c", rows: 1, cols: 1, media: "cd", sortIndex: 1 })];
     const records = [rec("A"), rec("B", { media: "cd" }), rec("C", { media: "other" }), rec("D")];
     const result = initialLayout(records, shelves, byArtist, 10);
-    const shelfOf = (id: string) => result.groups.vinyl.slots.concat(result.groups.cd.slots).find((s) => s.id === result.placement.get(id))?.shelfKey;
+    const shelfOf = (id: string) => result.groups.lp.slots.concat(result.groups.cd.slots).find((s) => s.id === result.placement.get(id))?.shelfKey;
     expect(shelfOf(records[0]!.id)).toBe("v");
     expect(shelfOf(records[1]!.id)).toBe("c");
     expect(result.placement.has(records[2]!.id)).toBe(false);
@@ -149,11 +149,47 @@ describe("initial layout", () => {
     expect(shelfOf(records[3]!.id)).toBe("v");
   });
 
+  it("never places a 7″ single on an LP shelf or an LP on a singles shelf", () => {
+    const shelves = [
+      shelf({ key: "kallax", rows: 2, cols: 2, defaultCapacity: 10 }),
+      shelf({ key: "box", rows: 1, cols: 3, defaultCapacity: 10, media: "single", sortIndex: 1 }),
+      shelf({ key: "kallax2", rows: 1, cols: 2, defaultCapacity: 10, sortIndex: 2 }),
+    ];
+    const records: LayoutRecord[] = Array.from({ length: 60 }, (_, i) =>
+      rec(`Artist ${String(i).padStart(3, "0")}`, { id: `m${i}`, media: i % 3 === 0 ? "single" : "lp" }),
+    );
+    const result = initialLayout(records, shelves, byArtist, 10);
+    const shelfMedia = new Map(shelves.map((s) => [s.key, s.media]));
+    const allSlots = [...result.groups.lp.slots, ...result.groups.single.slots, ...result.groups.cd.slots];
+    for (const r of records) {
+      const slot = allSlots.find((s) => s.id === result.placement.get(r.id));
+      expect(slot).toBeDefined();
+      expect(shelfMedia.get(slot!.shelfKey)).toBe(r.media);
+    }
+    // LPs flow through both Kallax shelves, skipping the singles box between them.
+    expect(result.groups.lp.slots.map((s) => s.shelfKey)).toEqual(["kallax", "kallax", "kallax", "kallax", "kallax2", "kallax2"]);
+    expect(result.groups.single.slots.map((s) => s.shelfKey)).toEqual(["box", "box", "box"]);
+    // Both invariants hold within each group.
+    for (const media of ["lp", "single"] as const) {
+      const group = records.filter((r) => r.media === media);
+      assertInvariants(group, result.placement, shelves, byArtist, media);
+    }
+  });
+
+  it("leaves singles off the map, and reports them, when there's no singles shelf", () => {
+    const shelves = [shelf({ key: "kallax", rows: 1, cols: 2, defaultCapacity: 10 })];
+    const records = [rec("A"), rec("B", { media: "single" }), rec("C")];
+    const result = initialLayout(records, shelves, byArtist, 10);
+    expect(result.placement.has(records[1]!.id)).toBe(false);
+    expect(result.groups.single.leftover).toEqual([records[1]!.id]);
+    expect(result.groups.lp.leftover).toEqual([]);
+  });
+
   it("handles an empty collection and a shelf with no available compartments", () => {
     expect(initialLayout([], [kallaxWithTurntable("rows")], byArtist, 10).placement.size).toBe(0);
     const allBlocked = shelf({ rows: 1, cols: 1, compartments: [{ row: 0, col: 0, status: "blocked" }] });
     const result = initialLayout(numbered(3), [allBlocked], byArtist, 10);
-    expect(result.groups.vinyl.leftover).toHaveLength(3);
+    expect(result.groups.lp.leftover).toHaveLength(3);
   });
 
   it("lays out 3,000 records in 40 compartments in under 100 ms", () => {

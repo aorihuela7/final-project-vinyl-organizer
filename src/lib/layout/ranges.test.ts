@@ -16,7 +16,7 @@ describe("range labels", () => {
 
   it("shows 'A – Bea' style ranges for each compartment, ignoring articles and suffixes", () => {
     const settings: SortSettings = { levels: ["artist"], ignoreArticles: true };
-    const slots = traverse([shelf({ rows: 1, cols: 2, defaultCapacity: 5 })], "vinyl");
+    const slots = traverse([shelf({ rows: 1, cols: 2, defaultCapacity: 5 })], "lp");
     const picture = [["ABBA", "The Beatles"], ["Beck", "Nirvana (2)"]];
     const records: LayoutRecord[] = [];
     const placement: Placement = new Map();
@@ -34,7 +34,7 @@ describe("range labels", () => {
 
   it("prefixes the first level when a compartment stays inside one group", () => {
     const settings: SortSettings = { levels: ["genre", "artist"], ignoreArticles: true };
-    const slots = traverse([shelf({ rows: 1, cols: 2, defaultCapacity: 5 })], "vinyl");
+    const slots = traverse([shelf({ rows: 1, cols: 2, defaultCapacity: 5 })], "lp");
     const records = [
       rec("Miles Davis", { id: "a", genre: "Jazz" }),
       rec("Nina Simone", { id: "b", genre: "Jazz" }),
@@ -49,7 +49,7 @@ describe("range labels", () => {
 
   it("shows both groups when a compartment crosses from one genre into the next, and never cuts genres", () => {
     const settings: SortSettings = { levels: ["genre", "artist"], ignoreArticles: true };
-    const slots = traverse([shelf({ rows: 1, cols: 2, defaultCapacity: 5 })], "vinyl");
+    const slots = traverse([shelf({ rows: 1, cols: 2, defaultCapacity: 5 })], "lp");
     const records = [
       rec("Miles Davis", { id: "a", genre: "Jazz" }),
       rec("Nina Simone", { id: "b", genre: "Jazz" }),
@@ -65,7 +65,7 @@ describe("range labels", () => {
 
   it("colors spines by the first sort level, from a fixed palette", () => {
     const settings: SortSettings = { levels: ["genre", "artist"], ignoreArticles: true };
-    const slots = traverse([shelf({ rows: 1, cols: 1, defaultCapacity: 10 })], "vinyl");
+    const slots = traverse([shelf({ rows: 1, cols: 1, defaultCapacity: 10 })], "lp");
     const records = [rec("A", { id: "1", genre: "Jazz" }), rec("B", { id: "2", genre: "Jazz" }), rec("C", { id: "3", genre: "Rock" })];
     const placement: Placement = new Map(records.map((r) => [r.id, slots[0]!.id]));
     const colors = spineColors(buildIndex(records, placement, slots, settings), settings, 12);

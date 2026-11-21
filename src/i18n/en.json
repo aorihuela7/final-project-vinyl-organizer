@@ -1,0 +1,623 @@
+{
+  "meta": {
+    "pitch": "Model your real record shelf, compartment by compartment, and always know where every record is and where the next one goes.",
+    "myShelf": "My shelf"
+  },
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "back": "Back",
+    "done": "Done",
+    "dismiss": "Dismiss",
+    "tryAgain": "Try again",
+    "import": "Import",
+    "saving": "Saving…",
+    "loading": "Loading…",
+    "records": {
+      "one": "{count} record",
+      "other": "{count} records"
+    },
+    "language": "Language"
+  },
+  "header": {
+    "myShelf": "My shelf",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "account": "Account",
+    "help": "Help",
+    "helpLabel": "Help: a quick tour of the app"
+  },
+  "importForm": {
+    "label": "Your Discogs username",
+    "placeholder": "For example, vinylcollector",
+    "help": "Your collection must be public on Discogs. You'll create a free account to save it.",
+    "checkUsername": "Check the username."
+  },
+  "validation": {
+    "usernameEmpty": "Type your Discogs username.",
+    "usernameLong": "That's too long for a Discogs username.",
+    "usernameChars": "Discogs usernames only use letters, numbers, dots, dashes, and underscores."
+  },
+  "onboarding": {
+    "title": "Let's map your shelf",
+    "demoTitle": "Try the demo collection",
+    "demoText": "1,000 real records on prebuilt shelves.",
+    "demoNoAccount": "No account needed.",
+    "demoButton": "Load the demo",
+    "importTitle": "Import your collection from Discogs",
+    "importLabel": "Your Discogs username (the collection must be public)",
+    "importAccount": "You'll create a free account first, so your shelf is saved."
+  },
+  "importing": {
+    "demoTitle": "Loading the demo collection",
+    "importing": "Importing your collection…",
+    "starting": "Starting the import…",
+    "loadingDemo": "Loading the demo collection…",
+    "progress": "{done} of {total} records",
+    "progressPages": "{done} of {total} records, page {page} of {pages}",
+    "talking": "Talking to Discogs…",
+    "closeTab": "You can close this tab: the import continues from here when you come back."
+  },
+  "app": {
+    "loadingShelf": "Loading your shelf…",
+    "loadingDemo": "Loading the demo collection from Discogs…",
+    "errorTitle": "Something went wrong",
+    "nothingYet": "Nothing to show yet.",
+    "startOver": "Start over",
+    "demoBanner": "This demo lives only in this browser. Sign up to save it and to import your own collection.",
+    "signUpToSave": "Sign up to save",
+    "updating": "Updating from Discogs…",
+    "updatingCount": "Updating from Discogs: {done} of {total}",
+    "buildTitle": "Build your shelf",
+    "buildText": "{count} records imported. Pick your furniture and your sort order, and the app computes where every record goes.",
+    "views": "Views",
+    "tabMap": "Map",
+    "tabSetup": "Shelves & order",
+    "summary": {
+      "one": "{count} record, sorted by {levels}, with {slack}% free space",
+      "other": "{count} records, sorted by {levels}, with {slack}% free space"
+    },
+    "summaryArticles": "{summary}, ignoring leading articles",
+    "levelJoin": "{first}, then {rest}",
+    "leftover": {
+      "one": "{count} record isn't on the shelf because it doesn't fit. Add a shelf or raise the capacity in Shelves & order.",
+      "other": "{count} records aren't on the shelf because they don't fit. Add a shelf or raise the capacity in Shelves & order."
+    },
+    "cdsWithoutShelf": {
+      "one": "{count} CD has no CD shelf yet.",
+      "other": "{count} CDs have no CD shelf yet."
+    },
+    "others": {
+      "one": "{count} cassette or other format stays off the shelves.",
+      "other": "{count} cassettes or other formats stay off the shelves."
+    },
+    "seeMoves": "See the moves",
+    "hideMoves": "Hide the moves",
+    "moveLine": "{record}: {from} to {to}",
+    "moveNew": "new",
+    "offTheShelf": "off the shelf",
+    "anotherCompartment": "another compartment",
+    "recordFallback": "Record",
+    "levelThen": ", then ",
+    "crashText": "Your shelf is safe. Try again, and if it keeps happening, reload the page.",
+    "singlesOff": {
+      "one": "Singles (7″) now go on their own shelves. {count} single is off the map until you add a Singles shelf.",
+      "other": "Singles (7″) now go on their own shelves. {count} singles are off the map until you add a Singles shelf."
+    },
+    "addSinglesShelf": "Add a Singles shelf",
+    "toolsTitle": "More for your collection",
+    "toolsText": "These save on their own; they don't need “Generate map”."
+  },
+  "levels": {
+    "genre": "genre",
+    "artist": "artist",
+    "year": "year",
+    "label": "label",
+    "title": "title"
+  },
+  "landing": {
+    "title": "Know where every record is, and where the next one goes.",
+    "tryDemo": "Try the demo collection",
+    "signUp": "Sign up",
+    "noAccount": "No account needed for the demo. Sign up only when you want to save.",
+    "importTitle": "Import your collection from Discogs",
+    "heroLabel": "An example shelf",
+    "heroCaption": "Every compartment shows its letters and how full it is. Search for a record and the app shows the compartment, how far in it is, and the records on each side.",
+    "heroRail": "An example collection from # to Z",
+    "heroShelf": "Kallax, LPs (12″ and 10″)",
+    "turntable": "Turntable"
+  },
+  "notFound": {
+    "title": "This page doesn't exist",
+    "text": "The link may be old, or the address has a typo.",
+    "home": "Go to the start"
+  },
+  "notices": {
+    "replaced": "The Discogs collection of “{username}” replaced the previous one. Build your shelf for it.",
+    "localSaveFailed": "This browser couldn't save the demo. It will reset when you leave.",
+    "demoReady": "Demo ready: {lps} LPs and {cds} CDs on prebuilt shelves, sorted by artist, then title.",
+    "demoFailed": "Couldn't load the demo collection. Try again in a minute.",
+    "demoSaved": "Your demo shelf is saved to your account.",
+    "relaidOut": "Most records were new, so the whole shelf was laid out again with your settings.",
+    "placeFailed": "Couldn't place the new records ({message}). Generate the map again to include them.",
+    "newPlaced": {
+      "one": "{count} new record is on your shelf now, with {moves}.",
+      "other": "{count} new records are on your shelf now, with {moves}."
+    },
+    "moves": {
+      "one": "{count} move",
+      "other": "{count} moves"
+    },
+    "newSkipped": {
+      "one": "{count} new record doesn't fit where it belongs. Add a shelf or generate the map again.",
+      "other": "{count} new records don't fit where they belong. Add a shelf or generate the map again."
+    },
+    "replaceFailed": "Couldn't import “{username}”: {message} Your current collection didn't change.",
+    "syncFailed": "Couldn't update from Discogs: {message}",
+    "importFailed": "The import failed. Check the username and that the collection is public.",
+    "loadFailed": "Couldn't load your shelf.",
+    "mapLeftover": {
+      "one": "Map generated. {count} record doesn't fit: add a shelf or raise the capacity.",
+      "other": "Map generated. {count} records don't fit: add a shelf or raise the capacity."
+    },
+    "mapUpdated": {
+      "one": "Map updated: {count} record changed compartment.",
+      "other": "Map updated: {count} records changed compartment."
+    },
+    "mapGenerated": {
+      "one": "Map generated: {count} record placed.",
+      "other": "Map generated: {count} records placed."
+    },
+    "mapSaveFailed": "Couldn't save the map.",
+    "addedOneMove": "Record added. Just put it in: 1 move.",
+    "addedMoves": {
+      "one": "Record added: {count} move.",
+      "other": "Record added: {count} moves."
+    },
+    "addFailed": "Couldn't add the record.",
+    "demoReadySingles": "Demo ready: {lps} LPs, {singles} singles, and {cds} CDs on prebuilt shelves, sorted by artist, then title.",
+    "singlesBoxAdded": {
+      "one": "Singles (7″) now go on their own shelves. We added a Singles box for your {count} single, and no LP moved.",
+      "other": "Singles (7″) now go on their own shelves. We added a Singles box for your {count} singles, and no LP moved."
+    }
+  },
+  "demo": {
+    "living": "Living room",
+    "studio": "Studio",
+    "singles": "Singles box"
+  },
+  "templates": {
+    "kallax_4x4": "Kallax 4×4",
+    "kallax_5x5": "Kallax 5×5",
+    "low_2x4": "Low unit 2×4",
+    "tower_1x5": "Tower 1×5",
+    "crates": "Crates in a row",
+    "record_box": "Record box",
+    "custom": "Custom"
+  },
+  "media": {
+    "lp": "LPs (12″ and 10″)",
+    "single": "Singles (7″)",
+    "cd": "CDs"
+  },
+  "mediaShort": {
+    "lp": "LPs",
+    "single": "singles",
+    "cd": "CDs"
+  },
+  "genres": {
+    "Blues": "Blues",
+    "Brass & Military": "Brass & Military",
+    "Children's": "Children's",
+    "Classical": "Classical",
+    "Electronic": "Electronic",
+    "Folk, World, & Country": "Folk, World, & Country",
+    "Funk / Soul": "Funk / Soul",
+    "Hip Hop": "Hip Hop",
+    "Jazz": "Jazz",
+    "Latin": "Latin",
+    "Non-Music": "Non-Music",
+    "Pop": "Pop",
+    "Reggae": "Reggae",
+    "Rock": "Rock",
+    "Stage & Screen": "Stage & Screen",
+    "No genre": "No genre"
+  },
+  "map": {
+    "holdsOf": "{count} of {capacity}",
+    "places": "{count} places",
+    "blocked": "Blocked",
+    "empty": "Empty",
+    "badge": "{count} of {capacity}",
+    "openCompartment": "{range}, {count} of {capacity} records. Open the compartment",
+    "openEmpty": "{place}, empty. Open the compartment",
+    "overCapacity": "over capacity",
+    "genresCount": {
+      "one": "{count} genre",
+      "other": "{count} genres"
+    },
+    "noYear": "No year",
+    "shelfTitle": "{name}, {media}",
+    "groupTitle": "{media}",
+    "legend": "Each compartment shows its letters; the full range is in the compartment view.",
+    "shelfTitleSection": "{name}, {media}, {section} section"
+  },
+  "place": {
+    "rowCol": "row {row}, column {col}",
+    "crate": "crate {n}",
+    "box": "box {n}",
+    "column": "column {n}",
+    "fromTop": "shelf {n} from the top",
+    "title": "{shelf}, {place}"
+  },
+  "search": {
+    "placeholder": "Search for an artist or a title in your collection",
+    "results": "Search results",
+    "noMatch": "No records match “{query}”.",
+    "where": "{place}, about {pct}% in from the left",
+    "notPlaced": "{format}: this format doesn't go on a shelf",
+    "noSinglesShelf": "Off the map until you add a Singles shelf",
+    "noCdShelf": "Off the map until you add a CD shelf",
+    "noLpShelf": "Off the map until you add an LP shelf",
+    "notOnShelf": "Not on the shelf: it doesn't fit",
+    "or": "or",
+    "addNew": "+ Add a new record"
+  },
+  "add": {
+    "title": "Add a new record",
+    "step1": "Find it on Discogs",
+    "step2": "See where it goes",
+    "step3": "Add record",
+    "searchLabel": "Search Discogs for the record you just bought.",
+    "searchPlaceholder": "Artist and title, for example Kind of Blue Miles Davis",
+    "searching": "Searching Discogs…",
+    "searchFailed": "Search failed.",
+    "releaseFailed": "Couldn't load that release.",
+    "noResults": "No releases match. Try the artist and the title.",
+    "change": "Pick another",
+    "goesBetween": "It goes in {place}, between {left} and {right}",
+    "goesAfter": "It goes in {place}, right after {left}",
+    "goesBefore": "It goes in {place}, right before {right}",
+    "goesIn": "It goes in {place}",
+    "notPlaced": "This is a {format} release, so it doesn't go on a shelf.",
+    "noShelf": "You don't have a shelf for {group} yet. Add one in Shelves & order.",
+    "full": "Your shelves are full: there's no room for it anywhere.",
+    "fits": "It fits. Just put it in: 1 move.",
+    "moves": {
+      "one": "That compartment is full: {count} move.",
+      "other": "That compartment is full: {count} moves."
+    },
+    "putItIn": "put it in",
+    "overflow": "The last record no longer fits on your shelves.",
+    "fallback": "({error} Showing the search result's data.)",
+    "add": "Add record",
+    "adding": "Adding…",
+    "discogsUnchanged": "Adding saves it here only; your Discogs collection doesn't change."
+  },
+  "levelNames": {
+    "genre": "Genre",
+    "artist": "Artist",
+    "year": "Year",
+    "label": "Label",
+    "title": "Title"
+  },
+  "builder": {
+    "yourShelves": "Your shelves",
+    "flowOrder": "Records flow through them in this order.",
+    "addOne": "Add at least one shelf to generate the map.",
+    "generate": "Generate map",
+    "generateShort": "Generate",
+    "recompute": "Recompute",
+    "recomputeTitle": "Recompute the whole map?",
+    "generateTitle": "Generate the map?",
+    "willChange": {
+      "one": "{count} record will change compartment. Calibrations you made are replaced by the new layout.",
+      "other": "{count} records will change compartment. Calibrations you made are replaced by the new layout."
+    },
+    "willPlace": {
+      "one": "{count} record will be placed.",
+      "other": "{count} records will be placed."
+    },
+    "leftover": {
+      "one": "{count} record doesn't fit. It will be listed as not on the shelf.",
+      "other": "{count} records don't fit. They'll be listed as not on the shelf."
+    },
+    "slackReduced": "It only fits by using part of the free space you asked for.",
+    "notPlaced": {
+      "one": "{count} cassette, file, or other format stays off the shelves.",
+      "other": "{count} cassettes, files, or other formats stay off the shelves."
+    },
+    "cardLine": "{media}, {template}, {rows} × {cols}",
+    "holds": "Holds {count}",
+    "edit": "Edit",
+    "moveUp": "Move {name} up",
+    "moveDown": "Move {name} down",
+    "remove": "Remove {name}",
+    "newShelf": "New shelf",
+    "name": "Name",
+    "template": "Template",
+    "holdsLabel": "Holds",
+    "rows": "Rows",
+    "cdRows": "CDs stand in two rows per cube (a CD insert in the middle), so each row of CDs is a compartment with its own plate.",
+    "cols": "Columns",
+    "perCompartment": "Records per compartment",
+    "freeSpace": "Free space to leave (all shelves)",
+    "readIt": "Read it",
+    "byRows": "By rows (left to right)",
+    "byColumns": "By columns (top to bottom)",
+    "thisHolds": "This shelf holds {count} {media}",
+    "arithmetic": {
+      "one": "{open} compartment × {capacity} records",
+      "other": "{open} compartments × {capacity} records"
+    },
+    "arithmeticMixed": {
+      "one": "{open} compartment, {overrides} with its own capacity",
+      "other": "{open} compartments, {overrides} with their own capacity"
+    },
+    "withBlocked": {
+      "one": "{text}, {count} blocked",
+      "other": "{text}, {count} blocked"
+    },
+    "importing": "Importing: {done} of {total} so far",
+    "fill": "{media}: your {count} records would fill {pct}% of {places} places",
+    "fillWithThis": "{media}: your {count} records would fill {pct}% of {places} places, with this shelf",
+    "fillNoShelf": "{media}: your {count} records have no shelf yet",
+    "wontFit": "{count} won't fit with {slack}% free space. Add compartments or raise the capacity.",
+    "tapMode": "What tapping a compartment does",
+    "tapBlock": "Tap to block",
+    "tapCapacity": "Tap to set capacity",
+    "tapToBlockHint": "Tap a compartment to block it (a turntable, speakers).",
+    "tapCapacityHint": "Tap a compartment to give it its own capacity.",
+    "capacityOf": "Capacity of {place}",
+    "capacityEmpty": "Leave it empty to use the shelf's {count}.",
+    "preview": "Preview",
+    "blocked": "blocked",
+    "available": "available",
+    "capacityN": "capacity {count}",
+    "addShelf": "Add a shelf",
+    "sortOrder": "Sort order",
+    "firstBy": "First by",
+    "thenBy": "Then by",
+    "none": "None",
+    "ties": "Ties are always broken by artist, then year, then title.",
+    "ignoreArticles": "Ignore leading articles (“The Beatles” under B instead of T, “Los Lobos” under L)",
+    "suggestedLp": "Kallax",
+    "suggestedLpN": "Kallax {n}",
+    "suggestedSingles": "Singles",
+    "suggestedCds": "CD shelf",
+    "thickness": "Count double albums and box sets by their number of discs (a double LP takes two places)",
+    "section": "Section",
+    "sectionNone": "Everything else",
+    "sectionGenre": "Genre: {name}",
+    "sectionHint": "Records of a section go only on shelves with that section, sorted inside it."
+  },
+  "record": {
+    "offMap": "Not on the map",
+    "otherFormat": "A {format} release: this format doesn't go on a shelf",
+    "doesntFit": "It doesn't fit on your shelves. Add a shelf or raise the capacity.",
+    "position": "Record {index} of {total}, about {pct}% in from the left",
+    "yearUnknown": "year unknown",
+    "formatUnknown": "Format unknown",
+    "drawingLabel": "The compartment, with this record highlighted: record {index} of {total}",
+    "showOnMap": "Show on the map",
+    "twoLeft": "Two to the left",
+    "justLeft": "Just to the left",
+    "thisOne": "This one",
+    "justRight": "Just to the right",
+    "twoRight": "Two to the right",
+    "inPlace": "in {place}",
+    "neighbors": "The records on each side",
+    "tracklist": "Tracklist",
+    "tracklistFailed": "Couldn't load the tracklist.",
+    "noTracklist": "Discogs has no tracklist for this release.",
+    "side": "Side {side}",
+    "disc": "Disc {n}",
+    "emptyTitle": "Find a record",
+    "emptyText": "Search for an artist or a title to see where a record is, the records on each side, and its tracklist. Click a compartment to see what's inside."
+  },
+  "rail": {
+    "label": "Your {media} from {first} to {last}",
+    "decade": "{decade}s",
+    "segment": {
+      "one": "{label}: {count} record",
+      "other": "{label}: {count} records"
+    },
+    "segmentGo": {
+      "one": "{label}: {count} record. Go to where it starts",
+      "other": "{label}: {count} records. Go to where they start"
+    }
+  },
+  "compartment": {
+    "count": {
+      "one": "{count} of {capacity} records",
+      "other": "{count} of {capacity} records"
+    },
+    "over": "You marked this compartment as fuller than its capacity. That's fine: the map follows your real shelf.",
+    "calibrate": "The first record here is different…",
+    "drawingHint": "Point at a record to see it; click it for the details and the cover.",
+    "list": "Records in this compartment, left to right",
+    "empty": "This compartment is empty.",
+    "added": "added by you",
+    "position": "{index} of {total}",
+    "calibrateLabel": "Which record is really the first one in this compartment?",
+    "calibratePlaceholder": "Search this compartment and the one before",
+    "calibrateNoMatch": "No match in this compartment or the previous one.",
+    "calibrateHint": "Only the boundary with the previous compartment moves. Everything else stays where it is.",
+    "calibrateFailed": "Couldn't save the calibration.",
+    "refusal": {
+      "unavailable": "That compartment isn't available.",
+      "notOnShelf": "That record isn't on this shelf.",
+      "firstCompartment": "This is the first compartment, so the records before it have nowhere to go.",
+      "notAdjacent": "Pick a record from this compartment or the one right before it: calibration only moves the boundary between them.",
+      "lastCompartment": "This is the last compartment, so the records after it have nowhere to go.",
+      "notEnough": "The next compartment doesn't have that many records to give.",
+      "badCount": "Type a whole number."
+    },
+    "countButton": "Count the records here",
+    "countLabel": "How many records are in this compartment right now?",
+    "countSave": "Save the count",
+    "countHint": "Only the boundary with the next compartment moves: extra records go to it, or missing ones come from it.",
+    "places": "{count} of {capacity} places"
+  },
+  "collection": {
+    "title": "Collection",
+    "demoLocal": {
+      "one": "The demo collection: {count} record, kept in this browser.",
+      "other": "The demo collection: {count} records, kept in this browser."
+    },
+    "demo": {
+      "one": "The demo collection: {count} record.",
+      "other": "The demo collection: {count} records."
+    },
+    "discogs": {
+      "one": "The Discogs collection of “{username}”: {count} record.",
+      "other": "The Discogs collection of “{username}”: {count} records."
+    },
+    "already": "That's already your collection. It updates from Discogs on its own.",
+    "importOwn": "Import your own collection from Discogs instead",
+    "importOther": "Import a different Discogs collection",
+    "placeholder": "Discogs username",
+    "waitSync": "Wait for the update from Discogs to finish.",
+    "confirmTitle": "Replace your collection with the one of “{username}”?",
+    "confirmText": {
+      "one": "Your {count} record and your shelves are replaced, including records you added by hand. You'll set up your shelves again for the new collection. Nothing changes on Discogs.",
+      "other": "Your {count} records and your shelves are replaced, including records you added by hand. You'll set up your shelves again for the new collection. Nothing changes on Discogs."
+    },
+    "accountFirst": "You'll create a free account first.",
+    "replace": "Replace my collection"
+  },
+  "cover": {
+    "none": "{artist}, {title} (no cover)"
+  },
+  "tour": {
+    "offerTitle": "Want a quick tour?",
+    "offerText": "It takes about a minute.",
+    "showMe": "Show me around",
+    "notNow": "Not now",
+    "waiting": "We'll show you around as soon as your shelf is ready.",
+    "back": "Back",
+    "next": "Next",
+    "skip": "Skip tour",
+    "finish": "Done",
+    "progress": "{n} of {total}",
+    "label": "Tour",
+    "steps": {
+      "search": {
+        "title": "Search",
+        "text": "Type an artist or a title to find where a record is."
+      },
+      "rail": {
+        "title": "The brass rail",
+        "text": "Your whole collection from start to end. The mustard marker shows where a record falls."
+      },
+      "compartment": {
+        "title": "A compartment",
+        "text": "Each compartment shows its range. Click one to see the records inside."
+      },
+      "record": {
+        "title": "The record detail",
+        "text": "Where it is, the records on each side, and its tracklist."
+      },
+      "add": {
+        "title": "Add a new record",
+        "text": "Bought something new? Find it on Discogs and see where it goes."
+      },
+      "setup": {
+        "title": "Shelves & order",
+        "text": "Set up your furniture. LPs and singles go on separate shelves, and you'll see how many records fit as you build."
+      },
+      "done": {
+        "title": "Done",
+        "text": "That's it. You can see this tour again from Help, at the top of the page."
+      }
+    }
+  },
+  "calibration": {
+    "hint": "The map assumes about {capacity} records per compartment, an estimate. If a compartment on your real shelf starts with a different record, tell the app which one: the map follows your shelf.",
+    "start": "Match a compartment",
+    "later": "Not now"
+  },
+  "simulator": {
+    "title": "Purchase simulator",
+    "text": {
+      "one": "Replays {count} purchase on your collection and shelves, with v1's insertion (it only pushes records forward) and with v2's minimum moves (it shifts toward the nearest free place, forward or back).",
+      "other": "Replays {count} purchases on your collection and shelves, with v1's insertion (it only pushes records forward) and with v2's minimum moves (it shifts toward the nearest free place, forward or back)."
+    },
+    "run": {
+      "one": "Replay {count} purchase",
+      "other": "Replay {count} purchases"
+    },
+    "running": "Running…",
+    "naive": "v1, naive",
+    "minimum": "v2, minimum moves",
+    "moved": {
+      "one": "{count} record moved",
+      "other": "{count} records moved"
+    },
+    "fewer": {
+      "one": "{scenario}, {purchases} purchases move {count} record fewer with v2.",
+      "other": "{scenario}, {purchases} purchases move {count} records fewer with v2."
+    },
+    "same": "{scenario}, {purchases} purchases move the same records with both methods: the free space absorbs them.",
+    "details": "Straight in: {naiveDirect} with v1, {minimumDirect} with v2. Most moves for a single purchase: {naiveWorst} with v1, {minimumWorst} with v2.",
+    "howFull": "How full your shelves end up",
+    "asIs": "As they are now",
+    "fullPct": "{pct}% full after the purchases",
+    "scenarioNow": "With your shelves as they are",
+    "scenarioFull": "With shelves {pct}% full after the purchases"
+  },
+  "mediaHeader": {
+    "lp": "LPs (12″ and 10″)",
+    "single": "7″",
+    "cd": "CDs"
+  },
+  "temp": {
+    "takenOut": "Taken out to {location}. Its spot on the shelf stays reserved.",
+    "putBack": "Back on the shelf. Its spot is highlighted on the map.",
+    "failed": "Couldn't save that. Try again.",
+    "outBanner": "Out of the shelf: in {location}.",
+    "outHint": "Its spot stays reserved. When it comes back, put it in the compartment above, between the records on each side.",
+    "putBackButton": "Put it back",
+    "takeOut": "Take it out…",
+    "chooseTitle": "Where is it going?",
+    "suggestions": {
+      "turntable": "Next to the turntable",
+      "gigBag": "Gig bag",
+      "discards": "Discards box",
+      "display": "On display",
+      "pile": "Unsorted pile"
+    },
+    "otherPlaceholder": "Name the place",
+    "confirm": "Take it out",
+    "panelTitle": {
+      "one": "{count} record out of the shelf",
+      "other": "{count} records out of the shelf"
+    },
+    "show": "Show",
+    "searchOut": "In {location}. Its spot: {place}",
+    "elsewhere": "Somewhere else"
+  },
+  "guest": {
+    "title": "A shared shelf",
+    "intro": "Search for a record to see where it is and where it goes back.",
+    "readOnly": "This is a read-only view shared by the shelf's owner. Nothing can be changed from here.",
+    "loading": "Loading the shelf…",
+    "missing": "This link doesn't work anymore. Ask the owner for a new one.",
+    "stale": "This shelf hasn't been updated in the last six hours, so it can't be shown right now. It shows again once its owner opens Record Organizer.",
+    "error": "Couldn't load the shelf. Try again in a minute."
+  },
+  "share": {
+    "title": "Share your shelf",
+    "text": "A read-only link for guests: they can search and see where a record is and where it goes back, without an account. They can't change anything.",
+    "create": "Create a link",
+    "new": "Make a new link",
+    "copy": "Copy the link",
+    "copied": "Copied",
+    "revoke": "Turn off the link",
+    "revoked": "The link is off.",
+    "signUp": "Sign up to share your shelf with a link.",
+    "failed": "Couldn't change the link. Try again.",
+    "label": "Guest link",
+    "freshness": "Guests see the shelf while its Discogs data is less than six hours old; opening the app refreshes it."
+  }
+}

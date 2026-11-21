@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, useClerk } from "@clerk/nextjs";
-import { discogsUsernameSchema } from "@/lib/validation";
+import { usernameIssue, type UsernameIssue } from "@/lib/validation";
 import { setPendingImport } from "@/lib/local/pending";
+import { useI18n } from "@/i18n/client";
+import { btnPrimary, input } from "./ui";
 
 /**
  * Lets anyone type their Discogs username without an account.
@@ -15,18 +17,19 @@ export function ImportForm() {
   const router = useRouter();
   const { isSignedIn } = useAuth();
   const clerk = useClerk();
+  const { t } = useI18n();
   const [value, setValue] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UsernameIssue | null>(null);
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    const parsed = discogsUsernameSchema.safeParse(value);
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Check the username.");
+    const issue = usernameIssue(value);
+    if (issue) {
+      setError(issue);
       return;
     }
     setError(null);
-    setPendingImport(parsed.data);
+    setPendingImport(value.trim());
     if (isSignedIn) {
       router.push("/app");
     } else {
@@ -36,8 +39,8 @@ export function ImportForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-2">
-      <label htmlFor="discogs-username" className="text-sm font-medium text-ink">
-        Your Discogs username
+      <label htmlFor="discogs-username" className="text-sm font-semibold text-ink">
+        {t("importForm.label")}
       </label>
       <div className="flex gap-2">
         <input
@@ -51,18 +54,15 @@ export function ImportForm() {
           onChange={(e) => setValue(e.target.value)}
           aria-invalid={error ? true : undefined}
           aria-describedby="discogs-username-help"
-          placeholder="e.g. vinylcollector"
-          className="min-w-0 flex-1 rounded-control border border-line-strong bg-surface px-3 py-2.5 text-base text-ink placeholder:text-ink-faint"
+          placeholder={t("importForm.placeholder")}
+          className={`${input} flex-1`}
         />
-        <button
-          type="submit"
-          className="shrink-0 rounded-control bg-ink px-4 py-2.5 text-sm font-semibold text-surface hover:bg-ink/85"
-        >
-          Import
+        <button type="submit" className={`${btnPrimary} shrink-0`}>
+          {t("common.import")}
         </button>
       </div>
-      <p id="discogs-username-help" className={`text-sm ${error ? "text-danger" : "text-ink-muted"}`} role={error ? "alert" : undefined}>
-        {error ?? "Your collection must be public on Discogs. You'll create a free account to save it."}
+      <p id="discogs-username-help" className={`text-sm ${error ? "font-semibold text-danger" : "text-muted"}`} role={error ? "alert" : undefined}>
+        {error ? t(`validation.${error}`) : t("importForm.help")}
       </p>
     </form>
   );

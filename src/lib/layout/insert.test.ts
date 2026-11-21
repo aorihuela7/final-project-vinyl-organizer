@@ -11,7 +11,7 @@ const byArtist: SortSettings = { levels: ["artist"], ignoreArticles: true };
 
 /** Builds a state from a picture like [["A","B"],["C"],[]] (one array per compartment). */
 function stateFrom(picture: string[][], capacity: number) {
-  const slots: Slot[] = traverse([shelf({ rows: 1, cols: picture.length, defaultCapacity: capacity })], "vinyl");
+  const slots: Slot[] = traverse([shelf({ rows: 1, cols: picture.length, defaultCapacity: capacity })], "lp");
   const records: LayoutRecord[] = [];
   const placement: Placement = new Map();
   picture.forEach((names, i) => {
@@ -205,7 +205,7 @@ describe("insertion keeps the invariants", () => {
     const shelves = [shelf({ rows: 2, cols: 4, defaultCapacity: 30 })];
     let records: LayoutRecord[] = Array.from({ length: 150 }, (_, i) => rec(name(), { id: `base${i}` }));
     const layout = initialLayout(records, shelves, byArtist, 20);
-    const slots = layout.groups.vinyl.slots;
+    const slots = layout.groups.lp.slots;
     let placement = layout.placement;
     let overflowed = 0;
     for (let i = 0; i < 200; i++) {

@@ -6,9 +6,10 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { DEMO, FRESHNESS_MS } from "@/lib/config";
-import { DiscogsError, getCollectionPage, getRelease } from "@/lib/discogs/client";
+import { DiscogsError, IMPORT_PACE, getCollectionPage, getRelease } from "@/lib/discogs/client";
 import { mapCollectionItem, mapRelease } from "@/lib/discogs/map";
 import { replacesCollection } from "./replace";
+import { storedJobSchema } from "@/lib/validation";
 
 export type ImportJob = {
   id: string;
@@ -154,6 +155,10 @@ export async function stepImport(supabase: SupabaseClient, userId: string, jobId
   if (!found) throw new ImportError("Import not found.", 404);
   const job = found as ImportJob;
   if (job.status === "done" || job.status === "error") return { job };
+  if (!storedJobSchema.safeParse(job).success) {
+    const failed = await updateJob(supabase, job.id, { status: "error", last_error: "This import isn't valid. Start it again.", finished_at: new Date().toISOString() });
+    return { job: failed ?? job };
+  }
 
   const page = job.next_page;
   let pageData;
@@ -221,9 +226,18 @@ export async function stepImport(supabase: SupabaseClient, userId: string, jobId
     return { job: (current as ImportJob) ?? job };
   }
 
-  // Leave room in the shared rate limit for other users.
-  const retryAfterMs = remaining !== null && remaining < 5 ? 2500 : undefined;
-  return { job: updated, retryAfterMs };
+  return { job: updated, retryAfterMs: importPause(remaining) };
+}
+
+/**
+ * How long the browser waits before the next step: nothing while the shared
+ * budget is comfortable, then longer the less is left (2.5 s with 29 requests
+ * left, about 14 s with none), so several imports at once settle above the
+ * floor that searches need.
+ */
+export function importPause(remaining: number | null): number | undefined {
+  if (remaining === null || remaining >= IMPORT_PACE) return undefined;
+  return 2500 + (IMPORT_PACE - 1 - Math.max(0, remaining)) * 400;
 }
 
 /** End of a full sync: sweep unseen records, refresh added ones, stamp the collection. */
@@ -282,14 +296,17 @@ async function finishSync(supabase: SupabaseClient, job: ImportJob, expected: nu
   for (const record of added ?? []) {
     if (!record.discogs_release_id) continue;
     try {
-      const { data } = await getRelease(record.discogs_release_id);
+      const { data, remaining } = await getRelease(record.discogs_release_id, "import");
       const fresh = mapRelease(data);
       await supabase
         .from("records")
         .update({ ...fresh, discogs_instance_id: null, synced_at: new Date().toISOString() })
         .eq("id", record.id);
-    } catch {
-      // Keep the old copy; the next sync tries again.
+      // Leave the rest of the shared budget to other people; the next sync refreshes the others.
+      if (remaining !== null && remaining < IMPORT_PACE) break;
+    } catch (err) {
+      // Keep the old copy; the next sync tries again. Discogs being busy stops the refresh.
+      if (err instanceof DiscogsError && err.status === 429) break;
     }
   }
 

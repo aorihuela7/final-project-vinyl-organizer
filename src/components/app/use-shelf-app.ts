@@ -9,22 +9,30 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { FRESHNESS_MS } from "@/lib/config";
+import { msg, rawMsg, type Msg } from "@/i18n/core";
+import { useI18n } from "@/i18n/client";
 import type { RecordInput } from "@/lib/discogs/map";
 import {
   calibrate as calibrateLayout,
+  calibrateCount as calibrateCountLayout,
   collapseMoves,
   countChanges,
   insertRecord,
+  restrictToSection,
+  restrictToSlotSection,
+  SHELF_MEDIA,
   sortRecords,
   type Move,
   type Placement,
   type ShelfMedia,
 } from "@/lib/layout";
-import { clearLocal, loadLocal, saveLocal, type LocalSnapshot } from "@/lib/store/local";
+import { clearLocal, loadLocal, loadLocalWithMigration, saveLocal, type LocalSnapshot } from "@/lib/store/local";
 import { peekPendingImport, setPendingImport, takePendingImport } from "@/lib/local/pending";
 import {
   addRecordRemote,
   applyPlacementsRemote,
+  ensureLocationRemote,
+  setRecordLocationRemote,
   loadRemote,
   saveSetupRemote,
   type CollectionRow,
@@ -36,12 +44,16 @@ import {
   buildViews,
   computeInitial,
   demoConfig,
+  groupOf,
+  misplacedRecords,
+  sizeOf,
   placementByPosition,
   toLayoutRecord,
   toSortSettings,
   type MediaView,
   type ShelfConfig,
   type StoredRecord,
+  type TempLocation,
 } from "@/lib/shelf/model";
 import { useSupabase } from "@/lib/supabase/browser";
 
@@ -52,16 +64,20 @@ export type AppData = {
   collection: CollectionRow | null;
   /** Local demo only: when its records were fetched from Discogs. */
   fetchedAt: string | null;
+  /** Whether a compartment was ever calibrated (the map says it's computed from estimates until then). */
+  calibrated?: boolean;
+  /** Temporary locations (records taken out carry temp_location_id). */
+  locations?: TempLocation[];
 };
 
 export type Status =
-  | { kind: "loading"; message: string }
-  | { kind: "onboarding"; error?: string; username?: string }
-  | { kind: "importing"; job: JobRow | null; message: string }
+  | { kind: "loading"; message: Msg }
+  | { kind: "onboarding"; error?: Msg; username?: string }
+  | { kind: "importing"; job: JobRow | null; message: Msg }
   | { kind: "ready" }
-  | { kind: "error"; message: string };
+  | { kind: "error"; message: Msg };
 
-export type Notice = { tone: "info" | "success" | "warning"; text: string; moves?: Move[] };
+export type Notice = { tone: "info" | "success" | "warning"; msg: Msg; moves?: Move[] };
 
 export type MapPreview = { config: ShelfConfig; changed: number; placed: number; leftover: number; notPlaced: number; hasMap: boolean; slackReduced: boolean };
 
@@ -90,10 +106,10 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const replacedNotice = (username: string): Notice => ({
-  tone: "success",
-  text: `The Discogs collection of "${username}" replaced the previous one. Build your shelf for it.`,
-});
+const replacedNotice = (username: string): Notice => ({ tone: "success", msg: msg("notices.replaced", { username }) });
+
+/** An error from a server or the network, as raw text (it comes in English), or a fallback message. */
+const errorMsg = (err: unknown, fallback: Msg): Msg => (err instanceof Error && err.message ? rawMsg(err.message) : fallback);
 
 function demoRecords(payload: { records: RecordInput[] }): StoredRecord[] {
   return payload.records.map((r) => ({ ...r, id: `d${r.discogs_instance_id}`, origin: "import" as const }));
@@ -122,9 +138,9 @@ function placeNewRecords(records: StoredRecord[], config: ShelfConfig, placement
   let skipped = 0;
   for (const view of views) {
     if (view.unplaced.length === 0) continue;
-    let group = records.filter((r) => r.media === view.media && current.has(r.id)).map(toLayoutRecord);
+    let group = records.filter((r) => groupOf(r) === view.media && current.has(r.id)).map(toLayoutRecord);
     for (const r of sortRecords(view.unplaced.map(toLayoutRecord), settings)) {
-      const result = insertRecord({ slots: view.index.slots, records: group, placement: current, settings }, r);
+      const result = insertRecord({ ...restrictToSection(view.index.slots, group, r), placement: current, settings }, r, "minimum");
       if (result.overflow.length > 0 || !result.target) {
         skipped++;
         continue;
@@ -138,12 +154,35 @@ function placeNewRecords(records: StoredRecord[], config: ShelfConfig, placement
   return { placement: current, moves: collapseMoves(moves), placed, skipped };
 }
 
+/**
+ * Takes off the map any record whose compartment belongs to another format
+ * group (a re-sync can turn an "LP" into a 7″ single once every format is
+ * read). It goes back in through insertion in its own group, if that group has shelves.
+ */
+async function removeMisplaced(client: SupabaseClient, data: AppData): Promise<AppData> {
+  if (!data.config) return data;
+  const misplaced = misplacedRecords(data.records, data.config, data.placement);
+  if (misplaced.length === 0) return data;
+  const placement: Placement = new Map(data.placement);
+  const moves: Move[] = misplaced.map((id) => ({ recordId: id, from: data.placement.get(id) ?? null, to: null }));
+  for (const id of misplaced) placement.delete(id);
+  await applyPlacementsRemote(client, placement, moves, { kind: "format_split", moves, movedCount: moves.length });
+  return { ...data, placement };
+}
+
 export function useShelfApp(startParam: string | null) {
   const { isLoaded, isSignedIn, userId } = useAuth();
+  const { t } = useI18n();
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
+  /** Shelf names for the demo, in the language at the moment they're created. */
+  const demoNames = useCallback(() => ({ living: tRef.current("demo.living"), studio: tRef.current("demo.studio"), singles: tRef.current("demo.singles") }), []);
   const clerk = useClerk();
   const supabase = useSupabase();
   const [data, setData] = useState<AppData | null>(null);
-  const [status, setStatus] = useState<Status>({ kind: "loading", message: "Loading your shelf…" });
+  const [status, setStatus] = useState<Status>({ kind: "loading", message: msg("app.loadingShelf") });
   const [syncJob, setSyncJob] = useState<JobRow | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
@@ -162,22 +201,23 @@ export function useShelfApp(startParam: string | null) {
   const persistLocal = useCallback((next: AppData, event?: { kind: string; movedCount: number }) => {
     const previous = loadLocal();
     const snapshot: LocalSnapshot = {
-      version: 1,
+      version: 2,
       records: next.records,
       fetchedAt: next.fetchedAt ?? new Date().toISOString(),
-      config: next.config ?? demoConfig(),
+      config: next.config ?? demoConfig(next.records, demoNames()),
       placement: [...next.placement],
       events: [...(previous?.events ?? []), ...(event ? [{ ...event, at: new Date().toISOString() }] : [])].slice(-50),
+      locations: next.locations ?? previous?.locations ?? [],
     };
-    if (!saveLocal(snapshot)) setNotice({ tone: "warning", text: "This browser couldn't save the demo. It will reset when you leave." });
-  }, []);
+    if (!saveLocal(snapshot)) setNotice({ tone: "warning", msg: msg("notices.localSaveFailed") });
+  }, [demoNames]);
 
   const startLocalDemo = useCallback(async () => {
-    setStatus({ kind: "loading", message: "Loading the demo collection from Discogs…" });
+    setStatus({ kind: "loading", message: msg("app.loadingDemo") });
     try {
       const payload = await api<{ records: RecordInput[]; fetchedAt: string }>("/api/demo");
       const records = demoRecords(payload);
-      const config = demoConfig();
+      const config = demoConfig(records, demoNames());
       const { byPosition, layout } = computeInitial(records, config);
       const next: AppData = { records, config, placement: byPosition, collection: null, fetchedAt: payload.fetchedAt };
       persistLocal(next, { kind: "initial", movedCount: byPosition.size });
@@ -186,12 +226,16 @@ export function useShelfApp(startParam: string | null) {
       setStatus({ kind: "ready" });
       setNotice({
         tone: "success",
-        text: `Demo ready: ${layout.groups.vinyl.sortedIds.length} records on "Living room" and ${layout.groups.cd.sortedIds.length} CDs in "Studio", sorted by genre, then artist.`,
+        msg: msg(layout.groups.single.sortedIds.length > 0 ? "notices.demoReadySingles" : "notices.demoReady", {
+          lps: layout.groups.lp.sortedIds.length,
+          singles: layout.groups.single.sortedIds.length,
+          cds: layout.groups.cd.sortedIds.length,
+        }),
       });
     } catch (err) {
-      setStatus({ kind: "error", message: err instanceof Error ? err.message : "Couldn't load the demo." });
+      setStatus({ kind: "error", message: errorMsg(err, msg("notices.demoFailed")) });
     }
-  }, [persistLocal]);
+  }, [persistLocal, demoNames]);
 
   /** Re-fetches the demo when the browser copy is older than 6 hours, keeping the shelves and calibrations. */
   const refreshLocalDemo = useCallback(
@@ -217,11 +261,24 @@ export function useShelfApp(startParam: string | null) {
         const latest = loadLocal() ?? snapshot;
         const refreshedAdded = new Map(added.map((r) => [r.id, r]));
         const addedNow = latest.records.filter((r) => r.origin === "added").map((r) => refreshedAdded.get(r.id) ?? r);
-        const fresh = [...demoRecords(payload), ...addedNow];
+        // Records taken out to a temporary location stay out after the refresh.
+        const outside = new Map(latest.records.filter((r) => r.temp_location_id).map((r) => [r.id, r]));
+        const fresh = [...demoRecords(payload), ...addedNow].map((r) => {
+          const was = outside.get(r.id);
+          return was ? { ...r, temp_location_id: was.temp_location_id, taken_out_at: was.taken_out_at } : r;
+        });
         const ids = new Set(fresh.map((r) => r.id));
         const kept = new Map([...new Map(latest.placement)].filter(([id]) => ids.has(id)));
         const placed = placeNewRecords(fresh, latest.config, kept);
-        const next: AppData = { records: fresh, config: latest.config, placement: placed.placement, collection: null, fetchedAt: payload.fetchedAt };
+        const next: AppData = {
+          records: fresh,
+          config: latest.config,
+          placement: placed.placement,
+          collection: null,
+          fetchedAt: payload.fetchedAt,
+          calibrated: latest.events.some((e) => e.kind === "calibrate"),
+          locations: latest.locations ?? [],
+        };
         persistLocal(next, placed.moves.length ? { kind: "insert", movedCount: placed.moves.length } : undefined);
         if (alive.current) setData(next);
       } catch {
@@ -236,7 +293,15 @@ export function useShelfApp(startParam: string | null) {
   // ------------------------------------------------------------ remote
   const reloadRemote = useCallback(async (client: SupabaseClient) => {
     const state = await loadRemote(client);
-    const next: AppData = { records: state.records, config: state.config, placement: state.placement, collection: state.collection, fetchedAt: null };
+    const next: AppData = {
+      records: state.records,
+      config: state.config,
+      placement: state.placement,
+      collection: state.collection,
+      fetchedAt: null,
+      calibrated: state.calibrated,
+      locations: state.locations,
+    };
     return { state, next };
   }, []);
 
@@ -258,7 +323,7 @@ export function useShelfApp(startParam: string | null) {
         current = step.job;
         if (!alive.current) break;
         if (background) setSyncJob(current);
-        else setStatus({ kind: "importing", job: current, message: "Importing your collection…" });
+        else setStatus({ kind: "importing", job: current, message: msg("importing.importing") });
         if (step.retryAfterMs) await sleep(step.retryAfterMs);
       }
       void client;
@@ -290,10 +355,10 @@ export function useShelfApp(startParam: string | null) {
         const localPositions = new Map(local.placement);
         for (const r of local.records.filter((x) => x.origin === "added")) {
           if (!userId) break;
-          const { id: localId, origin: _origin, synced_at: _synced, ...input } = r;
-          void _origin;
-          void _synced;
-          const stored = await addRecordRemote(client, userId, input);
+          // Only the Discogs fields go to the database: not the demo's local temporary location.
+          const { id: localId, origin: _origin, synced_at: _synced, temp_location_id: _loc, taken_out_at: _out, ...input } = r;
+          void [_origin, _synced, _loc, _out];
+          const stored = await addRecordRemote(client, userId, { ...input, size_inches: sizeOf(r), format_group: groupOf(r) });
           const position = localPositions.get(localId);
           if (position) byPosition.set(stored.id, position);
         }
@@ -304,9 +369,9 @@ export function useShelfApp(startParam: string | null) {
         await saveSetupRemote(client, config, byPosition, { kind: "initial", moves: [], movedCount: byPosition.size });
         clearLocal();
         ({ state, next } = await reloadRemote(client));
-        setNotice({ tone: "success", text: "Your demo shelf is saved to your account." });
+        setNotice({ tone: "success", msg: msg("notices.demoSaved") });
       } else if (!state.config && state.collection?.source === "demo") {
-        const config = demoConfig();
+        const config = demoConfig(state.records, demoNames());
         const { byPosition } = computeInitial(state.records, config);
         await saveSetupRemote(client, config, byPosition, { kind: "initial", moves: [], movedCount: byPosition.size });
         ({ state, next } = await reloadRemote(client));
@@ -319,8 +384,9 @@ export function useShelfApp(startParam: string | null) {
         };
         await saveSetupRemote(client, config, byPosition, { kind: "relayout", moves: [], movedCount: byPosition.size });
         ({ state, next } = await reloadRemote(client));
-        setNotice({ tone: "info", text: "Most records were new, so the whole shelf was laid out again with your settings." });
+        setNotice({ tone: "info", msg: msg("notices.relaidOut") });
       } else if (state.config) {
+        next = await removeMisplaced(client, next);
         const placed = placeNewRecords(next.records, state.config, next.placement);
         let saved = placed.moves.length > 0;
         if (saved) {
@@ -328,56 +394,56 @@ export function useShelfApp(startParam: string | null) {
             await applyPlacementsRemote(client, placed.placement, placed.moves, { kind: "insert", moves: placed.moves, movedCount: placed.moves.length });
           } catch (err) {
             saved = false;
-            setNotice({ tone: "warning", text: `Couldn't place the new records: ${err instanceof Error ? err.message : "unknown error"}. Regenerate the map to include them.` });
+            setNotice({ tone: "warning", msg: msg("notices.placeFailed", { message: err instanceof Error ? err.message : "?" }) });
           }
         }
         if (saved) {
           next = { ...next, placement: placed.placement };
           setNotice({
             tone: "info",
-            text: `${placed.placed} new record${placed.placed === 1 ? "" : "s"} placed on your shelf: ${placed.moves.length} move${placed.moves.length === 1 ? "" : "s"}.`,
+            msg: msg("notices.newPlaced", { count: placed.placed, moves: msg("notices.moves", { count: placed.moves.length }) }),
             moves: placed.moves,
           });
         } else if (placed.skipped > 0) {
-          setNotice({ tone: "warning", text: `${placed.skipped} new record${placed.skipped === 1 ? " doesn't" : "s don't"} fit where they belong. Add a shelf or regenerate the map.` });
+          setNotice({ tone: "warning", msg: msg("notices.newSkipped", { count: placed.skipped }) });
         }
       }
       if (!alive.current) return;
       setData(next);
       setStatus({ kind: "ready" });
     },
-    [reloadRemote, userId],
+    [reloadRemote, userId, demoNames],
   );
 
   /** A replacement failed: nothing changed, so go back to the current collection and say why. */
   const failReplacement = useCallback((username: string, message: string) => {
     setStatus({ kind: "ready" });
-    setNotice({ tone: "warning", text: `Couldn't import "${username}": ${message} Your current collection didn't change.` });
+    setNotice({ tone: "warning", msg: msg("notices.replaceFailed", { username, message }) });
   }, []);
 
   const startRemoteImport = useCallback(
     async (client: SupabaseClient, input: { source: "discogs"; username: string } | { source: "demo" }, background: boolean, replacing = false) => {
-      const username = input.source === "discogs" ? input.username : "the demo";
-      if (!background) setStatus({ kind: "importing", job: null, message: input.source === "demo" ? "Loading the demo collection…" : "Starting the import…" });
+      const username = input.source === "discogs" ? input.username : "demo";
+      if (!background) setStatus({ kind: "importing", job: null, message: msg(input.source === "demo" ? "importing.loadingDemo" : "importing.starting") });
       try {
         const { job } = await api<{ job: JobRow }>("/api/import/start", input);
         if (background) setSyncJob(job);
         const finished = await runJob(client, job, background);
         if (!alive.current || (finished.status !== "done" && finished.status !== "error")) return;
         if (finished.status === "error") {
-          if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${finished.last_error ?? "unknown error"}` });
+          if (background) setNotice({ tone: "warning", msg: msg("notices.syncFailed", { message: finished.last_error ?? "?" }) });
           else if (replacing) failReplacement(username, finished.last_error ?? "The import failed.");
-          else setStatus({ kind: "onboarding", error: finished.last_error ?? "The import failed.", username: input.source === "discogs" ? input.username : undefined });
+          else setStatus({ kind: "onboarding", error: finished.last_error ? rawMsg(finished.last_error) : msg("notices.importFailed"), username: input.source === "discogs" ? input.username : undefined });
           return;
         }
         await afterImport(client);
         if (replacing && alive.current) setNotice(replacedNotice(username));
       } catch (err) {
         if (!alive.current) return;
-        const message = err instanceof Error ? err.message : "The import failed.";
-        if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${message}` });
+        const message = err instanceof Error ? err.message : "";
+        if (background) setNotice({ tone: "warning", msg: msg("notices.syncFailed", { message: message || "?" }) });
         else if (replacing) failReplacement(username, message);
-        else setStatus({ kind: "onboarding", error: message, username: input.source === "discogs" ? input.username : undefined });
+        else setStatus({ kind: "onboarding", error: message ? rawMsg(message) : msg("notices.importFailed"), username: input.source === "discogs" ? input.username : undefined });
       } finally {
         if (alive.current && background) setSyncJob(null);
       }
@@ -395,10 +461,22 @@ export function useShelfApp(startParam: string | null) {
 
     if (mode === "local") {
       void (async () => {
-        const snapshot = loadLocal();
+        const loaded = loadLocalWithMigration(demoNames().singles);
+        const snapshot = loaded?.snapshot ?? null;
         if (snapshot) {
-          setData({ records: snapshot.records, config: snapshot.config, placement: new Map(snapshot.placement), collection: null, fetchedAt: snapshot.fetchedAt });
+          setData({
+            records: snapshot.records,
+            config: snapshot.config,
+            placement: new Map(snapshot.placement),
+            collection: null,
+            fetchedAt: snapshot.fetchedAt,
+            calibrated: snapshot.events.some((e) => e.kind === "calibrate"),
+            locations: snapshot.locations ?? [],
+          });
           setStatus({ kind: "ready" });
+          if (loaded?.migration?.singlesBoxAdded) {
+            setNotice({ tone: "info", msg: msg("notices.singlesBoxAdded", { count: snapshot.records.filter((r) => groupOf(r) === "single").length }) });
+          }
           if (isStale(snapshot.fetchedAt)) await refreshLocalDemo(snapshot);
         } else if (startParam === "demo") {
           await startLocalDemo();
@@ -435,11 +513,11 @@ export function useShelfApp(startParam: string | null) {
           }
           const finished = await runJob(client, state.activeJob, background);
           if (!alive.current) return;
-          const username = finished.source === "demo" ? "the demo" : finished.discogs_username;
+          const username = finished.source === "demo" ? "demo" : finished.discogs_username;
           if (finished.status === "error") {
-            if (background) setNotice({ tone: "warning", text: `Couldn't update from Discogs: ${finished.last_error}` });
+            if (background) setNotice({ tone: "warning", msg: msg("notices.syncFailed", { message: finished.last_error ?? "?" }) });
             else if (replacing) failReplacement(username, finished.last_error ?? "The import failed.");
-            else setStatus({ kind: "onboarding", error: finished.last_error ?? "The import failed.", username: finished.discogs_username });
+            else setStatus({ kind: "onboarding", error: finished.last_error ? rawMsg(finished.last_error) : msg("notices.importFailed"), username: finished.discogs_username });
             setSyncJob(null);
             return;
           }
@@ -452,7 +530,7 @@ export function useShelfApp(startParam: string | null) {
         }
         if (state.records.length === 0 && state.lastJob?.status === "error") {
           // The last import failed (a typo, a private collection): let them fix it.
-          setStatus({ kind: "onboarding", error: state.lastJob.last_error ?? "The last import failed.", username: state.lastJob.discogs_username });
+          setStatus({ kind: "onboarding", error: state.lastJob.last_error ? rawMsg(state.lastJob.last_error) : msg("notices.importFailed"), username: state.lastJob.discogs_username });
           return;
         }
         if (!state.collection) {
@@ -465,6 +543,10 @@ export function useShelfApp(startParam: string | null) {
         }
         setData(next);
         setStatus({ kind: "ready" });
+        if (state.config && misplacedRecords(next.records, state.config, next.placement).length > 0) {
+          const fixed = await removeMisplaced(client, next);
+          if (alive.current) setData(fixed);
+        }
         if (!state.config && state.collection.source === "demo") {
           // A demo import that finished without its shelves (e.g. the tab closed at the end): build them now.
           await afterImport(client);
@@ -480,10 +562,10 @@ export function useShelfApp(startParam: string | null) {
           if (placed.moves.length > 0) await afterImport(client);
         }
       } catch (err) {
-        if (alive.current) setStatus({ kind: "error", message: err instanceof Error ? err.message : "Couldn't load your shelf." });
+        if (alive.current) setStatus({ kind: "error", message: errorMsg(err, msg("notices.loadFailed")) });
       }
     })();
-  }, [mode, userId, supabase, startParam, startLocalDemo, refreshLocalDemo, reloadRemote, startRemoteImport, runJob, afterImport, failReplacement]);
+  }, [mode, userId, supabase, startParam, startLocalDemo, refreshLocalDemo, reloadRemote, startRemoteImport, runJob, afterImport, failReplacement, demoNames]);
 
   // ------------------------------------------------------------ actions
   const startDemo = useCallback(() => {
@@ -517,10 +599,10 @@ export function useShelfApp(startParam: string | null) {
         config,
         changed: hasMap ? countChanges(before, byPosition) : byPosition.size,
         placed: byPosition.size,
-        leftover: layout.groups.vinyl.leftover.length + layout.groups.cd.leftover.length,
+        leftover: SHELF_MEDIA.reduce((n, m) => n + layout.groups[m].leftover.length, 0),
         notPlaced: layout.notPlaced.length,
         hasMap,
-        slackReduced: layout.groups.vinyl.slackReduced || layout.groups.cd.slackReduced,
+        slackReduced: SHELF_MEDIA.some((m) => layout.groups[m].slackReduced),
       };
     },
     [data],
@@ -558,15 +640,15 @@ export function useShelfApp(startParam: string | null) {
         }
         setNotice({
           tone: preview.leftover > 0 ? "warning" : "success",
-          text:
+          msg:
             preview.leftover > 0
-              ? `Map generated. ${preview.leftover} record${preview.leftover === 1 ? " doesn't" : "s don't"} fit: add a shelf or raise the capacity.`
+              ? msg("notices.mapLeftover", { count: preview.leftover })
               : preview.hasMap
-                ? `Map updated: ${preview.changed} record${preview.changed === 1 ? "" : "s"} changed compartment.`
-                : `Map generated: ${preview.placed} records placed.`,
+                ? msg("notices.mapUpdated", { count: preview.changed })
+                : msg("notices.mapGenerated", { count: preview.placed }),
         });
       } catch (err) {
-        setNotice({ tone: "warning", text: err instanceof Error ? err.message : "Couldn't save the map." });
+        setNotice({ tone: "warning", msg: errorMsg(err, msg("notices.mapSaveFailed")) });
       } finally {
         setBusy(false);
       }
@@ -583,20 +665,20 @@ export function useShelfApp(startParam: string | null) {
       } else {
         persistLocal({ ...data, records, placement }, { kind: event.kind, movedCount: event.movedCount });
       }
-      setData({ ...data, records, placement });
+      setData({ ...data, records, placement, calibrated: data.calibrated || event.kind === "calibrate" });
     },
     [data, mode, supabase, persistLocal],
   );
 
   const calibrate = useCallback(
     async (recordId: string, slotId: string) => {
-      if (!data?.config) return { ok: false as const, reason: "Generate a map first." };
+      if (!data?.config) return { ok: false as const, code: "notOnShelf" as const, reason: "Generate a map first." };
       const record = data.records.find((r) => r.id === recordId);
-      const view = views.find((v) => v.media === record?.media);
-      if (!record || !view) return { ok: false as const, reason: "That record isn't on a shelf." };
+      const view = record ? views.find((v) => v.media === groupOf(record)) : undefined;
+      if (!record || !view) return { ok: false as const, code: "notOnShelf" as const, reason: "That record isn't on a shelf." };
       const settings = toSortSettings(data.config.settings);
-      const group = data.records.filter((r) => r.media === view.media).map(toLayoutRecord);
-      const result = calibrateLayout({ slots: view.index.slots, records: group, placement: data.placement, settings }, recordId, slotId);
+      const group = data.records.filter((r) => groupOf(r) === view.media).map(toLayoutRecord);
+      const result = calibrateLayout({ ...restrictToSlotSection(view.index.slots, group, slotId), placement: data.placement, settings }, recordId, slotId);
       if (!result.ok) return result;
       if (result.movedCount > 0) {
         setBusy(true);
@@ -611,18 +693,42 @@ export function useShelfApp(startParam: string | null) {
     [data, views, applyChange],
   );
 
-  /** "Where does this record go?": the naive insertion, computed without saving. */
+  /** Calibration by count: "there are N records in this compartment right now". */
+  const calibrateCount = useCallback(
+    async (slotId: string, count: number) => {
+      if (!data?.config) return { ok: false as const, code: "notOnShelf" as const, reason: "Generate a map first." };
+      const view = views.find((v) => v.index.slotById.has(slotId));
+      if (!view) return { ok: false as const, code: "unavailable" as const, reason: "That compartment isn't available." };
+      const settings = toSortSettings(data.config.settings);
+      const group = data.records.filter((r) => groupOf(r) === view.media).map(toLayoutRecord);
+      const result = calibrateCountLayout({ ...restrictToSlotSection(view.index.slots, group, slotId), placement: data.placement, settings }, slotId, count);
+      if (!result.ok) return result;
+      if (result.movedCount > 0) {
+        setBusy(true);
+        try {
+          await applyChange(result.placement, result.moves, { kind: "calibrate", moves: result.moves, movedCount: result.movedCount });
+        } finally {
+          setBusy(false);
+        }
+      }
+      return result;
+    },
+    [data, views, applyChange],
+  );
+
+  /** "Add a new record": the naive insertion, computed without saving. */
   const previewInsert = useCallback(
     (input: RecordInput): InsertPreview | null => {
       if (!data?.config) return null;
       const record: StoredRecord = { ...input, id: `new-${input.discogs_release_id}`, origin: "added" };
-      const view = views.find((v) => v.media === input.media);
+      const view = views.find((v) => v.media === groupOf(record));
       if (!view || view.index.slots.length === 0) {
         return { record, media: null, target: null, moves: [], movedCount: 0, overflow: [], placement: data.placement };
       }
       const settings = toSortSettings(data.config.settings);
-      const group = data.records.filter((r) => r.media === view.media && data.placement.has(r.id)).map(toLayoutRecord);
-      const result = insertRecord({ slots: view.index.slots, records: group, placement: data.placement, settings }, toLayoutRecord(record));
+      const group = data.records.filter((r) => groupOf(r) === view.media && data.placement.has(r.id)).map(toLayoutRecord);
+      const layoutRecord = toLayoutRecord(record);
+      const result = insertRecord({ ...restrictToSection(view.index.slots, group, layoutRecord), placement: data.placement, settings }, layoutRecord, "minimum");
       return { record, media: view.media, target: result.target, moves: result.moves, movedCount: result.movedCount, overflow: result.overflow, placement: result.placement };
     },
     [data, views],
@@ -636,14 +742,15 @@ export function useShelfApp(startParam: string | null) {
         let stored: StoredRecord;
         if (mode === "remote" && supabase && userId) stored = await addRecordRemote(supabase, userId, input);
         else stored = { ...input, id: `a${input.discogs_release_id}-${Date.now().toString(36)}`, origin: "added", synced_at: new Date().toISOString() };
-        const view = views.find((v) => v.media === stored.media);
+        const view = views.find((v) => v.media === groupOf(stored));
         if (!view || view.index.slots.length === 0) {
           setData({ ...data, records: [...data.records, stored] });
           return { stored, preview: null };
         }
         const settings = toSortSettings(data.config.settings);
-        const group = data.records.filter((r) => r.media === view.media && data.placement.has(r.id)).map(toLayoutRecord);
-        const result = insertRecord({ slots: view.index.slots, records: group, placement: data.placement, settings }, toLayoutRecord(stored));
+        const group = data.records.filter((r) => groupOf(r) === view.media && data.placement.has(r.id)).map(toLayoutRecord);
+        const layoutRecord = toLayoutRecord(stored);
+        const result = insertRecord({ ...restrictToSection(view.index.slots, group, layoutRecord), placement: data.placement, settings }, layoutRecord, "minimum");
         try {
           await applyChange(result.placement, result.moves, { kind: "insert", moves: result.moves, movedCount: result.movedCount }, [stored]);
         } catch (err) {
@@ -652,18 +759,73 @@ export function useShelfApp(startParam: string | null) {
         }
         setNotice({
           tone: "success",
-          text: `Added. ${result.movedCount === 1 ? "1 move: just put it in." : `${result.movedCount} moves.`}`,
+          msg: result.movedCount <= 1 ? msg("notices.addedOneMove") : msg("notices.addedMoves", { count: result.movedCount }),
           moves: result.moves,
         });
         return { stored, preview: result };
       } catch (err) {
-        setNotice({ tone: "warning", text: err instanceof Error ? err.message : "Couldn't add the record." });
+        setNotice({ tone: "warning", msg: errorMsg(err, msg("notices.addFailed")) });
         return null;
       } finally {
         setBusy(false);
       }
     },
     [data, mode, supabase, userId, views, applyChange],
+  );
+
+  /** Takes a record out to a temporary location (created if it's new). It keeps its spot on the shelf. */
+  const takeOut = useCallback(
+    async (recordId: string, name: string): Promise<TempLocation | null> => {
+      const trimmed = name.trim().slice(0, 60);
+      if (!data || !trimmed) return null;
+      setBusy(true);
+      try {
+        let location = (data.locations ?? []).find((l) => l.name.toLocaleLowerCase() === trimmed.toLocaleLowerCase());
+        if (mode === "remote" && supabase && userId) {
+          if (!location) location = await ensureLocationRemote(supabase, userId, trimmed);
+          await setRecordLocationRemote(supabase, recordId, location.id);
+        } else if (!location) {
+          location = { id: `loc-${Date.now().toString(36)}`, name: trimmed };
+        }
+        const found = location;
+        const locations = (data.locations ?? []).some((l) => l.id === found.id) ? (data.locations ?? []) : [...(data.locations ?? []), found];
+        const records = data.records.map((r) => (r.id === recordId ? { ...r, temp_location_id: found.id, taken_out_at: new Date().toISOString() } : r));
+        const next: AppData = { ...data, records, locations };
+        if (mode !== "remote") persistLocal(next);
+        setData(next);
+        setNotice({ tone: "info", msg: msg("temp.takenOut", { location: found.name }) });
+        return found;
+      } catch (err) {
+        setNotice({ tone: "warning", msg: errorMsg(err, msg("temp.failed")) });
+        return null;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [data, mode, supabase, userId, persistLocal],
+  );
+
+  /** Puts a record back: its spot never changed, so the card and the map show where. */
+  const putBack = useCallback(
+    async (recordId: string): Promise<boolean> => {
+      if (!data) return false;
+      setBusy(true);
+      try {
+        if (mode === "remote" && supabase) await setRecordLocationRemote(supabase, recordId, null);
+        const records = data.records.map((r) => (r.id === recordId ? { ...r, temp_location_id: null, taken_out_at: null } : r));
+        const next: AppData = { ...data, records };
+        if (mode !== "remote") persistLocal(next);
+        setData(next);
+        setNotice({ tone: "success", msg: msg("temp.putBack") });
+        return true;
+      } catch (err) {
+        setNotice({ tone: "warning", msg: errorMsg(err, msg("temp.failed")) });
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [data, mode, supabase, persistLocal],
   );
 
   const resetLocal = useCallback(() => {
@@ -687,8 +849,11 @@ export function useShelfApp(startParam: string | null) {
     previewMap,
     generateMap,
     calibrate,
+    calibrateCount,
     previewInsert,
     addRecord,
+    takeOut,
+    putBack,
     resetLocal,
   };
 }
