@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { FRESHNESS_MS } from "@/lib/config";
+import { FRESHNESS_MS, ZERO_START, isZeroStart } from "@/lib/config";
 import { msg, rawMsg, type Msg } from "@/i18n/core";
 import { useI18n } from "@/i18n/client";
 import type { RecordInput } from "@/lib/discogs/map";
@@ -106,7 +106,26 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const replacedNotice = (username: string): Notice => ({ tone: "success", msg: msg("notices.replaced", { username }) });
+const replacedNotice = (username: string): Notice => ({
+  tone: "success",
+  msg: isZeroStart(username) ? msg("notices.replacedZero") : msg("notices.replaced", { username }),
+});
+
+// "Start from zero" is an import of an empty Discogs collection behind the
+// scenes: its username and its Discogs errors never reach the screen.
+
+/** Why an import failed, as the user sees it. */
+const importError = (username: string | undefined, error: string | null | undefined): Msg =>
+  isZeroStart(username) ? msg("notices.zeroFailed") : error ? rawMsg(error) : msg("notices.importFailed");
+
+/** The username to put back in the field after a failed import. */
+const retryUsername = (username: string | undefined): string | undefined => (isZeroStart(username) ? undefined : username);
+
+/** A background update from Discogs that failed. */
+const syncFailedNotice = (username: string | undefined, error: string | null | undefined): Notice => ({
+  tone: "warning",
+  msg: msg("notices.syncFailed", { message: isZeroStart(username) ? msg("notices.discogsDown") : error || "?" }),
+});
 
 /** An error from a server or the network, as raw text (it comes in English), or a fallback message. */
 const errorMsg = (err: unknown, fallback: Msg): Msg => (err instanceof Error && err.message ? rawMsg(err.message) : fallback);
@@ -418,7 +437,7 @@ export function useShelfApp(startParam: string | null) {
   /** A replacement failed: nothing changed, so go back to the current collection and say why. */
   const failReplacement = useCallback((username: string, message: string) => {
     setStatus({ kind: "ready" });
-    setNotice({ tone: "warning", msg: msg("notices.replaceFailed", { username, message }) });
+    setNotice({ tone: "warning", msg: isZeroStart(username) ? msg("notices.replaceZeroFailed") : msg("notices.replaceFailed", { username, message }) });
   }, []);
 
   const startRemoteImport = useCallback(
@@ -431,9 +450,9 @@ export function useShelfApp(startParam: string | null) {
         const finished = await runJob(client, job, background);
         if (!alive.current || (finished.status !== "done" && finished.status !== "error")) return;
         if (finished.status === "error") {
-          if (background) setNotice({ tone: "warning", msg: msg("notices.syncFailed", { message: finished.last_error ?? "?" }) });
+          if (background) setNotice(syncFailedNotice(username, finished.last_error));
           else if (replacing) failReplacement(username, finished.last_error ?? "The import failed.");
-          else setStatus({ kind: "onboarding", error: finished.last_error ? rawMsg(finished.last_error) : msg("notices.importFailed"), username: input.source === "discogs" ? input.username : undefined });
+          else setStatus({ kind: "onboarding", error: importError(username, finished.last_error), username: input.source === "discogs" ? retryUsername(input.username) : undefined });
           return;
         }
         await afterImport(client);
@@ -441,9 +460,9 @@ export function useShelfApp(startParam: string | null) {
       } catch (err) {
         if (!alive.current) return;
         const message = err instanceof Error ? err.message : "";
-        if (background) setNotice({ tone: "warning", msg: msg("notices.syncFailed", { message: message || "?" }) });
+        if (background) setNotice(syncFailedNotice(username, message));
         else if (replacing) failReplacement(username, message);
-        else setStatus({ kind: "onboarding", error: message ? rawMsg(message) : msg("notices.importFailed"), username: input.source === "discogs" ? input.username : undefined });
+        else setStatus({ kind: "onboarding", error: importError(username, message), username: input.source === "discogs" ? retryUsername(input.username) : undefined });
       } finally {
         if (alive.current && background) setSyncJob(null);
       }
@@ -515,9 +534,9 @@ export function useShelfApp(startParam: string | null) {
           if (!alive.current) return;
           const username = finished.source === "demo" ? "demo" : finished.discogs_username;
           if (finished.status === "error") {
-            if (background) setNotice({ tone: "warning", msg: msg("notices.syncFailed", { message: finished.last_error ?? "?" }) });
+            if (background) setNotice(syncFailedNotice(username, finished.last_error));
             else if (replacing) failReplacement(username, finished.last_error ?? "The import failed.");
-            else setStatus({ kind: "onboarding", error: finished.last_error ? rawMsg(finished.last_error) : msg("notices.importFailed"), username: finished.discogs_username });
+            else setStatus({ kind: "onboarding", error: importError(finished.discogs_username, finished.last_error), username: retryUsername(finished.discogs_username) });
             setSyncJob(null);
             return;
           }
@@ -530,7 +549,7 @@ export function useShelfApp(startParam: string | null) {
         }
         if (state.records.length === 0 && state.lastJob?.status === "error") {
           // The last import failed (a typo, a private collection): let them fix it.
-          setStatus({ kind: "onboarding", error: state.lastJob.last_error ? rawMsg(state.lastJob.last_error) : msg("notices.importFailed"), username: state.lastJob.discogs_username });
+          setStatus({ kind: "onboarding", error: importError(state.lastJob.discogs_username, state.lastJob.last_error), username: retryUsername(state.lastJob.discogs_username) });
           return;
         }
         if (!state.collection) {
@@ -842,10 +861,11 @@ export function useShelfApp(startParam: string | null) {
     syncJob,
     notice,
     busy,
-    pendingImport: typeof window === "undefined" ? null : peekPendingImport(),
+    pendingImport: typeof window === "undefined" ? null : (retryUsername(peekPendingImport() ?? undefined) ?? null),
     dismissNotice: () => setNotice(null),
     startDemo,
     importDiscogs,
+    startFromZero: () => importDiscogs(ZERO_START.username),
     previewMap,
     generateMap,
     calibrate,

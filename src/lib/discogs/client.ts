@@ -136,6 +136,13 @@ export function getCollectionPage(
   return discogsGet<DiscogsCollectionPage>(`/users/${encodeURIComponent(username)}/collection/folders/0/releases?${q}`);
 }
 
+/** How many records a public collection has, from a one-record page. */
+export async function getCollectionCount(username: string): Promise<number> {
+  const q = new URLSearchParams({ page: "1", per_page: "1" });
+  const { data } = await discogsGet<DiscogsCollectionPage>(`/users/${encodeURIComponent(username)}/collection/folders/0/releases?${q}`, "interactive");
+  return data.pagination.items;
+}
+
 export function searchReleases(query: string): Promise<DiscogsResponse<{ results: DiscogsSearchResult[] }>> {
   const q = new URLSearchParams({ q: query, type: "release", per_page: "12" });
   return discogsGet<{ results: DiscogsSearchResult[] }>(`/database/search?${q}`, "interactive");

@@ -106,7 +106,9 @@
     },
     "addSinglesShelf": "Add a Singles shelf",
     "toolsTitle": "More for your collection",
-    "toolsText": "These save on their own; they don't need “Generate map”."
+    "toolsText": "These save on their own; they don't need “Generate map”.",
+    "buildTextEmpty": "Your collection is empty for now. Pick your furniture and your sort order, then add your records one by one: the app tells you where each one goes.",
+    "emptyShelf": "Your shelf is empty. Add your first record and the app tells you where it goes."
   },
   "levels": {
     "genre": "genre",
@@ -179,7 +181,11 @@
     "singlesBoxAdded": {
       "one": "Singles (7″) now go on their own shelves. We added a Singles box for your {count} single, and no LP moved.",
       "other": "Singles (7″) now go on their own shelves. We added a Singles box for your {count} singles, and no LP moved."
-    }
+    },
+    "replacedZero": "Your collection now starts from scratch. Build your shelf, then add your records one by one.",
+    "zeroFailed": "Couldn't start an empty collection right now. Try again in a minute.",
+    "replaceZeroFailed": "Couldn't start from scratch right now. Your current collection didn't change.",
+    "discogsDown": "Discogs didn't answer. Try again later."
   },
   "demo": {
     "living": "Living room",
@@ -484,7 +490,13 @@
       "other": "Your {count} records and your shelves are replaced, including records you added by hand. You'll set up your shelves again for the new collection. Nothing changes on Discogs."
     },
     "accountFirst": "You'll create a free account first.",
-    "replace": "Replace my collection"
+    "replace": "Replace my collection",
+    "zero": {
+      "one": "Started from scratch: {count} record added by hand.",
+      "other": "Started from scratch: {count} records added by hand."
+    },
+    "startZero": "Start from scratch instead",
+    "confirmZeroTitle": "Start from scratch, with an empty collection?"
   },
   "cover": {
     "none": "{artist}, {title} (no cover)"
@@ -619,5 +631,23 @@
     "failed": "Couldn't change the link. Try again.",
     "label": "Guest link",
     "freshness": "Guests see the shelf while its Discogs data is less than six hours old; opening the app refreshes it."
+  },
+  "zero": {
+    "title": "Start from scratch",
+    "text": "No Discogs account? Start with an empty collection and add your records one by one with “Add a new record”. The app tells you where each one goes.",
+    "button": "Start from scratch"
+  },
+  "samples": {
+    "label": "No Discogs account? Try a public collection",
+    "choose": "Choose a collection",
+    "option": "{username} ({records}, {about})",
+    "optionNoCount": "{username} ({about})",
+    "about": {
+      "oddcd": "90s electronic on vinyl",
+      "tubasmarty": "brass bands and military music on vinyl",
+      "wooda": "rock, mostly on CD",
+      "veale001": "rock, jazz, and blues on vinyl",
+      "wcdwinnell": "electronic and rock on vinyl and CD"
+    }
   }
 }

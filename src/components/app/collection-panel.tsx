@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { replacesCollection } from "@/lib/import/replace";
+import { ZERO_START, isZeroStart } from "@/lib/config";
+import { SampleCollections } from "../sample-collections";
 import { usernameIssue } from "@/lib/validation";
 import { useI18n } from "@/i18n/client";
-import { Banner, btnPrimary, btnPrimarySm, btnSecondarySm, card, input } from "../ui";
+import { Banner, btnPrimary, btnPrimarySm, btnSecondarySm, btnText, card, input } from "../ui";
 import type { ShelfApp } from "./use-shelf-app";
 
 /**
@@ -20,12 +22,16 @@ export function CollectionPanel({ app }: { app: ShelfApp }) {
   const count = app.data?.records.length ?? 0;
   const collection = app.data?.collection ?? null;
   const isDemo = app.mode === "local" || collection?.source === "demo";
+  // "Start from scratch" is an empty Discogs collection behind the scenes; its username never shows.
+  const fromScratch = !isDemo && isZeroStart(collection?.discogs_username);
   const summary =
     app.mode === "local"
       ? t("collection.demoLocal", { count })
       : isDemo
         ? t("collection.demo", { count })
-        : t("collection.discogs", { count, username: collection?.discogs_username ?? "?" });
+        : fromScratch
+          ? t("collection.zero", { count })
+          : t("collection.discogs", { count, username: collection?.discogs_username ?? "?" });
 
   return (
     <section aria-labelledby="collection-heading" className={`${card} p-[18px]`}>
@@ -75,10 +81,33 @@ export function CollectionPanel({ app }: { app: ShelfApp }) {
               {error}
             </p>
           )}
+          <div className="mt-3">
+            <SampleCollections
+              id="replace-sample"
+              value={username}
+              onPick={(name) => {
+                setUsername(name);
+                setError(null);
+              }}
+            />
+          </div>
+          {!fromScratch && (
+            <button
+              type="button"
+              disabled={!!app.syncJob || app.busy}
+              onClick={() => {
+                setError(null);
+                setConfirming(ZERO_START.username);
+              }}
+              className={`${btnText} mt-2 -ml-2`}
+            >
+              {t("collection.startZero")}
+            </button>
+          )}
         </form>
       ) : (
         <Banner tone="warning" role="alert" className="mt-3">
-          <p className="font-semibold">{t("collection.confirmTitle", { username: confirming })}</p>
+          <p className="font-semibold">{isZeroStart(confirming) ? t("collection.confirmZeroTitle") : t("collection.confirmTitle", { username: confirming })}</p>
           <p className="mt-1">{t("collection.confirmText", { count })}</p>
           {app.mode === "local" && <p className="mt-1">{t("collection.accountFirst")}</p>}
           <div className="mt-3 flex flex-wrap gap-2">

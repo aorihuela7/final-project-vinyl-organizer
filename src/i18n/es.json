@@ -106,7 +106,9 @@
     },
     "addSinglesShelf": "Agregar una repisa de singles",
     "toolsTitle": "Más para tu colección",
-    "toolsText": "Esto se guarda solo; no necesita “Generar el mapa”."
+    "toolsText": "Esto se guarda solo; no necesita “Generar el mapa”.",
+    "buildTextEmpty": "Por ahora tu colección está vacía. Elige tus muebles y tu orden, y después agrega tus discos uno por uno: la app te dice dónde va cada uno.",
+    "emptyShelf": "Tu repisa está vacía. Agrega tu primer disco y la app te dice dónde va."
   },
   "levels": {
     "genre": "género",
@@ -179,7 +181,11 @@
     "singlesBoxAdded": {
       "one": "Los singles (7″) ahora van en sus propias repisas. Agregamos una caja de singles para tu {count} single, y ningún LP se movió.",
       "other": "Los singles (7″) ahora van en sus propias repisas. Agregamos una caja de singles para tus {count} singles, y ningún LP se movió."
-    }
+    },
+    "replacedZero": "Tu colección ahora empieza de cero. Arma tu repisa y después agrega tus discos uno por uno.",
+    "zeroFailed": "No se pudo empezar una colección vacía en este momento. Vuelve a intentarlo en un minuto.",
+    "replaceZeroFailed": "No se pudo empezar de cero en este momento. Tu colección actual no cambió.",
+    "discogsDown": "Discogs no respondió. Vuelve a intentarlo más tarde."
   },
   "demo": {
     "living": "Sala",
@@ -484,7 +490,13 @@
       "other": "Se reemplazan tus {count} discos y tus repisas, incluidos los discos que agregaste a mano. Vas a armar tus repisas de nuevo para la colección nueva. Nada cambia en Discogs."
     },
     "accountFirst": "Primero vas a crear una cuenta gratis.",
-    "replace": "Reemplazar mi colección"
+    "replace": "Reemplazar mi colección",
+    "zero": {
+      "one": "Empezaste de cero: {count} disco agregado a mano.",
+      "other": "Empezaste de cero: {count} discos agregados a mano."
+    },
+    "startZero": "Mejor empezar de cero",
+    "confirmZeroTitle": "¿Empezar de cero, con una colección vacía?"
   },
   "cover": {
     "none": "{artist}, {title} (sin portada)"
@@ -619,5 +631,23 @@
     "failed": "No se pudo cambiar el enlace. Intenta de nuevo.",
     "label": "Enlace para invitados",
     "freshness": "Los invitados ven la repisa mientras sus datos de Discogs tengan menos de seis horas; abrir la app los actualiza."
+  },
+  "zero": {
+    "title": "Empezar de cero",
+    "text": "¿No tienes cuenta en Discogs? Empieza con una colección vacía y agrega tus discos uno por uno con “Agregar un disco nuevo”. La app te dice dónde va cada uno.",
+    "button": "Empezar de cero"
+  },
+  "samples": {
+    "label": "¿No tienes cuenta en Discogs? Prueba con una colección pública",
+    "choose": "Elige una colección",
+    "option": "{username} ({records}, {about})",
+    "optionNoCount": "{username} ({about})",
+    "about": {
+      "oddcd": "electrónica de los 90 en vinilo",
+      "tubasmarty": "bandas de bronce y música militar en vinilo",
+      "wooda": "rock, casi todo en CD",
+      "veale001": "rock, jazz y blues en vinilo",
+      "wcdwinnell": "electrónica y rock en vinilo y CD"
+    }
   }
 }
