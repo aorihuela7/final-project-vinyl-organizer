@@ -47,8 +47,8 @@ Plans: `docs/v2-plan.md` (what we learned from v1 and what to add) and `docs/v2-
 - **Live capacity** in the shelf builder.
 - **"Add a new record"** (renamed from "Where does this record go?").
 - **Tracklists** from Discogs in the record detail (fetched on demand, cached at most 6 hours, never stored in the database).
-- **Language selector** (English, Español, Português) and a **guided tour**.
-- From `docs/v2-plan.md`: easier calibration, minimum-move insertion with a purchase simulator (the naive method stays as the baseline), temporary locations and "Put it back", calibration by count and thickness by format, custom sections and tags, guest mode (read-only link or QR), and the hardening list (Clerk deletion webhook, purge of inactive accounts, CSP, no database errors in the browser).
+- **Language selector** (English, Español, Português) and a **guided tour**, reopened any time from Help in the header.
+- From `docs/v2-plan.md`: easier calibration, minimum-move insertion with a purchase simulator (the naive method stays as the baseline), temporary locations and "Put it back", calibration by count and thickness by format, custom sections (by genre), guest mode (read-only link or QR), and the hardening list (Clerk deletion webhook, purge of inactive accounts, CSP, no database errors in the browser).
 
 **Still out in v2:** drag-and-drop editor, multiple rooms, per-compartment dimensions, splitting or merging compartments, sort-order suggestions, MusicBrainz, any AI model call, Discogs OAuth, writing to Discogs, CSV import and manual entry, barcode scanning, printable dividers, dark mode, stores and Discogs inventory.
 
@@ -114,7 +114,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 
 - **Nogal mid-century (v2):** a 1960s living room. Sage wall background, walnut furniture on tapered legs, brass plates under each compartment, a brass rail for the whole collection, and mustard for what you found. Display face Belleza, text face Nunito Sans (both through `next/font`). The spec is `docs/v2-design-plan.md` and `docs/design/nogal.html`.
 - Covers are never altered (no filters, no text on top); they're integrated through the frame: square, same radius and same shadow everywhere.
-- **Compartment drawing:** one SVG component in three sizes (map, compartment view, record detail). Each record is a thin shape, one record's share of the capacity wide, colored by a hash of its record ID into the fixed spine palette (mustard is reserved for the found record), with heights by size (12″, 10″, 7″). Records lean into free space following `src/lib/visual/lean.ts` (visual only, never affects placement). Hovering or focusing a record shows artist and title; clicking it opens the record card, and only there the cover. On phones the compartment view adds a tappable text list under the drawing.
+- **Compartment drawing:** one SVG component in three sizes (map, compartment view, record detail). Each record is a thin shape, one record's share of the capacity wide, colored by a hash of its record ID into the fixed spine palette (mustard is reserved for the found record), with heights by size (12″, 10″, 7″, and CDs at about 40% of an LP's height, a bit thicker). Records lean into free space following `src/lib/visual/lean.ts` (visual only, never affects placement): at least the first half always stands upright against the wall, and only the last ones lean, each resting on the one before. Hovering or focusing a record shows artist and title; clicking it opens the record card, and only there the cover. On phones the compartment view adds a tappable text list under the drawing.
 - Record without a cover: our own placeholder (initials on a palette tile), never a broken image.
 - Design tokens (colors, type, radii, shadows) in a single file.
 - Plain sentences in sentence case; no strings joined with middle dots; no all-caps labels.
@@ -122,7 +122,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 
 ## Demo
 
-Demo collection source: the 1,000 most recently added records of the public Discogs collection of user `aorihuelar`, imported through the same path as any username import (10 pages, page cap). Prebuilt shelves: "Living room", Kallax 4×4 with two blocked compartments (turntable); "Studio", tower 1×5; and in v2 a "Singles box" (record box 1×3) when the demo collection has singles. Sort order: genre → artist. Default capacity: 80 records per cube (unmeasured), 70 per crate, 60 CDs per cube; global slack 10%. Without an account, the demo runs entirely in the browser; signing up saves it to the account.
+Demo collection source: the 1,000 most recently added records of the public Discogs collection of user `aorihuelar`, imported through the same path as any username import (10 pages, page cap). Prebuilt shelves: "Living room", Kallax 4×4 with two blocked compartments (turntable); "Studio", tower 1×5; and in v2 a "Singles box" (record box 1×3) when the demo collection has singles. Sort order: artist → title. Default capacity: 80 records per cube (unmeasured), 70 per crate, 60 CDs per cube (two rows of 30, each row its own compartment); global slack 10%. Without an account, the demo runs entirely in the browser; signing up saves it to the account.
 
 ## Security and free tiers
 
@@ -165,7 +165,7 @@ Demo collection source: the 1,000 most recently added records of the public Disc
 - Sign-in: email + password without email verification, plus Google (Clerk).
 - No login wall: the demo works without an account (in the browser); sign-up is asked to save or to run an own import.
 - Formats: shelves hold vinyl or CDs; each media is laid out separately with the same sort settings.
-- Defaults: sort by artist, ignore articles off ("The Beatles" under T), slack 10%, 80 records per cube, 70 per crate, 60 CDs per cube.
+- Defaults: sort by artist, ignore articles off ("The Beatles" under T), slack 10%, 80 records per cube, 70 per crate, 60 CDs per cube (two rows of 30).
 - Artist spellings: "The Beatles" and "Beatles" are the same artist and sort together under the spelling with the article.
 - Switching collections: one per user; a new import replaces the old collection and its shelves, then "Build your shelf" with suggested templates.
 - Compartment view (v1): vertical spines with a hover bubble on larger screens; replaced in v2 by the Nogal lean drawing.
@@ -173,3 +173,7 @@ Demo collection source: the 1,000 most recently added records of the public Disc
 - v2 format groups: LPs (12″ and 10″) and singles (7″) on separate shelves; singles were removed from LP shelves without moving any LP. Singles capacity: 150 per Kallax cube (one row deep), 100 per record box (unmeasured).
 - v2 languages: English (default), Español, Português; Ale reviews the Spanish, the Portuguese needs a native speaker's review.
 - v2 kickoff answers and assumptions: `docs/v2-design-log.md`.
+- Demo order (November 20, 2026): by artist, then album title.
+- CD shelves (November 20, 2026): a Kallax cube for CDs holds two rows of 30 with a board in the middle; each row is its own compartment.
+- Leaning (November 20, 2026): at least the first half of the records in a compartment stands upright, even when there are few; only the last ones lean. Same rule for every format.
+- Help (November 20, 2026): one Help button in the header for everyone reopens the tour; the tour has no language step.
