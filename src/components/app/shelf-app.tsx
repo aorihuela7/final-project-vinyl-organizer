@@ -406,6 +406,8 @@ export function ShelfApp() {
           onPickRecord={(id) => {
             setOpenSlot(null);
             setOpenRecord(id);
+            // Same as a search: the outline, the rail marker, and the lift follow the record.
+            showFound(id);
           }}
         />
       )}

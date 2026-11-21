@@ -45,6 +45,40 @@ test("changing the language keeps the open record and translates the app", async
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sabe dónde está cada disco, y dónde va el próximo.");
 });
 
+test("picking a record inside a compartment moves the outline and the rail marker to it", async ({ page }) => {
+  test.setTimeout(120_000);
+  await skipTour(page);
+  await page.goto("/app?start=demo");
+  await expect(page.locator("[data-map]")).toBeVisible({ timeout: 60_000 });
+  const foundSlot = page.locator('[data-map] [data-slot]:has([data-found="true"])');
+  const marker = page.locator('[data-map] nav[data-tour="rail"] span[aria-hidden][style*="left"]');
+
+  // First a search: its compartment gets the outline and the marker moves to it.
+  await page.getByLabel("Search for an artist or a title in your collection").fill("a");
+  await page.getByRole("listbox", { name: "Search results" }).getByRole("option").first().click();
+  await expect(foundSlot).toHaveCount(1);
+  await expect(marker).toHaveCount(1);
+  const slotBefore = await foundSlot.getAttribute("data-slot");
+  const markerBefore = await marker.getAttribute("style");
+  // On phones the record card is a sheet over the map.
+  if (await page.getByRole("dialog").count()) await page.getByRole("dialog").getByRole("button", { name: "Close" }).first().click();
+
+  // Then open another compartment on the map and pick a record from its list.
+  const slots = page.locator("[data-map] [data-slot]");
+  const other = (await slots.first().getAttribute("data-slot")) !== slotBefore ? slots.first() : slots.nth(1);
+  const otherId = await other.getAttribute("data-slot");
+  await other.getByRole("button").first().click();
+  const compartment = page.getByRole("dialog");
+  await expect(compartment.getByText("Records in this compartment, left to right")).toBeVisible();
+  await compartment.locator("ol button").first().click();
+  await expect(recordCard(page)).toBeVisible();
+
+  // The map follows the record that's open, not the one found before.
+  await expect(foundSlot).toHaveAttribute("data-slot", otherId!);
+  await expect(marker).toHaveCount(1);
+  await expect(marker).not.toHaveAttribute("style", markerBefore!);
+});
+
 test("a record shows its tracklist from Discogs, and singles live on their own shelf", async ({ page, request }) => {
   test.setTimeout(120_000);
   await skipTour(page);
