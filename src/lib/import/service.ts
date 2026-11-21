@@ -5,9 +5,10 @@
  * are deleted (and lose their placement through the foreign key).
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { DEMO, FRESHNESS_MS } from "@/lib/config";
+import { DEMO, FRESHNESS_MS, isZeroStart } from "@/lib/config";
 import { DiscogsError, IMPORT_PACE, getCollectionPage, getRelease } from "@/lib/discogs/client";
 import { mapCollectionItem, mapRelease } from "@/lib/discogs/map";
+import type { DiscogsCollectionItem, DiscogsCollectionPage } from "@/lib/discogs/types";
 import { replacesCollection } from "./replace";
 import { storedJobSchema } from "@/lib/validation";
 
@@ -181,14 +182,9 @@ export async function stepImport(supabase: SupabaseClient, userId: string, jobId
     throw err;
   }
 
-  const discogsPages = pageData.pagination.pages;
-  const totalPages = job.max_pages ? Math.min(discogsPages, job.max_pages) : discogsPages;
-  const itemsTotal = job.max_pages
-    ? Math.min(pageData.pagination.items, job.max_pages * pageData.pagination.per_page)
-    : pageData.pagination.items;
-
+  const { items, totalPages, itemsTotal } = readPage(job, pageData);
   const now = new Date().toISOString();
-  const rows = pageData.releases.map((item) => ({
+  const rows = items.map((item) => ({
     ...mapCollectionItem(item),
     user_id: userId,
     origin: "import" as const,
@@ -227,6 +223,24 @@ export async function stepImport(supabase: SupabaseClient, userId: string, jobId
   }
 
   return { job: updated, retryAfterMs: importPause(remaining) };
+}
+
+/**
+ * What one page of a collection adds to a job: the items to save, and the
+ * totals (capped for the demo). "Start from scratch" is always empty: if that
+ * Discogs collection ever gains a record, nobody who started from scratch gets it.
+ */
+export function readPage(
+  job: Pick<ImportJob, "source" | "discogs_username" | "max_pages">,
+  page: DiscogsCollectionPage,
+): { items: DiscogsCollectionItem[]; totalPages: number; itemsTotal: number } {
+  if (job.source === "discogs" && isZeroStart(job.discogs_username)) return { items: [], totalPages: 1, itemsTotal: 0 };
+  const { pages, items, per_page } = page.pagination;
+  return {
+    items: page.releases,
+    totalPages: job.max_pages ? Math.min(pages, job.max_pages) : pages,
+    itemsTotal: job.max_pages ? Math.min(items, job.max_pages * per_page) : items,
+  };
 }
 
 /**

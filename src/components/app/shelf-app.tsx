@@ -245,7 +245,7 @@ export function ShelfApp() {
         <div className="flex flex-col gap-3">
           <div>
             <h1 className="font-display text-2xl text-ink">{t("app.buildTitle")}</h1>
-            <p className="text-sm text-muted">{t("app.buildText", { count: data.records.length })}</p>
+            <p className="text-sm text-muted">{data.records.length === 0 ? t("app.buildTextEmpty") : t("app.buildText", { count: data.records.length })}</p>
           </div>
           <SetupView app={app} initial={suggestedConfig(data.records, { lp: (n) => (n === null ? t("builder.suggestedLp") : t("builder.suggestedLpN", { n })), single: t("builder.suggestedSingles"), cd: t("builder.suggestedCds") })} records={data.records} onDone={() => setTab("map")} />
           <CollectionPanel app={app} />
@@ -298,6 +298,15 @@ export function ShelfApp() {
               />
 
               <p className="text-sm text-muted">{collectionSummary(t, data.records.length, config.settings)}</p>
+              {data.records.length === 0 && (
+                // Started from scratch: nothing on the shelf yet.
+                <Banner className="flex flex-wrap items-center justify-between gap-2">
+                  <span>{t("app.emptyShelf")}</span>
+                  <button type="button" onClick={() => setAdding(true)} className={btnPrimarySm}>
+                    {t("search.addNew")}
+                  </button>
+                </Banner>
+              )}
               {singlesWithoutShelf > 0 && (
                 <Banner className="flex flex-wrap items-center justify-between gap-2">
                   <span>{t("app.singlesOff", { count: singlesWithoutShelf })}</span>

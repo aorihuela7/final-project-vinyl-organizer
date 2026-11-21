@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ImportForm } from "@/components/import-form";
+import { ImportForm, StartFromScratch } from "@/components/import-form";
 import { LandingHero } from "@/components/landing-hero";
 import { btnPrimary, btnSecondary, card } from "@/components/ui";
 import { getTranslator } from "@/i18n/server";
@@ -27,6 +27,12 @@ export default async function Home() {
         <div className={`${card} p-5`}>
           <h2 className="mb-3 font-display text-lg text-ink">{t("landing.importTitle")}</h2>
           <ImportForm />
+        </div>
+
+        <div className={`${card} flex flex-col items-start gap-2 p-5`}>
+          <h2 className="font-display text-lg text-ink">{t("zero.title")}</h2>
+          <p className="text-sm text-muted">{t("zero.text")}</p>
+          <StartFromScratch />
         </div>
       </section>
 
