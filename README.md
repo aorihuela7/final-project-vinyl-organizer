@@ -8,15 +8,26 @@ Project for Design, Build, Ship (MPCS 51238, UChicago, Autumn 2026). Focus: **Sy
 
 ## What's new in v2
 
+Most of these changes come from watching four collectors use v1 ([what we saw](docs/v2-plan.md#what-we-saw-when-people-used-v1)); the rest come from reviewing v2 ourselves.
+
 - **Nogal mid-century design:** walnut furniture on tapered legs, brass nameplates with letter ranges ("# – Al", "Rock A – Fe"), a brass rail for the whole collection with a mustard marker, and every compartment drawn with its records leaning into the free space (`src/lib/visual/lean.ts`, tested for overlaps on ~10 million pairs).
+  - *Why:* v1 looked like any generated interface, and its range labels ("5 Seconds Of Summer · 5 – Almendra · Almendra") were hard to read and got cut off on phones. A map that looks like the real cabinet, with short letter ranges and every compartment drawn, is easier to match with the shelf in front of you.
 - **LPs and singles on separate shelves:** records are grouped by size from their Discogs formats (12″ and 10″ LPs, 7″ singles, CDs); a 7″ never sits on an LP shelf.
+  - *Why:* small records get lost behind 12″ ones (one tester lost a 10″ that way), and v1 treated all vinyl the same, so a 7″ could land between two LPs. Singles, the smallest, now get their own shelves.
 - **Minimum-move insertion** for new records, with a **purchase simulator** that compares it with v1's naive method on your own collection ([results](docs/algorithm.md#6b-minimum-move-insertion-v2-insertts-with-strategy-minimum)).
+  - *Why:* every record the app moves is one you have to shift by hand, and v1's cascade only pushed forward. On a real collection of 1,725 records at 98% full, it moves about 23% fewer records; with the default 10% free space, neither method moves any.
 - **Live capacity** while you build a shelf; **calibration by count**; an optional **thickness by format** (a double LP takes two places).
+  - *Why:* one tester's map was one or two compartments off by the end of the shelf, because 80 records per cube is a guess and double albums take more room. Seeing capacity while you build, and telling the app "74 fit here", keeps the map matched to the real shelf.
 - **Temporary locations** (gig bag, next to the turntable…) and **Put it back**; **sections** that pin a genre to a shelf.
+  - *Why:* three of four testers lose records outside the sorted shelf: a DJ's gig bag, a "discards" box. Put it back gives the exact spot and the neighbors. Sections cover the other thing testers asked for: not keeping the whole collection in one order ("jazz lives in the studio tower").
 - **CDs at their real size:** a Kallax cube holds two rows of CDs with a board between them, so each row of CDs is a compartment, drawn low and wide, with every shelf on the map at the same scale.
+  - *Why:* a CD drawn as tall as an LP gave the wrong picture, and a compartment the size of the whole cube couldn't say which of the two rows a CD is in.
 - **Guest mode:** a revocable read-only link to your shelf.
+  - *Why:* one tester lost a record when a guest put it back in the wrong place during a party. With the link, a guest finds a record and sees where it goes, without an account. It works because the shelf lives on the server, not on one phone.
 - **Tracklists** from Discogs in the record card; **English, Español, Português**; a **guided tour** for first-time users, which **Help** in the header shows again.
+  - *Why:* the tracklist lets you check what's on a record without leaving for Discogs. The languages open the app to collectors who don't read English. The tour helps a new person do the core task with no one helping, and "Help" is the word people look for when they're stuck.
 - **Hardening and a security pass:** a Content-Security-Policy for Clerk, generic error messages, a nightly purge of Discogs data from inactive accounts, a Clerk webhook that deletes an account's rows, the shared Discogs budget split fairly between imports and searches, per-account quotas so nobody can fill the free database, and cross-site checks on the import routes ([details](docs/security-pass.md)).
+  - *Why:* the Discogs terms ask us not to keep data longer than necessary, so data from deleted and inactive accounts goes away. The whole app shares one Discogs token and one free database, so no single account should be able to use them up for everyone else.
 
 ## What you can do
 
