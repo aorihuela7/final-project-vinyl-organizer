@@ -2,11 +2,25 @@
 
 import { useMemo, useState } from "react";
 import { SORT_LEVELS, type ShelfMedia, type SortLevel } from "@/lib/layout";
-import { changeMedia, changeTemplate, discsOf, groupOf, newFurniture, resizeFurniture, type FurnitureConfig, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
+import {
+  changeMedia,
+  changeTemplate,
+  discsOf,
+  groupOf,
+  newFurniture,
+  renameForSize,
+  resizeAndRename,
+  sizeLabel,
+  templateSizeLabel,
+  type FurnitureConfig,
+  type ShelfConfig,
+  type StoredRecord,
+} from "@/lib/shelf/model";
 import { slotPlace } from "@/lib/shelf/describe";
 import { groupFills, shelfHolds } from "@/lib/shelf/capacity";
-import { TEMPLATES, compartmentAspect, isBoxTemplate, rowsPerCube, type TemplateId } from "@/lib/shelf/templates";
+import { MAX_COLS, TEMPLATES, compartmentAspect, isBoxTemplate, maxRows, rowsPerCube, type TemplateId } from "@/lib/shelf/templates";
 import { useI18n } from "@/i18n/client";
+import type { Translator } from "@/i18n/core";
 import { genreName } from "@/i18n/core";
 import { Banner, btnPrimary, btnSecondary, btnSecondarySm, card } from "../ui";
 import { Compartment, Furniture } from "./furniture";
@@ -19,6 +33,26 @@ const field = "flex flex-col gap-1 text-sm text-muted";
 const control = "rounded-[18px] border border-input-line bg-white px-3.5 py-2 text-[15px] text-ink disabled:opacity-50";
 
 type Counts = Record<ShelfMedia | "other", number>;
+
+/** A new shelf's name: the template's, with its size ("Tower 1×5", "Custom shelf 3×3"). */
+function shelfName(t: Translator["t"], id: TemplateId): string {
+  return id === "custom" ? t("builder.customName", { size: templateSizeLabel(id) }) : t(`templates.${id}`);
+}
+
+/**
+ * Another template for a shelf. A name that is still the old template's own
+ * (at any size) becomes the new template's; a name the user wrote keeps its
+ * words, with the size updated if it has one.
+ */
+function withTemplate(t: Translator["t"], f: FurnitureConfig, id: TemplateId): FurnitureConfig {
+  const next = changeTemplate(f, id);
+  const ownName = renameForSize(shelfName(t, f.template), templateSizeLabel(f.template), sizeLabel(f));
+  const name =
+    !f.name.trim() || f.name === ownName
+      ? renameForSize(shelfName(t, id), templateSizeLabel(id), sizeLabel(next))
+      : renameForSize(f.name, sizeLabel(f), sizeLabel(next));
+  return { ...next, name };
+}
 
 /** Shelves & order: the shelves as walnut furniture, one open in the builder at a time, and the sort order. No drag and drop. */
 export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; initial: ShelfConfig; records: StoredRecord[]; onDone: () => void }) {
@@ -68,7 +102,7 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
     const hasSinglesShelf = draft.furniture.some((f) => f.media === "single");
     const media: ShelfMedia =
       id === "record_box" && counts.single > 0 && !hasSinglesShelf ? "single" : counts.lp === 0 && counts.cd > 0 ? "cd" : "lp";
-    const shelf = newFurniture(id, draft.furniture.length, media, t(`templates.${id}`));
+    const shelf = newFurniture(id, draft.furniture.length, media, shelfName(t, id));
     setDraft((d) => ({ ...d, furniture: [...d.furniture, shelf] }));
     setOpenKey(shelf.key);
   };
@@ -153,7 +187,6 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
             {preview.hasMap ? <p>{t("builder.willChange", { count: preview.changed })}</p> : <p>{t("builder.willPlace", { count: preview.placed })}</p>}
             {preview.leftover > 0 && <Banner tone="warning">{t("builder.leftover", { count: preview.leftover })}</Banner>}
             {preview.slackReduced && preview.leftover === 0 && <Banner tone="warning">{t("builder.slackReduced")}</Banner>}
-            {preview.notPlaced > 0 && <p className="text-muted">{t("builder.notPlaced", { count: preview.notPlaced })}</p>}
             <div className="flex gap-2">
               <button
                 type="button"
@@ -271,7 +304,11 @@ function ShelfBuilder({
   };
 
   // CDs stand in two rows per cube: changeMedia splits or joins the rows.
-  const setMedia = (media: ShelfMedia) => onChange((x) => changeMedia(x, media));
+  const setMedia = (media: ShelfMedia) =>
+    onChange((x) => {
+      const next = changeMedia(x, media);
+      return { ...next, name: renameForSize(x.name, sizeLabel(x), sizeLabel(next)) };
+    });
 
   const arithmetic =
     holds.overrides > 0
@@ -300,7 +337,7 @@ function ShelfBuilder({
               value={f.template}
               onChange={(e) => {
                 const id = e.target.value as TemplateId;
-                onChange((x) => changeTemplate(x, id));
+                onChange((x) => withTemplate(t, x, id));
               }}
               className={control}
             >
@@ -327,9 +364,9 @@ function ShelfBuilder({
               type="number"
               inputMode="numeric"
               min={1}
-              max={12}
+              max={maxRows(f.template, f.media)}
               value={f.rows}
-              onChange={(e) => onChange((x) => resizeFurniture(x, clamp(Number(e.target.value), 1, 12), x.cols))}
+              onChange={(e) => onChange((x) => resizeAndRename(x, clamp(Number(e.target.value), 1, maxRows(x.template, x.media)), x.cols))}
               className={control}
             />
           </label>
@@ -339,9 +376,9 @@ function ShelfBuilder({
               type="number"
               inputMode="numeric"
               min={1}
-              max={24}
+              max={MAX_COLS}
               value={f.cols}
-              onChange={(e) => onChange((x) => resizeFurniture(x, x.rows, clamp(Number(e.target.value), 1, 24)))}
+              onChange={(e) => onChange((x) => resizeAndRename(x, x.rows, clamp(Number(e.target.value), 1, MAX_COLS)))}
               className={control}
             />
           </label>

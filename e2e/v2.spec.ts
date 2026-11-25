@@ -51,7 +51,7 @@ test("picking a record inside a compartment moves the outline and the rail marke
   await page.goto("/app?start=demo");
   await expect(page.locator("[data-map]")).toBeVisible({ timeout: 60_000 });
   const foundSlot = page.locator('[data-map] [data-slot]:has([data-found="true"])');
-  const marker = page.locator('[data-map] nav[data-tour="rail"] span[aria-hidden][style*="left"]');
+  const marker = page.locator("[data-map] [data-rail-marker]").first();
 
   // First a search: its compartment gets the outline and the marker moves to it.
   await page.getByLabel("Search for an artist or a title in your collection").fill("a");
@@ -77,6 +77,38 @@ test("picking a record inside a compartment moves the outline and the rail marke
   await expect(foundSlot).toHaveAttribute("data-slot", otherId!);
   await expect(marker).toHaveCount(1);
   await expect(marker).not.toHaveAttribute("style", markerBefore!);
+});
+
+test("dragging the rail's marker and letting go picks the record at that spot", async ({ page }) => {
+  test.setTimeout(120_000);
+  await skipTour(page);
+  await page.goto("/app?start=demo");
+  await expect(page.locator("[data-map]")).toBeVisible({ timeout: 60_000 });
+  const foundSlot = page.locator('[data-map] [data-slot]:has([data-found="true"])');
+  await page.getByLabel("Search for an artist or a title in your collection").fill("a");
+  await page.getByRole("listbox", { name: "Search results" }).getByRole("option").first().click();
+  if (await page.getByRole("dialog").count()) await page.getByRole("dialog").getByRole("button", { name: "Close" }).first().click();
+  const marker = page.locator("[data-map] [data-rail-marker]").first();
+  await expect(marker).toBeVisible();
+  const before = await marker.getAttribute("aria-valuetext");
+  const slotBefore = await foundSlot.getAttribute("data-slot");
+
+  // Drag it to the end of the rail and let go.
+  // Hovering waits until the marker stops moving (the page scrolls to the record first).
+  await marker.hover();
+  const box = (await marker.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  const railBox = (await page.locator('[data-map] nav[data-tour="rail"]').first().boundingBox())!;
+  await page.mouse.move(railBox.x + railBox.width - 2, box.y + box.height / 2, { steps: 8 });
+  await page.screenshot({ path: "test-results/rail-dragging.png" });
+  await page.mouse.up();
+
+  await expect(marker).not.toHaveAttribute("aria-valuetext", before!);
+  // Let go near the end of the rail: one of the last records.
+  const last = Number(await marker.getAttribute("aria-valuemax"));
+  await expect.poll(async () => Number(await marker.getAttribute("aria-valuenow"))).toBeGreaterThan(last - 10);
+  await expect(foundSlot).not.toHaveAttribute("data-slot", slotBefore!);
 });
 
 test("a record shows its tracklist from Discogs, and singles live on their own shelf", async ({ page, request }) => {
@@ -137,7 +169,7 @@ test("guest mode: a read-only link shows the shelf without an account, until it'
   await guest.getByLabel("Search for an artist or a title in your collection").fill("a");
   await guest.getByRole("listbox", { name: "Search results" }).getByRole("option").first().click();
   await expect(recordCard(guest)).toBeVisible();
-  // Read-only: no taking out, no calibrating, no adding.
+  // Read-only: no taking out, no adding.
   await expect(guest.getByRole("button", { name: "Take it out…" })).toHaveCount(0);
   await expect(guest.getByRole("button", { name: "+ Add a new record" })).toHaveCount(0);
 

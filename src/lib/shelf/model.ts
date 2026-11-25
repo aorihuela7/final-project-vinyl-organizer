@@ -21,7 +21,7 @@ import {
   type SortSettings,
 } from "@/lib/layout";
 import { DEFAULT_SLACK_PCT } from "@/lib/config";
-import { defaultCapacity, rowsPerCube, template, type TemplateId } from "./templates";
+import { defaultCapacity, maxRows, rowsPerCube, template, type TemplateId } from "./templates";
 import type { RecordSize } from "@/lib/visual/lean";
 
 /** Records saved before v2 may lack the format group columns: they're classified on read. */
@@ -112,6 +112,15 @@ export function groupOf(r: StoredRecord) {
   return groupOfRecord(r);
 }
 
+/**
+ * Cassettes, files, and every other format that doesn't go on a shelf are
+ * ignored everywhere in the app: not counted, not searchable, never mentioned.
+ * They're still imported (a sync compares its count with Discogs'), just never shown.
+ */
+export function withoutOtherFormats<T extends StoredRecord>(records: readonly T[]): T[] {
+  return records.filter((r) => groupOf(r) !== "other");
+}
+
 /** 12, 10, or 7 inches for vinyl (drawings use it for heights); null otherwise. */
 export function sizeOf(r: StoredRecord) {
   return sizeOfRecord(r);
@@ -151,14 +160,53 @@ export function localKey(prefix: string): string {
 
 /** English names for new shelves; the UI passes translated ones. */
 export const DEFAULT_TEMPLATE_NAMES: Record<TemplateId, string> = {
-  kallax_4x4: "Kallax 4×4",
-  kallax_5x5: "Kallax 5×5",
-  low_2x4: "Low unit 2×4",
+  kallax_4x4: "Cube shelf 4×4",
+  kallax_5x5: "Cube shelf 5×5",
+  low_2x4: "Low unit 4×2",
   tower_1x5: "Tower 1×5",
-  crates: "Crates",
+  crates: "Crates in a row",
   record_box: "Record box",
-  custom: "Shelf",
+  custom: "Custom shelf 3×3",
 };
+
+/**
+ * The size a shelf's name carries, width × height like furniture: columns ×
+ * rows of cubes ("1×5" for a tower, "4×2" for a low unit), also on CD
+ * shelves, where each cube holds two rows of CDs.
+ */
+export function sizeLabel(f: Pick<FurnitureConfig, "rows" | "cols" | "template" | "media">): string {
+  return `${f.cols}×${Math.ceil(f.rows / rowsPerCube(f.template, f.media))}`;
+}
+
+/** The size of a template as written in its name ("1×5" for a tower). */
+export function templateSizeLabel(id: TemplateId): string {
+  const t = template(id);
+  return `${t.cols}×${t.rows}`;
+}
+
+/**
+ * Keeps a shelf's name in step with its size: a name with the old size in it
+ * ("Tower 1×5", or "Tower 1x5" typed by hand) gets the new one ("Tower 3×5").
+ * A name without a size stays as it is.
+ */
+export function renameForSize(name: string, oldSize: string, newSize: string): string {
+  if (oldSize === newSize) return name;
+  const [width, height] = oldSize.split("×");
+  const pattern = new RegExp(`(^|\\s)${width}\\s?[×xX]\\s?${height}(?=$|[\\s,)])`);
+  return name.replace(pattern, `$1${newSize}`);
+}
+
+/** Resizes a shelf and keeps its name in step with the new size. */
+export function resizeAndRename(f: FurnitureConfig, rows: number, cols: number): FurnitureConfig {
+  const next = resizeFurniture(f, rows, cols);
+  return { ...next, name: renameForSize(f.name, sizeLabel(f), sizeLabel(next)) };
+}
+
+/** "Kallax" is a brand: shelves still named after it (saved before) get the common name. */
+export function withoutBrandNames(config: ShelfConfig, cubeShelf: string): ShelfConfig {
+  if (!config.furniture.some((f) => /^Kallax(\s|$)/.test(f.name))) return config;
+  return { ...config, furniture: config.furniture.map((f) => ({ ...f, name: f.name.replace(/^Kallax(?=\s|$)/, cubeShelf) })) };
+}
 
 /** A new shelf from a template, with every compartment listed. */
 export function newFurniture(id: TemplateId, sortIndex: number, media: ShelfMedia = "lp", name?: string): FurnitureConfig {
@@ -201,7 +249,7 @@ export function changeMedia(f: FurnitureConfig, media: ShelfMedia): FurnitureCon
   const to = rowsPerCube(f.template, media);
   if (from === to) return { ...f, media, defaultCapacity: capacity };
   const status = new Map(f.compartments.map((c) => [`${c.row}:${c.col}`, c.status]));
-  const rows = to > from ? Math.min(12, f.rows * 2) : Math.ceil(f.rows / 2);
+  const rows = to > from ? Math.min(maxRows(f.template, media), f.rows * 2) : Math.ceil(f.rows / 2);
   const compartments: CompartmentConfig[] = [];
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < f.cols; col++) {

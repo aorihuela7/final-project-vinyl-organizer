@@ -130,13 +130,13 @@ test("a demo account imports its own Discogs collection: a typo changes nothing,
 
   // A typo: the demo stays as it was.
   await page.getByRole("button", { name: "Shelves & order" }).click();
-  await expect(page.getByText(/The demo collection: 1,000 records/)).toBeVisible();
+  await expect(page.getByText(/The demo collection: [\d,]+ records/)).toBeVisible();
   const { count: shelvesBefore } = await supabase.from("furniture").select("id", { count: "exact", head: true });
   await page.getByLabel("Import your own collection from Discogs instead").fill("no-such-user-zz9x");
   await page.getByRole("button", { name: "Import", exact: true }).click();
   await page.getByRole("button", { name: "Replace my collection" }).click();
   await expect(page.getByText(/Couldn't import .no-such-user-zz9x.*Your current collection didn't change\./)).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByText(/The demo collection: 1,000 records/)).toBeVisible();
+  await expect(page.getByText(/The demo collection: [\d,]+ records/)).toBeVisible();
   const { count: shelvesAfterTypo } = await supabase.from("furniture").select("id", { count: "exact", head: true });
   expect(shelvesAfterTypo).toBe(shelvesBefore);
   expect(shelvesBefore).toBeGreaterThanOrEqual(2);
@@ -144,7 +144,7 @@ test("a demo account imports its own Discogs collection: a typo changes nothing,
   // The real collection replaces the demo and its shelves.
   await page.getByLabel("Import your own collection from Discogs instead").fill("aorihuelar");
   await page.getByRole("button", { name: "Import", exact: true }).click();
-  await expect(page.getByText(/Your 1,000 records and your shelves are replaced/)).toBeVisible();
+  await expect(page.getByText(/Your [\d,]+ records and your shelves are replaced/)).toBeVisible();
   await page.getByRole("button", { name: "Replace my collection" }).click();
   await expect(page.getByRole("heading", { name: "Build your shelf" })).toBeVisible({ timeout: 240_000 });
   const imported = page.getByText(/[\d,]+ records imported/);
@@ -156,6 +156,7 @@ test("a demo account imports its own Discogs collection: a typo changes nothing,
   expect(collection).toEqual({ source: "discogs", discogs_username: "aorihuelar" });
   const { count: shelves } = await supabase.from("furniture").select("id", { count: "exact", head: true });
   expect(shelves).toBe(0);
-  const { count: records } = await supabase.from("records").select("id", { count: "exact", head: true });
+  // Every record is imported; the app shows the ones that go on a shelf (cassettes and other formats are ignored).
+  const { count: records } = await supabase.from("records").select("id", { count: "exact", head: true }).neq("format_group", "other");
   expect(records).toBe(shownCount);
 });

@@ -24,3 +24,27 @@ export const DEMO = {
 } as const;
 
 export const DEFAULT_SLACK_PCT = 10;
+
+/**
+ * "Start from zero" for people without a Discogs account: an import of this
+ * empty public Discogs collection, through the normal path, so the user starts
+ * with no records and adds them one by one with "Add a new record". Records
+ * added by hand belong to each account (RLS), and nothing is ever written to
+ * Discogs, so two people who start from zero never see each other's records.
+ * The import ignores anything this collection might gain on Discogs, and the
+ * UI never shows this username.
+ */
+export const ZERO_START = { username: "aorihuelam" } as const;
+
+export function isZeroStart(username: string | null | undefined): boolean {
+  return (username ?? "").trim().toLowerCase() === ZERO_START.username;
+}
+
+/**
+ * Public Discogs collections offered to people without one of their own, to try
+ * an import. The descriptions are ours (i18n: samples.<username>); the counts
+ * come live from Discogs (/api/discogs/samples), and a collection that stops
+ * being public drops out of the list.
+ */
+export const SAMPLE_COLLECTIONS = ["oddcd", "tubasmarty", "wooda", "veale001", "wcdwinnell"] as const;
+export type SampleCollection = (typeof SAMPLE_COLLECTIONS)[number];

@@ -42,7 +42,7 @@ Plans: `docs/v2-plan.md` (what we learned from v1 and what to add) and `docs/v2-
 
 **In v2:**
 - The **Nogal mid-century** redesign (`docs/design/nogal.html` is the visual spec).
-- **Format groups:** LPs (12″ and 10″), singles (7″), CDs, and other (not placed). Each group is laid out separately on its own shelves; a 7″ never sits on an LP shelf.
+- **Format groups:** LPs (12″ and 10″), singles (7″), CDs, and other (cassettes and the rest: ignored, see the Decisions log). Each group is laid out separately on its own shelves; a 7″ never sits on an LP shelf.
 - **Letter plates** on the map instead of names; a **brass rail** per format group.
 - **Live capacity** in the shelf builder.
 - **"Add a new record"** (renamed from "Where does this record go?").
@@ -63,7 +63,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 - `collections`: collection source (`discogs` | `demo` | `manual`), `discogs_username`, `last_synced_at`. One per user in v1.
 - `records`: `discogs_release_id`, `discogs_instance_id` (two copies of the same release are two rows), `artist`, `title`, `year`, `label`, `genre` (primary), `styles[]`, `format_name`, `format_qty`, `format_descriptions[]`, `cover_url`, `thumb_url`, `discogs_url`, `synced_at`, `last_seen_job_id`, `origin` (`import` | `added`). Unique on (`user_id`, `discogs_instance_id`).
 - `import_jobs`: `status` (`queued` | `running` | `done` | `error`), `next_page`, `total_pages`, `items_total`, `items_done`, `attempts`, `last_error`, timestamps.
-- `furniture`: `name`, `template` (adds `record_box` in v2), `media` (`vinyl` | `single` | `cd`), `rows`, `cols`, `traversal` (`rows` | `columns`), `default_capacity`, `sort_index`. In the database `vinyl` means **LPs (12″ and 10″)**: the value stays `vinyl` so the deployed v1 keeps working, and renaming it to `lp` is a later migration. LPs flow only through LP shelves, singles only through singles shelves, CDs only through CD shelves; other formats are imported but not placed.
+- `furniture`: `name`, `template` (adds `record_box` in v2), `media` (`vinyl` | `single` | `cd`), `rows`, `cols`, `traversal` (`rows` | `columns`), `default_capacity`, `sort_index`. In the database `vinyl` means **LPs (12″ and 10″)**: the value stays `vinyl` so the deployed v1 keeps working, and renaming it to `lp` is a later migration. LPs flow only through LP shelves, singles only through singles shelves, CDs only through CD shelves; other formats are imported (a sync compares its count with Discogs') but never placed or shown.
 - `records` also has `size_inches` (7, 10, 12, or null) and `format_group` (`lp` | `single` | `cd` | `other`), computed from the Discogs formats (see Algorithm) by a database trigger and by the import.
 - `user_preferences` (v2): `locale` (`en` | `es` | `pt`), `tour_status`. Exists before any shelf is saved.
 - `compartments`: `furniture_id`, `row`, `col`, `status` (`available` | `blocked`), `capacity` (optional, overrides the shelf's). Unique on (`furniture_id`, `row`, `col`).
@@ -81,7 +81,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 - **Invariant 2, capacity:** after the initial layout, no compartment exceeds its capacity. If the collection doesn't fit, report how many records are left over; never drop them silently.
 - **Initial layout:** distribute proportionally to effective capacity (capacity × (1 − slack)), so gaps are spread across the whole shelf (the *library sort* idea).
 - **v1 insertion (naive method):** compute the position; candidate = the compartment of the previous record, or of the next one if the previous is full and the next isn't. If it fits, that's 1 move. If not, push the last record to the start of the next available compartment, cascading until there's room. Return the list of moves and their count. In v2 this is replaced by minimum moves, and the naive method stays as the baseline.
-- **Calibration:** "X is the first record in compartment C" moves only the boundary between C and the previous available compartment. Reality beats capacity: if C ends up over capacity, flag it, don't block it.
+- **Calibration:** "X is the first record in compartment C" moves only the boundary between C and the previous available compartment. Reality beats capacity: if C ends up over capacity, flag it, don't block it. (The algorithm and its tests stay; since November 25, 2026 the app has no calibration UI.)
 - **Position within the compartment:** (index + 0.5) / total, shown as "40% from the left".
 - **Neighbors:** two before and two after in global order, each with its compartment.
 - **Changing the sort order or the shelf** recomputes the whole layout: ask for confirmation and say how many records change compartment.
@@ -122,7 +122,7 @@ Every table has `user_id text not null default (auth.jwt()->>'sub')`: the Clerk 
 
 ## Demo
 
-Demo collection source: the 1,000 most recently added records of the public Discogs collection of user `aorihuelar`, imported through the same path as any username import (10 pages, page cap). Prebuilt shelves: "Living room", Kallax 4×4 with two blocked compartments (turntable); "Studio", tower 1×5; and in v2 a "Singles box" (record box 1×3) when the demo collection has singles. Sort order: artist → title. Default capacity: 80 records per cube (unmeasured), 70 per crate, 60 CDs per cube (two rows of 30, each row its own compartment); global slack 10%. Without an account, the demo runs entirely in the browser; signing up saves it to the account.
+Demo collection source: the 1,000 most recently added records of the public Discogs collection of user `aorihuelar`, imported through the same path as any username import (10 pages, page cap). Prebuilt shelves: "Living room", cube shelf 4×4 with two blocked compartments (turntable); "Studio", tower 1×5; and in v2 a "Singles box" (record box 1×3) when the demo collection has singles. Sort order: artist → title. Default capacity: 80 records per cube (unmeasured), 70 per crate, 60 CDs per cube (two rows of 30, each row its own compartment); global slack 10%. Without an account, the demo runs entirely in the browser; signing up saves it to the account.
 
 ## Security and free tiers
 
@@ -177,3 +177,10 @@ Demo collection source: the 1,000 most recently added records of the public Disc
 - CD shelves (November 20, 2026): a Kallax cube for CDs holds two rows of 30 with a board in the middle; each row is its own compartment.
 - Leaning (November 20, 2026): at least the first half of the records in a compartment stands upright, even when there are few; only the last ones lean. Same rule for every format.
 - Help (November 20, 2026): one Help button in the header for everyone reopens the tour; the tour has no language step.
+- Start from scratch (November 21, 2026): for people without Discogs, "Start from scratch" imports the empty public collection `aorihuelam` behind the scenes (its username never shows, and anything it gains on Discogs is ignored); records are then added one by one with "Add a new record" and belong to each account. Every username field lists five public collections to try (oddcd, tubasmarty, wooda, veale001, wcdwinnell) with their live size from Discogs; the list opens when the field gets focus.
+- Calibration (November 25, 2026): removed from the app, both "The first record here is different…" and "Count the records here", and the map's "Match a compartment" hint. The algorithm and its tests stay in `src/lib/layout`.
+- Other formats (November 25, 2026): cassettes and every format that doesn't go on a shelf are ignored in any collection: never counted, searched, offered in "Add a new record", or mentioned.
+- Notices (November 25, 2026): no notice about singles moving to their own shelves.
+- Shelf names (November 25, 2026): no brand names: "Kallax" is "Cube shelf" (Estante de cubos, Estante de nichos). Sizes in names are width × height ("Tower 1×5", "Low unit 4×2") and follow the shelf when its rows or columns change. Shelves go up to 20 rows of cubes and 20 columns.
+- Brass rail (November 25, 2026): not on the landing page, only inside a collection or the demo. Its marker can be dragged; letting go picks the record at that spot.
+- Nameplates (November 25, 2026): flat engraved brass held by two small screws, so they don't look like buttons. Each compartment view shows its count badge, as on the map.

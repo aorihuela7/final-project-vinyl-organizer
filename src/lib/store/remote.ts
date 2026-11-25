@@ -6,7 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RecordInput } from "@/lib/discogs/map";
 import type { Move, Placement, ShelfMedia } from "@/lib/layout";
-import { withoutRemovedOptions, type CompartmentConfig, type FurnitureConfig, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
+import { withoutOtherFormats, withoutRemovedOptions, type CompartmentConfig, type FurnitureConfig, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
 import { DEFAULT_SETTINGS } from "@/lib/shelf/model";
 import type { TemplateId } from "@/lib/shelf/templates";
 
@@ -40,8 +40,6 @@ export type RemoteState = {
   lastJob: JobRow | null;
   /** When the current map was generated (last initial or relayout event). */
   layoutAt: string | null;
-  /** Whether the user has ever calibrated a compartment. */
-  calibrated: boolean;
   locations: TempLocation[];
 };
 
@@ -84,7 +82,7 @@ export function mediaToDb(media: ShelfMedia): FurnitureRow["media"] {
 type CompartmentRow = { id: string; furniture_id: string; row: number; col: number; status: "available" | "blocked"; capacity: number | null };
 
 export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState> {
-  const [records, furnitureRes, compartments, settingsRes, placements, collectionRes, jobsRes, eventRes, calibrateRes, locationsRes] = await Promise.all([
+  const [records, furnitureRes, compartments, settingsRes, placements, collectionRes, jobsRes, eventRes, locationsRes] = await Promise.all([
     fetchAll<StoredRecord>(supabase, "records", RECORD_COLUMNS, "id"),
     supabase.from("furniture").select("id, name, template, media, rows, cols, traversal, default_capacity, sort_index, section").order("sort_index"),
     fetchAll<CompartmentRow>(supabase, "compartments", "id, furniture_id, row, col, status, capacity", "id"),
@@ -93,10 +91,9 @@ export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState>
     supabase.from("collections").select("id, source, discogs_username, last_synced_at").maybeSingle(),
     supabase.from("import_jobs").select("*").order("created_at", { ascending: false }).limit(5),
     supabase.from("layout_events").select("created_at").in("kind", ["initial", "relayout"]).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("layout_events").select("id").eq("kind", "calibrate").limit(1),
     supabase.from("temporary_locations").select("id, name").order("created_at"),
   ]);
-  for (const res of [furnitureRes, settingsRes, collectionRes, jobsRes, eventRes, calibrateRes, locationsRes]) {
+  for (const res of [furnitureRes, settingsRes, collectionRes, jobsRes, eventRes, locationsRes]) {
     if (res.error) throw new Error(res.error.message);
   }
 
@@ -132,14 +129,13 @@ export async function loadRemote(supabase: SupabaseClient): Promise<RemoteState>
 
   const jobs = (jobsRes.data ?? []) as JobRow[];
   return {
-    records,
+    records: withoutOtherFormats(records),
     config: furniture.length > 0 ? withoutRemovedOptions({ furniture, settings }) : null,
     placement: new Map(placements.map((p) => [p.record_id, p.compartment_id])),
     collection: (collectionRes.data as CollectionRow | null) ?? null,
     activeJob: jobs.find((j) => j.status === "queued" || j.status === "running") ?? null,
     lastJob: jobs[0] ?? null,
     layoutAt: (eventRes.data as { created_at: string } | null)?.created_at ?? null,
-    calibrated: (calibrateRes.data?.length ?? 0) > 0,
     locations: (locationsRes.data ?? []) as TempLocation[],
   };
 }

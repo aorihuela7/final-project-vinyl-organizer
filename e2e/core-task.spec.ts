@@ -39,7 +39,7 @@ test("signs up, imports a Discogs collection by username, builds a shelf, and fi
   await expect(page.getByText(/[\d,]+ records imported/)).toBeVisible();
   await page.screenshot({ path: `docs/screenshots/setup-${testInfo.project.name}.png`, fullPage: true });
 
-  // Build it from a template: the suggestion has Kallax shelves; block a compartment and switch one shelf to columns.
+  // Build it from a template: the suggestion has cube shelves; block a compartment and switch one shelf to columns.
   const firstShelf = page.locator("article").first();
   await firstShelf.getByRole("button", { name: /row 1, column 1: available/ }).click();
   await expect(firstShelf.getByRole("button", { name: /row 1, column 1: blocked/ })).toBeVisible();
@@ -53,24 +53,24 @@ test("signs up, imports a Discogs collection by username, builds a shelf, and fi
   await page.getByRole("button", { name: "Generate map" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Generate" }).click();
   await expect(page.getByText(/Map generated/)).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByRole("region", { name: "Kallax 1" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Cube shelf 4×4 (1)" })).toBeVisible();
   await page.screenshot({ path: `docs/screenshots/map-${testInfo.project.name}.png`, fullPage: true });
 
   // 5. Search a record and see shelf, row, column, how far in, and its neighbors.
   await page.getByLabel("Search for an artist or a title in your collection").fill("Faith George Michael");
   await page.getByRole("listbox", { name: "Search results" }).getByRole("option").first().click();
   const card = recordCard(page);
-  await expect(card.getByText(/Kallax \d, row \d, column \d/)).toBeVisible();
+  await expect(card.getByText(/Cube shelf 4×4 \(\d\), row \d+, column \d+/)).toBeVisible();
   await expect(card.getByText(/\d+% in from the left/)).toBeVisible();
   await expect(card.getByText(/Just to the left|Just to the right/).first()).toBeVisible();
   await page.screenshot({ path: `docs/screenshots/record-${testInfo.project.name}.png` });
 
   // Reload: the map is persisted, not recomputed.
   await page.reload();
-  await expect(page.getByRole("region", { name: "Kallax 1" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("region", { name: "Cube shelf 4×4 (1)" })).toBeVisible({ timeout: 60_000 });
 });
 
-test("signs up, loads the demo into the account, calibrates, and adds a new purchase", async ({ page }, testInfo) => {
+test("signs up, loads the demo into the account, and adds a new purchase", async ({ page }, testInfo) => {
   test.setTimeout(180_000);
   await setupClerkTestingToken({ page });
   const account = newAccount(`demo-${testInfo.project.name}`);
@@ -83,23 +83,6 @@ test("signs up, loads the demo into the account, calibrates, and adds a new purc
   await expect(page.getByRole("region", { name: "Living room" })).toBeVisible({ timeout: 120_000 });
   await expect(page.getByRole("region", { name: "Studio" })).toBeVisible();
   await expect(page.getByText("This demo lives only in this browser")).toHaveCount(0);
-
-  // Calibration: open the second compartment and say its first record is the last one of the first compartment.
-  const living = page.getByRole("region", { name: "Living room" });
-  await living.getByRole("button").first().click();
-  const firstSheet = page.getByRole("dialog");
-  const lastItem = firstSheet.locator("ol li").last();
-  const lastArtist = (await lastItem.locator(".font-semibold").first().innerText()).trim();
-  const lastTitle = (await lastItem.locator(".text-muted").last().innerText()).replace(/^,\s*/, "").trim();
-  await firstSheet.getByRole("button", { name: "Close" }).click();
-  await living.getByRole("button").nth(1).click();
-  const sheet = page.getByRole("dialog");
-  const before = Number((await sheet.getByText(/of \d+ records/).innerText()).split(" ")[0]);
-  await sheet.getByRole("button", { name: "The first record here is different…" }).click();
-  await sheet.getByLabel("Which record is really the first one in this compartment?").fill(`${lastArtist} ${lastTitle}`.slice(0, 40));
-  await sheet.getByRole("list").first().getByRole("button").first().click();
-  await expect(sheet.getByText(new RegExp(`^${before + 1} of \\d+ records`))).toBeVisible({ timeout: 30_000 });
-  await sheet.getByRole("button", { name: "Close" }).click();
 
   // "Add a new record" with Discogs search, then Add record.
   await page.getByRole("button", { name: "+ Add a new record" }).click();

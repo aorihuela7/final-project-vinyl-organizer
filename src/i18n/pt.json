@@ -41,7 +41,7 @@
   "onboarding": {
     "title": "Vamos mapear a sua estante",
     "demoTitle": "Experimente a coleção de demonstração",
-    "demoText": "1.000 discos reais em estantes já montadas.",
+    "demoText": "Cerca de 1.000 discos reais em estantes já montadas.",
     "demoNoAccount": "Não precisa de conta.",
     "demoButton": "Carregar a demonstração",
     "importTitle": "Importe sua coleção do Discogs",
@@ -87,10 +87,6 @@
       "one": "{count} CD ainda não tem estante de CD.",
       "other": "{count} CDs ainda não têm estante de CD."
     },
-    "others": {
-      "one": "{count} fita cassete ou outro formato fica fora das estantes.",
-      "other": "{count} fitas cassete ou outros formatos ficam fora das estantes."
-    },
     "seeMoves": "Ver as mudanças",
     "hideMoves": "Esconder as mudanças",
     "moveLine": "{record}: de {from} para {to}",
@@ -106,7 +102,9 @@
     },
     "addSinglesShelf": "Adicionar uma estante de compactos",
     "toolsTitle": "Mais para a sua coleção",
-    "toolsText": "Isto se salva sozinho; não precisa de “Gerar o mapa”."
+    "toolsText": "Isto se salva sozinho; não precisa de “Gerar o mapa”.",
+    "buildTextEmpty": "Por enquanto sua coleção está vazia. Escolha seus móveis e sua ordem, e depois adicione seus discos um por um: o app diz onde vai cada um.",
+    "emptyShelf": "Sua estante está vazia. Adicione seu primeiro disco e o app diz onde ele vai."
   },
   "levels": {
     "genre": "gênero",
@@ -123,8 +121,7 @@
     "importTitle": "Importe sua coleção do Discogs",
     "heroLabel": "Uma estante de exemplo",
     "heroCaption": "Cada nicho mostra suas letras e o quanto está cheio. Busque um disco e o app mostra o nicho, a que altura ele está e os discos de cada lado.",
-    "heroRail": "Uma coleção de exemplo de # a Z",
-    "heroShelf": "Kallax, LPs (12″ e 10″)",
+    "heroShelf": "Estante de nichos, LPs (12″ e 10″)",
     "turntable": "Toca-discos"
   },
   "notFound": {
@@ -176,10 +173,10 @@
     },
     "addFailed": "Não foi possível adicionar o disco.",
     "demoReadySingles": "Demonstração pronta: {lps} LPs, {singles} compactos e {cds} CDs em estantes já montadas, ordenados por artista, depois título.",
-    "singlesBoxAdded": {
-      "one": "Os compactos (7″) agora vão em estantes próprias. Adicionamos uma caixa de compactos para o seu {count} compacto, e nenhum LP mudou de lugar.",
-      "other": "Os compactos (7″) agora vão em estantes próprias. Adicionamos uma caixa de compactos para os seus {count} compactos, e nenhum LP mudou de lugar."
-    }
+    "replacedZero": "Sua coleção agora começa do zero. Monte sua estante e depois adicione seus discos um por um.",
+    "zeroFailed": "Não foi possível começar uma coleção vazia agora. Tente de novo em um minuto.",
+    "replaceZeroFailed": "Não foi possível começar do zero agora. Sua coleção atual não mudou.",
+    "discogsDown": "O Discogs não respondeu. Tente de novo mais tarde."
   },
   "demo": {
     "living": "Sala",
@@ -187,9 +184,9 @@
     "singles": "Caixa de compactos"
   },
   "templates": {
-    "kallax_4x4": "Kallax 4×4",
-    "kallax_5x5": "Kallax 5×5",
-    "low_2x4": "Móvel baixo 2×4",
+    "kallax_4x4": "Estante de nichos 4×4",
+    "kallax_5x5": "Estante de nichos 5×5",
+    "low_2x4": "Móvel baixo 4×2",
     "tower_1x5": "Torre 1×5",
     "crates": "Caixotes em fila",
     "record_box": "Caixa de discos",
@@ -255,7 +252,6 @@
     "results": "Resultados da busca",
     "noMatch": "Nenhum disco corresponde a “{query}”.",
     "where": "{place}, a cerca de {pct}% da esquerda",
-    "notPlaced": "{format}: este formato não vai em uma estante",
     "noSinglesShelf": "Fora do mapa até você adicionar uma estante de compactos",
     "noCdShelf": "Fora do mapa até você adicionar uma estante de CD",
     "noLpShelf": "Fora do mapa até você adicionar uma estante de LP",
@@ -279,7 +275,6 @@
     "goesAfter": "Ele vai em {place}, logo depois de {left}",
     "goesBefore": "Ele vai em {place}, logo antes de {right}",
     "goesIn": "Ele vai em {place}",
-    "notPlaced": "Esta edição é em {format}, então não vai em uma estante.",
     "noShelf": "Você ainda não tem uma estante para {group}. Adicione uma em Estantes e ordem.",
     "full": "Suas estantes estão cheias: não há lugar para ele em lugar nenhum.",
     "fits": "Cabe. É só colocar no lugar: 1 mudança.",
@@ -311,8 +306,8 @@
     "recomputeTitle": "Recalcular o mapa inteiro?",
     "generateTitle": "Gerar o mapa?",
     "willChange": {
-      "one": "{count} disco vai mudar de nicho. As calibrações que você fez são substituídas pela nova organização.",
-      "other": "{count} discos vão mudar de nicho. As calibrações que você fez são substituídas pela nova organização."
+      "one": "{count} disco vai mudar de nicho.",
+      "other": "{count} discos vão mudar de nicho."
     },
     "willPlace": {
       "one": "{count} disco vai ser colocado.",
@@ -323,10 +318,6 @@
       "other": "{count} discos não cabem. Eles vão aparecer como fora da estante."
     },
     "slackReduced": "Só cabe usando parte do espaço livre que você pediu.",
-    "notPlaced": {
-      "one": "{count} fita cassete, arquivo ou outro formato fica fora das estantes.",
-      "other": "{count} fitas cassete, arquivos ou outros formatos ficam fora das estantes."
-    },
     "cardLine": "{media}, {template}, {rows} × {cols}",
     "holds": "Cabem {count}",
     "edit": "Editar",
@@ -381,15 +372,17 @@
     "none": "Nenhum",
     "ties": "Os empates sempre se resolvem por artista, depois ano, depois título.",
     "ignoreArticles": "Ignorar os artigos iniciais (“The Beatles” no B em vez do T, “Los Lobos” no L)",
-    "suggestedLp": "Kallax",
-    "suggestedLpN": "Kallax {n}",
+    "suggestedLp": "Estante de nichos 4×4",
+    "suggestedLpN": "Estante de nichos 4×4 ({n})",
     "suggestedSingles": "Compactos",
     "suggestedCds": "Estante de CD",
     "thickness": "Contar discos duplos e caixas pela quantidade de discos (um LP duplo ocupa dois lugares)",
     "section": "Seção",
     "sectionNone": "Todo o resto",
     "sectionGenre": "Gênero: {name}",
-    "sectionHint": "Os discos de uma seção vão só nas estantes com essa seção, ordenados dentro dela."
+    "sectionHint": "Os discos de uma seção vão só nas estantes com essa seção, ordenados dentro dela.",
+    "customName": "Móvel sob medida {size}",
+    "cubeShelf": "Estante de nichos"
   },
   "record": {
     "offMap": "Fora do mapa",
@@ -425,7 +418,8 @@
     "segmentGo": {
       "one": "{label}: {count} disco. Ir para onde começa",
       "other": "{label}: {count} discos. Ir para onde começam"
-    }
+    },
+    "marker": "Disco no trilho: arraste, ou use as setas, para escolher outro"
   },
   "compartment": {
     "count": {
@@ -433,30 +427,11 @@
       "other": "{count} de {capacity} discos"
     },
     "over": "Você marcou este nicho como mais cheio do que a capacidade. Tudo bem: o mapa segue a sua estante real.",
-    "calibrate": "O primeiro disco aqui é outro…",
     "drawingHint": "Aponte para um disco para vê-lo; clique para ver os detalhes e a capa.",
     "list": "Discos deste nicho, da esquerda para a direita",
     "empty": "Este nicho está vazio.",
     "added": "adicionado por você",
     "position": "{index} de {total}",
-    "calibrateLabel": "Qual é de verdade o primeiro disco deste nicho?",
-    "calibratePlaceholder": "Busque neste nicho e no anterior",
-    "calibrateNoMatch": "Nenhum resultado neste nicho nem no anterior.",
-    "calibrateHint": "Só o limite com o nicho anterior se move. Todo o resto fica onde está.",
-    "calibrateFailed": "Não foi possível salvar a calibração.",
-    "refusal": {
-      "unavailable": "Esse nicho não está disponível.",
-      "notOnShelf": "Esse disco não está nesta estante.",
-      "firstCompartment": "Este é o primeiro nicho, então os discos anteriores não têm para onde ir.",
-      "notAdjacent": "Escolha um disco deste nicho ou do imediatamente anterior: a calibração só move o limite entre eles.",
-      "lastCompartment": "Este é o último nicho, então os discos seguintes não têm para onde ir.",
-      "notEnough": "O nicho seguinte não tem tantos discos para dar.",
-      "badCount": "Digite um número inteiro."
-    },
-    "countButton": "Contar os discos daqui",
-    "countLabel": "Quantos discos há agora neste nicho?",
-    "countSave": "Salvar a contagem",
-    "countHint": "Só o limite com o nicho seguinte se move: os discos a mais vão para ele, ou os que faltam vêm dele.",
     "places": "{count} de {capacity} lugares"
   },
   "collection": {
@@ -484,7 +459,13 @@
       "other": "Seus {count} discos e suas estantes são substituídos, inclusive os discos que você adicionou à mão. Você vai montar as estantes de novo para a nova coleção. Nada muda no Discogs."
     },
     "accountFirst": "Primeiro você vai criar uma conta grátis.",
-    "replace": "Substituir minha coleção"
+    "replace": "Substituir minha coleção",
+    "zero": {
+      "one": "Começou do zero: {count} disco adicionado à mão.",
+      "other": "Começou do zero: {count} discos adicionados à mão."
+    },
+    "startZero": "Começar do zero em vez disso",
+    "confirmZeroTitle": "Começar do zero, com uma coleção vazia?"
   },
   "cover": {
     "none": "{artist}, {title} (sem capa)"
@@ -531,11 +512,6 @@
         "text": "É isso. Você pode ver este tour de novo em Ajuda, no alto da página."
       }
     }
-  },
-  "calibration": {
-    "hint": "O mapa supõe cerca de {capacity} discos por nicho, uma estimativa. Se na sua estante real um nicho começa com outro disco, diga ao app qual: o mapa segue a sua estante.",
-    "start": "Ajustar um nicho",
-    "later": "Agora não"
   },
   "simulator": {
     "title": "Simulador de compras",
@@ -619,5 +595,20 @@
     "failed": "Não foi possível mudar o link. Tente de novo.",
     "label": "Link para convidados",
     "freshness": "Os convidados veem a estante enquanto os dados do Discogs tiverem menos de seis horas; abrir o app os atualiza."
+  },
+  "zero": {
+    "title": "Começar do zero",
+    "text": "Não tem conta no Discogs? Comece com uma coleção vazia e adicione seus discos um por um com “Adicionar um disco novo”. O app diz onde vai cada um.",
+    "button": "Começar do zero"
+  },
+  "samples": {
+    "label": "Não tem conta no Discogs? Experimente uma coleção pública",
+    "about": {
+      "oddcd": "eletrônica dos anos 90 em vinil",
+      "tubasmarty": "bandas de metais e música militar em vinil",
+      "wooda": "rock, quase tudo em CD",
+      "veale001": "rock, jazz e blues em vinil",
+      "wcdwinnell": "eletrônica e rock em vinil e CD"
+    }
   }
 }

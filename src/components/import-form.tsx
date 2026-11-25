@@ -5,8 +5,25 @@ import { useRouter } from "next/navigation";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { usernameIssue, type UsernameIssue } from "@/lib/validation";
 import { setPendingImport } from "@/lib/local/pending";
+import { ZERO_START } from "@/lib/config";
 import { useI18n } from "@/i18n/client";
-import { btnPrimary, input } from "./ui";
+import { UsernameField } from "./sample-collections";
+import { btnPrimary, btnSecondary } from "./ui";
+
+/** Saves what to import and goes to the app, asking to sign up first if needed (the import job lives in the database). */
+function useStartImport() {
+  const router = useRouter();
+  const { isSignedIn } = useAuth();
+  const clerk = useClerk();
+  return (username: string) => {
+    setPendingImport(username);
+    if (isSignedIn) {
+      router.push("/app");
+    } else {
+      clerk.openSignUp({ forceRedirectUrl: "/app", signInForceRedirectUrl: "/app" });
+    }
+  };
+}
 
 /**
  * Lets anyone type their Discogs username without an account.
@@ -14,9 +31,7 @@ import { btnPrimary, input } from "./ui";
  * resumable import job lives in the database.
  */
 export function ImportForm() {
-  const router = useRouter();
-  const { isSignedIn } = useAuth();
-  const clerk = useClerk();
+  const startImport = useStartImport();
   const { t } = useI18n();
   const [value, setValue] = useState("");
   const [error, setError] = useState<UsernameIssue | null>(null);
@@ -29,12 +44,7 @@ export function ImportForm() {
       return;
     }
     setError(null);
-    setPendingImport(value.trim());
-    if (isSignedIn) {
-      router.push("/app");
-    } else {
-      clerk.openSignUp({ forceRedirectUrl: "/app", signInForceRedirectUrl: "/app" });
-    }
+    startImport(value.trim());
   }
 
   return (
@@ -43,19 +53,14 @@ export function ImportForm() {
         {t("importForm.label")}
       </label>
       <div className="flex gap-2">
-        <input
+        <UsernameField
           id="discogs-username"
-          name="username"
-          autoComplete="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          inputMode="text"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
-          aria-invalid={error ? true : undefined}
-          aria-describedby="discogs-username-help"
+          onChange={setValue}
+          invalid={!!error}
+          describedBy="discogs-username-help"
           placeholder={t("importForm.placeholder")}
-          className={`${input} flex-1`}
+          className="flex-1"
         />
         <button type="submit" className={`${btnPrimary} shrink-0`}>
           {t("common.import")}
@@ -65,5 +70,20 @@ export function ImportForm() {
         {error ? t(`validation.${error}`) : t("importForm.help")}
       </p>
     </form>
+  );
+}
+
+/**
+ * "Start from scratch" for people without a Discogs account: behind the scenes,
+ * an import of an empty Discogs collection (ZERO_START), so the app works the
+ * same as for everyone else; the user then adds records one by one.
+ */
+export function StartFromScratch() {
+  const startImport = useStartImport();
+  const { t } = useI18n();
+  return (
+    <button type="button" onClick={() => startImport(ZERO_START.username)} className={btnSecondary}>
+      {t("zero.button")}
+    </button>
   );
 }

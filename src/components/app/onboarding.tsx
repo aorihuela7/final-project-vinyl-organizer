@@ -4,10 +4,14 @@ import { useState } from "react";
 import { usernameIssue, type UsernameIssue } from "@/lib/validation";
 import { useI18n } from "@/i18n/client";
 import { renderMsg } from "@/i18n/core";
-import { Banner, btnPrimary, card, input } from "../ui";
+import { UsernameField } from "../sample-collections";
+import { Banner, btnPrimary, btnSecondary, card } from "../ui";
 import type { ShelfApp } from "./use-shelf-app";
 
-/** First screen when there's nothing yet: the demo or your own Discogs collection. No login wall. */
+/**
+ * First screen when there's nothing yet: the demo, a Discogs collection (yours
+ * or a public one), or an empty collection to fill by hand. No login wall.
+ */
 export function Onboarding({ app }: { app: ShelfApp }) {
   const { t } = useI18n();
   const previous = app.status.kind === "onboarding" ? app.status : null;
@@ -47,16 +51,7 @@ export function Onboarding({ app }: { app: ShelfApp }) {
           {t("onboarding.importLabel")}
         </label>
         <div className="mt-1 flex gap-2">
-          <input
-            id="onboarding-username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            autoCapitalize="none"
-            autoComplete="off"
-            spellCheck={false}
-            aria-invalid={error ? true : undefined}
-            className={`${input} flex-1`}
-          />
+          <UsernameField id="onboarding-username" value={username} onChange={setUsername} invalid={!!error} className="flex-1" />
           <button type="submit" className={btnPrimary}>
             {t("common.import")}
           </button>
@@ -68,6 +63,14 @@ export function Onboarding({ app }: { app: ShelfApp }) {
         )}
         {app.mode === "local" && <p className="mt-2 text-xs text-muted">{t("onboarding.importAccount")}</p>}
       </form>
+      <div className={`${card} p-5`}>
+        <h2 className="font-display text-lg text-ink">{t("zero.title")}</h2>
+        <p className="mt-1 text-sm text-muted">{t("zero.text")}</p>
+        <button type="button" onClick={app.startFromZero} className={`${btnSecondary} mt-3`}>
+          {t("zero.button")}
+        </button>
+        {app.mode === "local" && <p className="mt-2 text-xs text-muted">{t("onboarding.importAccount")}</p>}
+      </div>
     </div>
   );
 }
