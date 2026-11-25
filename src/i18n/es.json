@@ -122,7 +122,7 @@
     "heroLabel": "Una repisa de ejemplo",
     "heroCaption": "Cada compartimiento muestra sus letras y qué tan lleno está. Busca un disco y la app te muestra el compartimiento, qué tan adentro está y los discos de cada lado.",
     "heroRail": "Una colección de ejemplo de # a Z",
-    "heroShelf": "Kallax, LP (12″ y 10″)",
+    "heroShelf": "Estante de cubos, LP (12″ y 10″)",
     "turntable": "Tocadiscos"
   },
   "notFound": {
@@ -185,9 +185,9 @@
     "singles": "Caja de singles"
   },
   "templates": {
-    "kallax_4x4": "Kallax 4×4",
-    "kallax_5x5": "Kallax 5×5",
-    "low_2x4": "Mueble bajo 2×4",
+    "kallax_4x4": "Estante de cubos 4×4",
+    "kallax_5x5": "Estante de cubos 5×5",
+    "low_2x4": "Mueble bajo 4×2",
     "tower_1x5": "Torre 1×5",
     "crates": "Cajones en fila",
     "record_box": "Caja de discos",
@@ -373,15 +373,17 @@
     "none": "Ninguno",
     "ties": "Los empates siempre se resuelven por artista, luego año, luego título.",
     "ignoreArticles": "No contar los artículos iniciales (“The Beatles” en la B en vez de la T, “Los Lobos” en la L)",
-    "suggestedLp": "Kallax",
-    "suggestedLpN": "Kallax {n}",
+    "suggestedLp": "Estante de cubos 4×4",
+    "suggestedLpN": "Estante de cubos 4×4 ({n})",
     "suggestedSingles": "Singles",
     "suggestedCds": "Repisa de CD",
     "thickness": "Contar los discos dobles y las cajas por su cantidad de discos (un LP doble ocupa dos lugares)",
     "section": "Sección",
     "sectionNone": "Todo lo demás",
     "sectionGenre": "Género: {name}",
-    "sectionHint": "Los discos de una sección van solo en las repisas con esa sección, ordenados dentro de ella."
+    "sectionHint": "Los discos de una sección van solo en las repisas con esa sección, ordenados dentro de ella.",
+    "customName": "Mueble a medida {size}",
+    "cubeShelf": "Estante de cubos"
   },
   "record": {
     "offMap": "Fuera del mapa",

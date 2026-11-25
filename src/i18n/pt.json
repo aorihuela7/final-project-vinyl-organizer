@@ -122,7 +122,7 @@
     "heroLabel": "Uma estante de exemplo",
     "heroCaption": "Cada nicho mostra suas letras e o quanto está cheio. Busque um disco e o app mostra o nicho, a que altura ele está e os discos de cada lado.",
     "heroRail": "Uma coleção de exemplo de # a Z",
-    "heroShelf": "Kallax, LPs (12″ e 10″)",
+    "heroShelf": "Estante de nichos, LPs (12″ e 10″)",
     "turntable": "Toca-discos"
   },
   "notFound": {
@@ -185,9 +185,9 @@
     "singles": "Caixa de compactos"
   },
   "templates": {
-    "kallax_4x4": "Kallax 4×4",
-    "kallax_5x5": "Kallax 5×5",
-    "low_2x4": "Móvel baixo 2×4",
+    "kallax_4x4": "Estante de nichos 4×4",
+    "kallax_5x5": "Estante de nichos 5×5",
+    "low_2x4": "Móvel baixo 4×2",
     "tower_1x5": "Torre 1×5",
     "crates": "Caixotes em fila",
     "record_box": "Caixa de discos",
@@ -373,15 +373,17 @@
     "none": "Nenhum",
     "ties": "Os empates sempre se resolvem por artista, depois ano, depois título.",
     "ignoreArticles": "Ignorar os artigos iniciais (“The Beatles” no B em vez do T, “Los Lobos” no L)",
-    "suggestedLp": "Kallax",
-    "suggestedLpN": "Kallax {n}",
+    "suggestedLp": "Estante de nichos 4×4",
+    "suggestedLpN": "Estante de nichos 4×4 ({n})",
     "suggestedSingles": "Compactos",
     "suggestedCds": "Estante de CD",
     "thickness": "Contar discos duplos e caixas pela quantidade de discos (um LP duplo ocupa dois lugares)",
     "section": "Seção",
     "sectionNone": "Todo o resto",
     "sectionGenre": "Gênero: {name}",
-    "sectionHint": "Os discos de uma seção vão só nas estantes com essa seção, ordenados dentro dela."
+    "sectionHint": "Os discos de uma seção vão só nas estantes com essa seção, ordenados dentro dela.",
+    "customName": "Móvel sob medida {size}",
+    "cubeShelf": "Estante de nichos"
   },
   "record": {
     "offMap": "Fora do mapa",

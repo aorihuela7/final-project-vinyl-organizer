@@ -43,6 +43,7 @@ import {
   demoConfig,
   groupOf,
   withoutOtherFormats,
+  withoutBrandNames,
   misplacedRecords,
   sizeOf,
   placementByPosition,
@@ -479,7 +480,7 @@ export function useShelfApp(startParam: string | null) {
         if (snapshot) {
           setData({
             records: withoutOtherFormats(snapshot.records),
-            config: snapshot.config,
+            config: withoutBrandNames(snapshot.config, tRef.current("builder.cubeShelf")),
             placement: new Map(snapshot.placement),
             collection: null,
             fetchedAt: snapshot.fetchedAt,

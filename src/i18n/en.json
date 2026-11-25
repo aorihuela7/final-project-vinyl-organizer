@@ -122,7 +122,7 @@
     "heroLabel": "An example shelf",
     "heroCaption": "Every compartment shows its letters and how full it is. Search for a record and the app shows the compartment, how far in it is, and the records on each side.",
     "heroRail": "An example collection from # to Z",
-    "heroShelf": "Kallax, LPs (12″ and 10″)",
+    "heroShelf": "Cube shelf, LPs (12″ and 10″)",
     "turntable": "Turntable"
   },
   "notFound": {
@@ -185,9 +185,9 @@
     "singles": "Singles box"
   },
   "templates": {
-    "kallax_4x4": "Kallax 4×4",
-    "kallax_5x5": "Kallax 5×5",
-    "low_2x4": "Low unit 2×4",
+    "kallax_4x4": "Cube shelf 4×4",
+    "kallax_5x5": "Cube shelf 5×5",
+    "low_2x4": "Low unit 4×2",
     "tower_1x5": "Tower 1×5",
     "crates": "Crates in a row",
     "record_box": "Record box",
@@ -373,15 +373,17 @@
     "none": "None",
     "ties": "Ties are always broken by artist, then year, then title.",
     "ignoreArticles": "Ignore leading articles (“The Beatles” under B instead of T, “Los Lobos” under L)",
-    "suggestedLp": "Kallax",
-    "suggestedLpN": "Kallax {n}",
+    "suggestedLp": "Cube shelf 4×4",
+    "suggestedLpN": "Cube shelf 4×4 ({n})",
     "suggestedSingles": "Singles",
     "suggestedCds": "CD shelf",
     "thickness": "Count double albums and box sets by their number of discs (a double LP takes two places)",
     "section": "Section",
     "sectionNone": "Everything else",
     "sectionGenre": "Genre: {name}",
-    "sectionHint": "Records of a section go only on shelves with that section, sorted inside it."
+    "sectionHint": "Records of a section go only on shelves with that section, sorted inside it.",
+    "customName": "Custom shelf {size}",
+    "cubeShelf": "Cube shelf"
   },
   "record": {
     "offMap": "Not on the map",

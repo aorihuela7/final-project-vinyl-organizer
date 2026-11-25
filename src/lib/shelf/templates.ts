@@ -57,6 +57,15 @@ export function rowsPerCube(id: TemplateId, media: ShelfMedia): 1 | 2 {
   return media === "cd" && template(id).kind === "cube" ? 2 : 1;
 }
 
+/** The builder's limits: up to 20 rows of cubes and 20 columns (on CD shelves, 40 rows of CDs). */
+export const MAX_CUBE_ROWS = 20;
+export const MAX_COLS = 20;
+
+/** Most compartment rows a shelf can have: 20, or 40 rows of CDs on cube templates. */
+export function maxRows(id: TemplateId, media: ShelfMedia): number {
+  return MAX_CUBE_ROWS * rowsPerCube(id, media);
+}
+
 /** Width ÷ height of one row of CDs: a 33 cm cube split by a board into two rows about 15.7 cm high. */
 export const CD_ROW_ASPECT = 2.1;
 

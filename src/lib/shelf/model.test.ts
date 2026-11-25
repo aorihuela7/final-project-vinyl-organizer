@@ -59,9 +59,9 @@ describe("CD shelves: two rows of CDs per cube", () => {
     expect(changeMedia(newFurniture("kallax_4x4", 0, "lp"), "single").defaultCapacity).toBe(150);
   });
 
-  it("never goes past 12 rows", () => {
-    const tall = { ...newFurniture("custom", 0, "lp"), rows: 7 };
-    expect(changeMedia(tall, "cd").rows).toBe(12);
+  it("never goes past 40 rows of CDs (20 rows of cubes)", () => {
+    const tall = { ...newFurniture("custom", 0, "lp"), rows: 21 };
+    expect(changeMedia(tall, "cd").rows).toBe(40);
   });
 
   it("sizes a new template for the shelf's format group", () => {
