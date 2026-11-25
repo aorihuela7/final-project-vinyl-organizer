@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { replacesCollection } from "@/lib/import/replace";
 import { ZERO_START, isZeroStart } from "@/lib/config";
-import { SampleCollections } from "../sample-collections";
+import { UsernameField } from "../sample-collections";
 import { usernameIssue } from "@/lib/validation";
 import { useI18n } from "@/i18n/client";
-import { Banner, btnPrimary, btnPrimarySm, btnSecondarySm, btnText, card, input } from "../ui";
+import { Banner, btnPrimary, btnPrimarySm, btnSecondarySm, btnText, card } from "../ui";
 import type { ShelfApp } from "./use-shelf-app";
 
 /**
@@ -60,16 +60,13 @@ export function CollectionPanel({ app }: { app: ShelfApp }) {
             {isDemo ? t("collection.importOwn") : t("collection.importOther")}
           </label>
           <div className="mt-1 flex gap-2">
-            <input
+            <UsernameField
               id="replace-username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={setUsername}
               placeholder={t("collection.placeholder")}
-              autoCapitalize="none"
-              autoComplete="off"
-              spellCheck={false}
-              aria-invalid={error ? true : undefined}
-              className={`${input} flex-1`}
+              invalid={!!error}
+              className="flex-1"
             />
             <button type="submit" disabled={!!app.syncJob || app.busy} className={btnPrimary}>
               {t("common.import")}
@@ -81,16 +78,6 @@ export function CollectionPanel({ app }: { app: ShelfApp }) {
               {error}
             </p>
           )}
-          <div className="mt-3">
-            <SampleCollections
-              id="replace-sample"
-              value={username}
-              onPick={(name) => {
-                setUsername(name);
-                setError(null);
-              }}
-            />
-          </div>
           {!fromScratch && (
             <button
               type="button"

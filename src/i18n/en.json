@@ -603,9 +603,6 @@
   },
   "samples": {
     "label": "No Discogs account? Try a public collection",
-    "choose": "Choose a collection",
-    "option": "{username} ({records}, {about})",
-    "optionNoCount": "{username} ({about})",
     "about": {
       "oddcd": "90s electronic on vinyl",
       "tubasmarty": "brass bands and military music on vinyl",

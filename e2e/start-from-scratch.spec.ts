@@ -5,16 +5,29 @@ import { ensureTestUser } from "../scripts/lib/clerk-test";
 import { expect, skipTour, test } from "./fixtures";
 
 /** For people without a Discogs collection: public ones to try, and starting from scratch. */
-test("the import field lists public collections with their size from Discogs", async ({ page }) => {
+test("focusing the username field lists public collections with their size from Discogs", async ({ page }) => {
   test.setTimeout(90_000);
   await page.goto("/");
-  const list = page.getByLabel("No Discogs account? Try a public collection");
+  const field = page.getByRole("combobox", { name: "Your Discogs username" });
+  await field.click();
+  const list = page.getByRole("listbox", { name: "No Discogs account? Try a public collection" });
   await expect(list).toBeVisible({ timeout: 30_000 });
-  await expect(list.locator("option").nth(1)).toHaveText(/^[a-z0-9]+ \(\d[\d,]* records?, .+\)$/);
-  await list.selectOption({ index: 1 });
-  const username = await list.inputValue();
-  await expect(page.getByLabel("Your Discogs username")).toHaveValue(username);
+  const first = list.getByRole("option").first();
+  await expect(first).toHaveText(/^[a-z0-9]+ \(\d[\d,]* records?, .+\)$/, { timeout: 30_000 });
+  const username = (await first.locator(".font-semibold").innerText()).trim();
+  await first.hover();
   await expect(page.getByRole("link", { name: "Data provided by Discogs" })).toHaveAttribute("href", `https://www.discogs.com/user/${username}/collection`);
+  await page.screenshot({ path: `test-results/samples-${test.info().project.name}.png` });
+  await first.click();
+  await expect(field).toHaveValue(username);
+  await expect(list).toHaveCount(0);
+
+  // Typing narrows the list; Escape closes it.
+  await field.fill("w");
+  await expect(list.getByRole("option")).not.toHaveCount(0);
+  for (const option of await list.getByRole("option").all()) await expect(option).toHaveText(/^w/);
+  await field.press("Escape");
+  await expect(list).toHaveCount(0);
 });
 
 async function signInAndStartFromScratch(page: Page, tag: string) {

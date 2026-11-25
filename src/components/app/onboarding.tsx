@@ -4,8 +4,8 @@ import { useState } from "react";
 import { usernameIssue, type UsernameIssue } from "@/lib/validation";
 import { useI18n } from "@/i18n/client";
 import { renderMsg } from "@/i18n/core";
-import { SampleCollections } from "../sample-collections";
-import { Banner, btnPrimary, btnSecondary, card, input } from "../ui";
+import { UsernameField } from "../sample-collections";
+import { Banner, btnPrimary, btnSecondary, card } from "../ui";
 import type { ShelfApp } from "./use-shelf-app";
 
 /**
@@ -51,16 +51,7 @@ export function Onboarding({ app }: { app: ShelfApp }) {
           {t("onboarding.importLabel")}
         </label>
         <div className="mt-1 flex gap-2">
-          <input
-            id="onboarding-username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            autoCapitalize="none"
-            autoComplete="off"
-            spellCheck={false}
-            aria-invalid={error ? true : undefined}
-            className={`${input} flex-1`}
-          />
+          <UsernameField id="onboarding-username" value={username} onChange={setUsername} invalid={!!error} className="flex-1" />
           <button type="submit" className={btnPrimary}>
             {t("common.import")}
           </button>
@@ -70,16 +61,6 @@ export function Onboarding({ app }: { app: ShelfApp }) {
             {t(`validation.${error}`)}
           </p>
         )}
-        <div className="mt-3">
-          <SampleCollections
-            id="onboarding-sample"
-            value={username}
-            onPick={(name) => {
-              setUsername(name);
-              setError(null);
-            }}
-          />
-        </div>
         {app.mode === "local" && <p className="mt-2 text-xs text-muted">{t("onboarding.importAccount")}</p>}
       </form>
       <div className={`${card} p-5`}>

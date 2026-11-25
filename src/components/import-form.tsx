@@ -7,8 +7,8 @@ import { usernameIssue, type UsernameIssue } from "@/lib/validation";
 import { setPendingImport } from "@/lib/local/pending";
 import { ZERO_START } from "@/lib/config";
 import { useI18n } from "@/i18n/client";
-import { SampleCollections } from "./sample-collections";
-import { btnPrimary, btnSecondary, input } from "./ui";
+import { UsernameField } from "./sample-collections";
+import { btnPrimary, btnSecondary } from "./ui";
 
 /** Saves what to import and goes to the app, asking to sign up first if needed (the import job lives in the database). */
 function useStartImport() {
@@ -53,19 +53,14 @@ export function ImportForm() {
         {t("importForm.label")}
       </label>
       <div className="flex gap-2">
-        <input
+        <UsernameField
           id="discogs-username"
-          name="username"
-          autoComplete="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          inputMode="text"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
-          aria-invalid={error ? true : undefined}
-          aria-describedby="discogs-username-help"
+          onChange={setValue}
+          invalid={!!error}
+          describedBy="discogs-username-help"
           placeholder={t("importForm.placeholder")}
-          className={`${input} flex-1`}
+          className="flex-1"
         />
         <button type="submit" className={`${btnPrimary} shrink-0`}>
           {t("common.import")}
@@ -74,11 +69,6 @@ export function ImportForm() {
       <p id="discogs-username-help" className={`text-sm ${error ? "font-semibold text-danger" : "text-muted"}`} role={error ? "alert" : undefined}>
         {error ? t(`validation.${error}`) : t("importForm.help")}
       </p>
-      <SampleCollections id="sample-collection" value={value} onPick={(username) => {
-          setValue(username);
-          setError(null);
-        }}
-      />
     </form>
   );
 }

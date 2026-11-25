@@ -603,9 +603,6 @@
   },
   "samples": {
     "label": "Não tem conta no Discogs? Experimente uma coleção pública",
-    "choose": "Escolha uma coleção",
-    "option": "{username} ({records}, {about})",
-    "optionNoCount": "{username} ({about})",
     "about": {
       "oddcd": "eletrônica dos anos 90 em vinil",
       "tubasmarty": "bandas de metais e música militar em vinil",
