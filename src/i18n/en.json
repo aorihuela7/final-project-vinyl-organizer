@@ -121,7 +121,6 @@
     "importTitle": "Import your collection from Discogs",
     "heroLabel": "An example shelf",
     "heroCaption": "Every compartment shows its letters and how full it is. Search for a record and the app shows the compartment, how far in it is, and the records on each side.",
-    "heroRail": "An example collection from # to Z",
     "heroShelf": "Cube shelf, LPs (12″ and 10″)",
     "turntable": "Turntable"
   },
@@ -419,7 +418,8 @@
     "segmentGo": {
       "one": "{label}: {count} record. Go to where it starts",
       "other": "{label}: {count} records. Go to where they start"
-    }
+    },
+    "marker": "Record on the rail: drag it, or use the arrow keys, to pick another"
   },
   "compartment": {
     "count": {

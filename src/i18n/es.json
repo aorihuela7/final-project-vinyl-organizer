@@ -121,7 +121,6 @@
     "importTitle": "Importa tu colección de Discogs",
     "heroLabel": "Una repisa de ejemplo",
     "heroCaption": "Cada compartimiento muestra sus letras y qué tan lleno está. Busca un disco y la app te muestra el compartimiento, qué tan adentro está y los discos de cada lado.",
-    "heroRail": "Una colección de ejemplo de # a Z",
     "heroShelf": "Estante de cubos, LP (12″ y 10″)",
     "turntable": "Tocadiscos"
   },
@@ -419,7 +418,8 @@
     "segmentGo": {
       "one": "{label}: {count} disco. Ir a donde empieza",
       "other": "{label}: {count} discos. Ir a donde empiezan"
-    }
+    },
+    "marker": "Disco en el riel: arrástralo, o usa las flechas, para elegir otro"
   },
   "compartment": {
     "count": {

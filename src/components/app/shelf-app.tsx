@@ -330,6 +330,10 @@ export function ShelfApp() {
                       settings={sortSettings}
                       foundId={found && view.index.positionOf.has(found) ? found : null}
                       onJump={jumpTo}
+                      onPick={(id) => {
+                        setOpenRecord(id);
+                        showFound(id);
+                      }}
                     />
                   )}
                 />

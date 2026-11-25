@@ -126,7 +126,18 @@ export function GuestShelf({ token }: { token: string }) {
           foundSlot={found ? (findLocation(views, found)?.slot.id ?? null) : null}
           lifted={lifted}
           onOpen={(slot) => setOpenSlot(slot)}
-          railFor={(view) => <BrassRail view={view} settings={toSortSettings(config.settings)} foundId={found && view.index.positionOf.has(found) ? found : null} onJump={(id) => document.querySelector(`[data-slot="${CSS.escape(id)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" })} />}
+          railFor={(view) => (
+            <BrassRail
+              view={view}
+              settings={toSortSettings(config.settings)}
+              foundId={found && view.index.positionOf.has(found) ? found : null}
+              onJump={(id) => document.querySelector(`[data-slot="${CSS.escape(id)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" })}
+              onPick={(id) => {
+                setOpenRecord(id);
+                showFound(id);
+              }}
+            />
+          )}
         />
         {wide && <aside className="sticky top-4 max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-card">{card_ ?? <RecordCardEmpty />}</aside>}
       </div>

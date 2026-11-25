@@ -121,7 +121,6 @@
     "importTitle": "Importe sua coleção do Discogs",
     "heroLabel": "Uma estante de exemplo",
     "heroCaption": "Cada nicho mostra suas letras e o quanto está cheio. Busque um disco e o app mostra o nicho, a que altura ele está e os discos de cada lado.",
-    "heroRail": "Uma coleção de exemplo de # a Z",
     "heroShelf": "Estante de nichos, LPs (12″ e 10″)",
     "turntable": "Toca-discos"
   },
@@ -419,7 +418,8 @@
     "segmentGo": {
       "one": "{label}: {count} disco. Ir para onde começa",
       "other": "{label}: {count} discos. Ir para onde começam"
-    }
+    },
+    "marker": "Disco no trilho: arraste, ou use as setas, para escolher outro"
   },
   "compartment": {
     "count": {
