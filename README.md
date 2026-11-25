@@ -16,11 +16,11 @@ Most of these changes come from watching four collectors use v1 ([what we saw](d
   - *Why:* small records get lost behind 12″ ones (one tester lost a 10″ that way), and v1 treated all vinyl the same, so a 7″ could land between two LPs. Singles, the smallest, now get their own shelves.
 - **Minimum-move insertion** for new records, with a **purchase simulator** that compares it with v1's naive method on your own collection ([results](docs/algorithm.md#6b-minimum-move-insertion-v2-insertts-with-strategy-minimum)).
   - *Why:* every record the app moves is one you have to shift by hand, and v1's cascade only pushed forward. On a real collection of 1,725 records at 98% full, it moves about 23% fewer records; with the default 10% free space, neither method moves any.
-- **Live capacity** while you build a shelf; **calibration by count**; an optional **thickness by format** (a double LP takes two places).
-  - *Why:* one tester's map was one or two compartments off by the end of the shelf, because 80 records per cube is a guess and double albums take more room. Seeing capacity while you build, and telling the app "74 fit here", keeps the map matched to the real shelf.
+- **Live capacity** while you build a shelf, for shelves up to 20×20, whose names follow their size ("Tower 1×5" becomes "Tower 3×5"); an optional **thickness by format** (a double LP takes two places).
+  - *Why:* one tester's map was one or two compartments off by the end of the shelf, because 80 records per cube is a guess and double albums take more room. Seeing capacity while you build, and counting a double album as two, keeps the map matched to the real shelf.
 - **Temporary locations** (gig bag, next to the turntable…) and **Put it back**; **sections** that pin a genre to a shelf.
   - *Why:* three of four testers lose records outside the sorted shelf: a DJ's gig bag, a "discards" box. Put it back gives the exact spot and the neighbors. Sections cover the other thing testers asked for: not keeping the whole collection in one order ("jazz lives in the studio tower").
-- **CDs at their real size:** a Kallax cube holds two rows of CDs with a board between them, so each row of CDs is a compartment, drawn low and wide, with every shelf on the map at the same scale.
+- **CDs at their real size:** a cube shelf holds two rows of CDs per cube with a board between them, so each row of CDs is a compartment, drawn low and wide, with every shelf on the map at the same scale.
   - *Why:* a CD drawn as tall as an LP gave the wrong picture, and a compartment the size of the whole cube couldn't say which of the two rows a CD is in.
 - **Guest mode:** a revocable read-only link to your shelf.
   - *Why:* one tester lost a record when a guest put it back in the wrong place during a party. With the link, a guest finds a record and sees where it goes, without an account. It works because the shelf lives on the server, not on one phone.
@@ -31,16 +31,15 @@ Most of these changes come from watching four collectors use v1 ([what we saw](d
 
 ## What you can do
 
-1. **Open it without an account** and try the demo collection: 1,000 real records from a public Discogs collection, on two prebuilt shelves (a Kallax 4×4 with two compartments blocked by the turntable, and a 1×5 tower for CDs).
+1. **Open it without an account** and try the demo collection: about 1,000 real records from a public Discogs collection, on prebuilt shelves (a cube shelf 4×4 with two compartments blocked by the turntable, and a 1×5 tower for CDs).
 2. **Import your own collection** by typing your Discogs username (the collection must be public). You create an account right before the import; it runs in steps of 100 records and resumes if you close the tab. Started with the demo? Import yours later from "Shelves & order": it replaces the demo, and you set up your shelves for it.
    - **No Discogs collection?** Pick one of the public collections listed under the username field (each with its size, live from Discogs), or **start from scratch** with an empty collection and add your records one by one with "Add a new record".
-3. **Build your shelf from templates:** Kallax 4×4, Kallax 5×5, low unit 2×4, tower 1×5, crates in a row, record box, or custom. Edit rows and columns, tap compartments to block them, set the capacity per shelf or per compartment, choose whether it's read by rows or by columns, and whether it holds LPs (12″ and 10″), singles (7″), or CDs (two rows per cube), and optionally pin a section (a genre). Several shelves, in order. How many records fit updates as you edit.
+3. **Build your shelf from templates:** cube shelf 4×4 or 5×5, low unit 4×2, tower 1×5, crates in a row, record box, or custom. Edit rows and columns (up to 20 each; the name follows the size), tap compartments to block them, set the capacity per shelf or per compartment, choose whether it's read by rows or by columns, and whether it holds LPs (12″ and 10″), singles (7″), or CDs (two rows per cube), and optionally pin a section (a genre). Several shelves, in order. How many records fit updates as you edit.
 4. **Pick the sort order:** up to three levels from genre, artist, year, label, and title, with "ignore articles", free space, and thickness by format.
-5. **See the map:** walnut furniture where every compartment shows its letters on a brass plate, how full it is, and a drawing of its records; a brass rail per format shows the whole collection. Open a compartment to see the same drawing up close and its records in order.
+5. **See the map:** walnut furniture where every compartment shows its letters on a brass plate, how full it is, and a drawing of its records; a brass rail per format shows the whole collection, and dragging its marker picks the record where you let go. Open a compartment to see the same drawing up close and its records in order.
 6. **Search a record:** shelf, row, column, how far into the compartment ("about 40% in from the left"), the two records on each side, and its tracklist.
-7. **Calibrate:** "This is the first record in this compartment" or "There are 74 records here" moves one boundary so the map matches the real shelf.
-8. **Add a new record.** Search Discogs for a new purchase, see where it goes and what has to move (with minimum moves), and add it.
-9. **Take a record out** to a temporary place and **put it back** in its spot; **share** a read-only link with guests.
+7. **Add a new record.** Search Discogs for a new purchase, see where it goes and what has to move (with minimum moves), and add it.
+8. **Take a record out** to a temporary place and **put it back** in its spot; **share** a read-only link with guests.
 
 Signing up is only needed to save your shelf or to import your own collection.
 
