@@ -94,7 +94,7 @@ export function CompartmentSheet({ slot, view, config, byId, highlightId, onClos
             </button>
           </div>
           {plate && (
-            <p className="surface-brass mx-auto max-w-full rounded-plate px-3 py-1 text-center font-display text-sm shadow-plate">{plate.full}</p>
+            <p className="surface-plate mx-auto max-w-full px-4 py-1 text-center font-display text-sm">{plate.full}</p>
           )}
           <div
             ref={frame}

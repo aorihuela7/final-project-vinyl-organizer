@@ -86,14 +86,16 @@
   --radius-pill: 999px;
   --radius-control: 999px;
   --radius-card: 4px;
-  --radius-plate: 3px;
+  /* Nameplates are flat metal fixed to the wood, not buttons: almost square corners. */
+  --radius-plate: 1px;
   --radius-cover: 2px;
   --radius-cell: 2px;
 
   /* Shadows */
   --shadow-card: 0 10px 24px -16px rgb(0 0 0 / 0.5);
   --shadow-cover: 0 8px 16px -8px rgb(0 0 0 / 0.55);
-  --shadow-plate: 0 1px 2px rgb(0 0 0 / 0.35);
+  /* Engraved, not raised: an inset edge line and a faint top highlight, no drop shadow. */
+  --shadow-plate: inset 0 0 0 1px rgb(46 34 9 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.35);
   --shadow-sheet: 0 -8px 32px rgb(34 48 42 / 0.25);
   --shadow-tooltip: 0 2px 6px rgb(34 48 42 / 0.2), 0 8px 24px rgb(34 48 42 / 0.16);
   --shadow-rail: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 2px 4px rgb(0 0 0 / 0.2);
@@ -108,6 +110,10 @@
   --gradient-brass: linear-gradient(var(--color-brass-light), var(--color-brass) 50%, var(--color-brass-dark));
   --gradient-rail: linear-gradient(var(--color-brass-light), var(--color-brass) 45%, var(--color-brass-dark));
   --gradient-meter: linear-gradient(var(--color-brass-light), var(--color-brass-dark));
+  /* A flat brass plate: much less shine than the rail, so it doesn't read as a raised button. */
+  --gradient-plate: linear-gradient(var(--color-brass) -30%, var(--color-brass) 40%, var(--color-brass-dark) 160%);
+  /* The two small screws that hold a plate. */
+  --gradient-screw: radial-gradient(circle at 35% 35%, var(--color-brass-light), var(--color-brass-dark) 75%);
   /* Engraved lines between rail segments. */
   --color-rail-line: rgb(74 54 19 / 0.35);
   /* Count badge on a compartment. */

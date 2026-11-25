@@ -39,6 +39,39 @@ body {
   color: var(--color-engraving);
 }
 
+/*
+ * A nameplate under a compartment: flat engraved brass held by two small
+ * screws, with debossed text. Not raised and not rounded, so it never looks
+ * like a button.
+ */
+@utility surface-plate {
+  position: relative;
+  background: var(--gradient-plate);
+  color: var(--color-engraving);
+  border-radius: var(--radius-plate);
+  box-shadow: var(--shadow-plate);
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.3);
+  cursor: default;
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    margin-top: -2px;
+    border-radius: 50%;
+    background: var(--gradient-screw);
+    box-shadow: 0 0 0 0.5px rgb(46 34 9 / 0.6);
+  }
+  &::before {
+    left: 4px;
+  }
+  &::after {
+    right: 4px;
+  }
+}
+
 @utility surface-rail {
   background: var(--gradient-rail);
   color: var(--color-engraving);

@@ -147,7 +147,8 @@ export function Compartment({
 export type PlateLineText = { lead?: string; text: string };
 
 /**
- * A brass nameplate: one line for letter ranges, two only in the genre case.
+ * A brass nameplate, engraved and screwed to the wood (not a button): one
+ * line for letter ranges, two only in the genre case.
  * In a narrow compartment a single genre line breaks into the genre over its range.
  */
 export function Plate({ lines, title }: { lines: Array<string | PlateLineText>; title?: string }) {
@@ -155,7 +156,7 @@ export function Plate({ lines, title }: { lines: Array<string | PlateLineText>; 
   return (
     <span
       title={title}
-      className="surface-brass mx-auto block max-w-[92%] truncate rounded-plate px-3 py-[3px] text-center font-display text-sm leading-[1.2] shadow-plate @max-[80px]:px-1.5 @max-[80px]:text-xs"
+      className="surface-plate mx-auto block max-w-[92%] truncate px-3.5 py-[3px] text-center font-display text-sm leading-[1.2] @max-[80px]:px-1.5 @max-[80px]:text-xs @max-[80px]:before:hidden @max-[80px]:after:hidden"
     >
       {lines.map((line, i) => {
         const { lead, text } = typeof line === "string" ? { lead: undefined, text: line } : line;
