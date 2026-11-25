@@ -137,7 +137,7 @@ test("guest mode: a read-only link shows the shelf without an account, until it'
   await guest.getByLabel("Search for an artist or a title in your collection").fill("a");
   await guest.getByRole("listbox", { name: "Search results" }).getByRole("option").first().click();
   await expect(recordCard(guest)).toBeVisible();
-  // Read-only: no taking out, no calibrating, no adding.
+  // Read-only: no taking out, no adding.
   await expect(guest.getByRole("button", { name: "Take it out…" })).toHaveCount(0);
   await expect(guest.getByRole("button", { name: "+ Add a new record" })).toHaveCount(0);
 

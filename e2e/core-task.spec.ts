@@ -70,7 +70,7 @@ test("signs up, imports a Discogs collection by username, builds a shelf, and fi
   await expect(page.getByRole("region", { name: "Kallax 1" })).toBeVisible({ timeout: 60_000 });
 });
 
-test("signs up, loads the demo into the account, calibrates, and adds a new purchase", async ({ page }, testInfo) => {
+test("signs up, loads the demo into the account, and adds a new purchase", async ({ page }, testInfo) => {
   test.setTimeout(180_000);
   await setupClerkTestingToken({ page });
   const account = newAccount(`demo-${testInfo.project.name}`);
@@ -83,23 +83,6 @@ test("signs up, loads the demo into the account, calibrates, and adds a new purc
   await expect(page.getByRole("region", { name: "Living room" })).toBeVisible({ timeout: 120_000 });
   await expect(page.getByRole("region", { name: "Studio" })).toBeVisible();
   await expect(page.getByText("This demo lives only in this browser")).toHaveCount(0);
-
-  // Calibration: open the second compartment and say its first record is the last one of the first compartment.
-  const living = page.getByRole("region", { name: "Living room" });
-  await living.getByRole("button").first().click();
-  const firstSheet = page.getByRole("dialog");
-  const lastItem = firstSheet.locator("ol li").last();
-  const lastArtist = (await lastItem.locator(".font-semibold").first().innerText()).trim();
-  const lastTitle = (await lastItem.locator(".text-muted").last().innerText()).replace(/^,\s*/, "").trim();
-  await firstSheet.getByRole("button", { name: "Close" }).click();
-  await living.getByRole("button").nth(1).click();
-  const sheet = page.getByRole("dialog");
-  const before = Number((await sheet.getByText(/of \d+ records/).innerText()).split(" ")[0]);
-  await sheet.getByRole("button", { name: "The first record here is different…" }).click();
-  await sheet.getByLabel("Which record is really the first one in this compartment?").fill(`${lastArtist} ${lastTitle}`.slice(0, 40));
-  await sheet.getByRole("list").first().getByRole("button").first().click();
-  await expect(sheet.getByText(new RegExp(`^${before + 1} of \\d+ records`))).toBeVisible({ timeout: 30_000 });
-  await sheet.getByRole("button", { name: "Close" }).click();
 
   // "Add a new record" with Discogs search, then Add record.
   await page.getByRole("button", { name: "+ Add a new record" }).click();

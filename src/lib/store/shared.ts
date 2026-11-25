@@ -6,7 +6,7 @@
  */
 import { createClient } from "@supabase/supabase-js";
 import type { Placement } from "@/lib/layout";
-import { withoutRemovedOptions, type FurnitureConfig, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
+import { withoutOtherFormats, withoutRemovedOptions, type FurnitureConfig, type ShelfConfig, type StoredRecord, type TempLocation } from "@/lib/shelf/model";
 import { DEFAULT_SETTINGS } from "@/lib/shelf/model";
 import { mediaFromDb } from "./remote";
 import type { TemplateId } from "@/lib/shelf/templates";
@@ -75,7 +75,7 @@ export async function loadSharedShelf(token: string): Promise<SharedShelf | null
       }
     : DEFAULT_SETTINGS;
   return {
-    records: row.records,
+    records: withoutOtherFormats(row.records),
     config: furniture.length ? withoutRemovedOptions({ furniture, settings }) : null,
     placement: new Map(row.placements),
     locations: row.locations,

@@ -66,7 +66,6 @@ export function SearchPanel({
       return t("search.where", { place, pct: Math.round(loc.fraction * 100) });
     }
     const group = groupOf(r);
-    if (group === "other") return t("search.notPlaced", { format: r.format_name ?? "?" });
     if (!hasShelf(group)) return t(group === "single" ? "search.noSinglesShelf" : group === "cd" ? "search.noCdShelf" : "search.noLpShelf");
     return t("search.notOnShelf");
   };

@@ -61,7 +61,8 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord }: Props) {
         const res = await fetch(`/api/discogs/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
         const json = (await res.json()) as { results?: RecordInput[]; error?: string };
         if (!res.ok) throw new Error(json.error ?? t("add.searchFailed"));
-        setResults(json.results ?? []);
+        // Only what goes on a shelf (LPs, singles, CDs): cassettes and other formats are ignored.
+        setResults((json.results ?? []).filter((r) => r.format_group !== "other"));
       } catch (err) {
         if ((err as Error).name !== "AbortError") setError((err as Error).message);
       } finally {
@@ -221,7 +222,7 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord }: Props) {
           {chosen &&
             (!preview?.media ? (
               <Banner tone="warning">
-                {chosen.format_group === "other" ? t("add.notPlaced", { format: chosen.format_name ?? "?" }) : t("add.noShelf", { group: groupLabel })}
+                {t("add.noShelf", { group: groupLabel })}
               </Banner>
             ) : !preview.target ? (
               <Banner tone="warning">{t("add.full")}</Banner>

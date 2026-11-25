@@ -7,39 +7,32 @@ import { slotTitle } from "@/lib/shelf/describe";
 import { discsOf, drawingSize, toSortSettings, type MediaView, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { compartmentAspect } from "@/lib/shelf/templates";
 import { plateLabels } from "@/lib/visual/plates";
-import { searchRecords } from "@/lib/search";
 import { genreName } from "@/i18n/core";
 import { useI18n } from "@/i18n/client";
-import { Banner, btnSecondarySm, input } from "../ui";
+import { Banner } from "../ui";
 import { CompartmentDrawing } from "./compartment-drawing";
 import { DiscogsAttribution } from "./discogs-attribution";
+import { CountBadge } from "./furniture";
 import { Sheet } from "./sheet";
-import type { ShelfApp } from "./use-shelf-app";
 
 type Props = {
   slot: Slot;
   view: MediaView;
   config: ShelfConfig;
   byId: Map<string, StoredRecord>;
-  /** Missing in the read-only guest view: no calibration. */
-  app?: ShelfApp;
   /** The record the user last looked at: drawn in mustard. */
   highlightId: string | null;
   onClose: () => void;
   onPickRecord: (id: string) => void;
-  /** Open with calibration already showing (from the map's calibration hint). */
-  startCalibrating?: boolean;
 };
 
 /**
  * One compartment up close: a walnut frame with its full range on a brass
  * plate, the same drawing as on the map (pointing at a record shows it,
- * clicking opens its card), the records as a list, and calibration.
+ * clicking opens its card) with its count in the corner, and the records as a list.
  */
-export function CompartmentSheet({ slot, view, config, byId, app, highlightId, onClose, onPickRecord, startCalibrating = false }: Props) {
-  const { t, locale } = useI18n();
-  const [calibrating, setCalibrating] = useState(startCalibrating);
-  const [counting, setCounting] = useState(false);
+export function CompartmentSheet({ slot, view, config, byId, highlightId, onClose, onPickRecord }: Props) {
+  const { t, n, locale } = useI18n();
   const [hover, setHover] = useState<{ id: string; x: number; y: number; w: number } | null>(null);
   const frame = useRef<HTMLDivElement>(null);
   const settings = toSortSettings(config.settings);
@@ -119,6 +112,8 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
               onHover={(id) => setHover(id && lastPointer.current ? { id, ...lastPointer.current } : null)}
               onPick={onPickRecord}
             />
+            {/* The same count as on the map, in the same corner. */}
+            <CountBadge count={records.length} capacity={slot.capacity} long={t("map.badge", { count: records.length, capacity: slot.capacity })} short={n(records.length)} />
             {shown && hover && (
               <div
                 role="tooltip"
@@ -139,21 +134,6 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
 
         <div className="flex flex-col gap-3 px-4">
           {over && <Banner tone="warning">{t("compartment.over")}</Banner>}
-
-          {!app ? null : calibrating ? (
-            <Calibrate slot={slot} view={view} byId={byId} app={app} onDone={() => setCalibrating(false)} />
-          ) : counting ? (
-            <CalibrateCount slot={slot} app={app} current={records.length} onDone={() => setCounting(false)} />
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => setCalibrating(true)} className={btnSecondarySm}>
-                {t("compartment.calibrate")}
-              </button>
-              <button type="button" onClick={() => setCounting(true)} className={btnSecondarySm}>
-                {t("compartment.countButton")}
-              </button>
-            </div>
-          )}
 
           {records.length === 0 ? (
             <p className="text-sm text-muted">{t("compartment.empty")}</p>
@@ -190,105 +170,5 @@ export function CompartmentSheet({ slot, view, config, byId, app, highlightId, o
         </div>
       </div>
     </Sheet>
-  );
-}
-
-/** Calibration: "This is the first record in this compartment", choosing the record through search. */
-function Calibrate({ slot, view, byId, app, onDone }: { slot: Slot; view: MediaView; byId: Map<string, StoredRecord>; app: ShelfApp; onDone: () => void }) {
-  const { t } = useI18n();
-  const [query, setQuery] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  // The compartment before it in the same section (or among the shelves without one).
-  const sameSection = view.index.slots.filter((s) => (s.section ?? null) === (slot.section ?? null));
-  const previous = sameSection[sameSection.findIndex((s) => s.id === slot.id) - 1];
-  // Only records from this compartment and the previous one can become its first record.
-  const candidates = useMemo(() => {
-    const ids = [...(view.index.bySlot.get(slot.id) ?? []), ...(previous ? (view.index.bySlot.get(previous.id) ?? []) : [])].map((r) => r.id);
-    return ids.map((id) => byId.get(id)).filter((r): r is StoredRecord => !!r);
-  }, [view, slot.id, previous, byId]);
-  const results = query.trim() ? searchRecords(candidates, query, 8) : [];
-
-  async function choose(id: string) {
-    setError(null);
-    try {
-      const result = await app.calibrate(id, slot.id);
-      if (!result.ok) setError(t(`compartment.refusal.${result.code}`));
-      else onDone();
-    } catch (err) {
-      setError(err instanceof Error ? `${t("compartment.calibrateFailed")} ${err.message}` : t("compartment.calibrateFailed"));
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-2 rounded-card border border-input-line p-3">
-      <label htmlFor="calibrate-search" className="text-sm font-semibold text-ink">
-        {t("compartment.calibrateLabel")}
-      </label>
-      <input id="calibrate-search" autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("compartment.calibratePlaceholder")} className={input} />
-      {results.length > 0 && (
-        <ul className="flex flex-col">
-          {results.map((r) => (
-            <li key={r.id}>
-              <button type="button" disabled={app.busy} onClick={() => choose(r.id)} className="w-full rounded-[3px] px-2 py-2 text-left text-sm hover:bg-mustard-soft disabled:opacity-50">
-                <span className="font-semibold text-ink">{displayArtist(r.artist)}</span> <span className="text-muted">{r.title}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {query.trim() && results.length === 0 && <p className="text-sm text-muted">{t("compartment.calibrateNoMatch")}</p>}
-      {error && (
-        <p role="alert" className="text-sm font-semibold text-danger">
-          {error}
-        </p>
-      )}
-      <p className="text-xs text-muted">{t("compartment.calibrateHint")}</p>
-      <button type="button" onClick={onDone} className="self-start text-sm font-semibold text-ink underline underline-offset-2">
-        {t("common.cancel")}
-      </button>
-    </div>
-  );
-}
-
-/** Calibration by count: "there are N records here", moving only the boundary with the next compartment. */
-function CalibrateCount({ slot, app, current, onDone }: { slot: Slot; app: ShelfApp; current: number; onDone: () => void }) {
-  const { t } = useI18n();
-  const [value, setValue] = useState(String(current));
-  const [error, setError] = useState<string | null>(null);
-  return (
-    <form
-      className="flex flex-col gap-2 rounded-card border border-input-line p-3"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        setError(null);
-        const count = Number(value);
-        try {
-          const result = await app.calibrateCount(slot.id, Number.isFinite(count) ? count : -1);
-          if (!result.ok) setError(t(`compartment.refusal.${result.code}`));
-          else onDone();
-        } catch (err) {
-          setError(err instanceof Error ? `${t("compartment.calibrateFailed")} ${err.message}` : t("compartment.calibrateFailed"));
-        }
-      }}
-    >
-      <label htmlFor="calibrate-count" className="text-sm font-semibold text-ink">
-        {t("compartment.countLabel")}
-      </label>
-      <div className="flex gap-2">
-        <input id="calibrate-count" type="number" inputMode="numeric" min={0} max={1000} autoFocus value={value} onChange={(e) => setValue(e.target.value)} className={`${input} w-28`} />
-        <button type="submit" disabled={app.busy} className={btnSecondarySm}>
-          {t("compartment.countSave")}
-        </button>
-      </div>
-      {error && (
-        <p role="alert" className="text-sm font-semibold text-danger">
-          {error}
-        </p>
-      )}
-      <p className="text-xs text-muted">{t("compartment.countHint")}</p>
-      <button type="button" onClick={onDone} className="self-start text-sm font-semibold text-ink underline underline-offset-2">
-        {t("common.cancel")}
-      </button>
-    </form>
   );
 }

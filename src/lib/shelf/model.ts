@@ -112,6 +112,15 @@ export function groupOf(r: StoredRecord) {
   return groupOfRecord(r);
 }
 
+/**
+ * Cassettes, files, and every other format that doesn't go on a shelf are
+ * ignored everywhere in the app: not counted, not searchable, never mentioned.
+ * They're still imported (a sync compares its count with Discogs'), just never shown.
+ */
+export function withoutOtherFormats<T extends StoredRecord>(records: readonly T[]): T[] {
+  return records.filter((r) => groupOf(r) !== "other");
+}
+
 /** 12, 10, or 7 inches for vinyl (drawings use it for heights); null otherwise. */
 export function sizeOf(r: StoredRecord) {
   return sizeOfRecord(r);

@@ -153,7 +153,6 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
             {preview.hasMap ? <p>{t("builder.willChange", { count: preview.changed })}</p> : <p>{t("builder.willPlace", { count: preview.placed })}</p>}
             {preview.leftover > 0 && <Banner tone="warning">{t("builder.leftover", { count: preview.leftover })}</Banner>}
             {preview.slackReduced && preview.leftover === 0 && <Banner tone="warning">{t("builder.slackReduced")}</Banner>}
-            {preview.notPlaced > 0 && <p className="text-muted">{t("builder.notPlaced", { count: preview.notPlaced })}</p>}
             <div className="flex gap-2">
               <button
                 type="button"

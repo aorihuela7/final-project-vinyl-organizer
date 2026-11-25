@@ -13,13 +13,10 @@ import { msg, rawMsg, type Msg } from "@/i18n/core";
 import { useI18n } from "@/i18n/client";
 import type { RecordInput } from "@/lib/discogs/map";
 import {
-  calibrate as calibrateLayout,
-  calibrateCount as calibrateCountLayout,
   collapseMoves,
   countChanges,
   insertRecord,
   restrictToSection,
-  restrictToSlotSection,
   SHELF_MEDIA,
   sortRecords,
   type Move,
@@ -45,6 +42,7 @@ import {
   computeInitial,
   demoConfig,
   groupOf,
+  withoutOtherFormats,
   misplacedRecords,
   sizeOf,
   placementByPosition,
@@ -64,8 +62,6 @@ export type AppData = {
   collection: CollectionRow | null;
   /** Local demo only: when its records were fetched from Discogs. */
   fetchedAt: string | null;
-  /** Whether a compartment was ever calibrated (the map says it's computed from estimates until then). */
-  calibrated?: boolean;
   /** Temporary locations (records taken out carry temp_location_id). */
   locations?: TempLocation[];
 };
@@ -131,13 +127,13 @@ const syncFailedNotice = (username: string | undefined, error: string | null | u
 const errorMsg = (err: unknown, fallback: Msg): Msg => (err instanceof Error && err.message ? rawMsg(err.message) : fallback);
 
 function demoRecords(payload: { records: RecordInput[] }): StoredRecord[] {
-  return payload.records.map((r) => ({ ...r, id: `d${r.discogs_instance_id}`, origin: "import" as const }));
+  return withoutOtherFormats(payload.records.map((r) => ({ ...r, id: `d${r.discogs_instance_id}`, origin: "import" as const })));
 }
 
 /**
  * True when most records have no compartment and there's room for them, e.g.
  * after switching from the demo to your own collection. A collection that
- * simply doesn't fit never triggers it, so calibrations aren't thrown away.
+ * simply doesn't fit never triggers it.
  */
 function needsRelayout(records: StoredRecord[], config: ShelfConfig, placement: Placement) {
   const views = buildViews(records, config, placement);
@@ -256,7 +252,7 @@ export function useShelfApp(startParam: string | null) {
     }
   }, [persistLocal, demoNames]);
 
-  /** Re-fetches the demo when the browser copy is older than 6 hours, keeping the shelves and calibrations. */
+  /** Re-fetches the demo when the browser copy is older than 6 hours, keeping the shelves. */
   const refreshLocalDemo = useCallback(
     async (snapshot: LocalSnapshot) => {
       setSyncJob({ id: "local", status: "running" } as JobRow);
@@ -275,14 +271,14 @@ export function useShelfApp(startParam: string | null) {
               }
             }),
         );
-        // The user may have calibrated, added, or regenerated while we fetched:
+        // The user may have added, taken out, or regenerated while we fetched:
         // merge into what's saved now, not into the snapshot we started from.
         const latest = loadLocal() ?? snapshot;
         const refreshedAdded = new Map(added.map((r) => [r.id, r]));
         const addedNow = latest.records.filter((r) => r.origin === "added").map((r) => refreshedAdded.get(r.id) ?? r);
         // Records taken out to a temporary location stay out after the refresh.
         const outside = new Map(latest.records.filter((r) => r.temp_location_id).map((r) => [r.id, r]));
-        const fresh = [...demoRecords(payload), ...addedNow].map((r) => {
+        const fresh = withoutOtherFormats([...demoRecords(payload), ...addedNow]).map((r) => {
           const was = outside.get(r.id);
           return was ? { ...r, temp_location_id: was.temp_location_id, taken_out_at: was.taken_out_at } : r;
         });
@@ -295,7 +291,6 @@ export function useShelfApp(startParam: string | null) {
           placement: placed.placement,
           collection: null,
           fetchedAt: payload.fetchedAt,
-          calibrated: latest.events.some((e) => e.kind === "calibrate"),
           locations: latest.locations ?? [],
         };
         persistLocal(next, placed.moves.length ? { kind: "insert", movedCount: placed.moves.length } : undefined);
@@ -318,7 +313,6 @@ export function useShelfApp(startParam: string | null) {
       placement: state.placement,
       collection: state.collection,
       fetchedAt: null,
-      calibrated: state.calibrated,
       locations: state.locations,
     };
     return { state, next };
@@ -484,18 +478,14 @@ export function useShelfApp(startParam: string | null) {
         const snapshot = loaded?.snapshot ?? null;
         if (snapshot) {
           setData({
-            records: snapshot.records,
+            records: withoutOtherFormats(snapshot.records),
             config: snapshot.config,
             placement: new Map(snapshot.placement),
             collection: null,
             fetchedAt: snapshot.fetchedAt,
-            calibrated: snapshot.events.some((e) => e.kind === "calibrate"),
             locations: snapshot.locations ?? [],
           });
           setStatus({ kind: "ready" });
-          if (loaded?.migration?.singlesBoxAdded) {
-            setNotice({ tone: "info", msg: msg("notices.singlesBoxAdded", { count: snapshot.records.filter((r) => groupOf(r) === "single").length }) });
-          }
           if (isStale(snapshot.fetchedAt)) await refreshLocalDemo(snapshot);
         } else if (startParam === "demo") {
           await startLocalDemo();
@@ -684,55 +674,9 @@ export function useShelfApp(startParam: string | null) {
       } else {
         persistLocal({ ...data, records, placement }, { kind: event.kind, movedCount: event.movedCount });
       }
-      setData({ ...data, records, placement, calibrated: data.calibrated || event.kind === "calibrate" });
+      setData({ ...data, records, placement });
     },
     [data, mode, supabase, persistLocal],
-  );
-
-  const calibrate = useCallback(
-    async (recordId: string, slotId: string) => {
-      if (!data?.config) return { ok: false as const, code: "notOnShelf" as const, reason: "Generate a map first." };
-      const record = data.records.find((r) => r.id === recordId);
-      const view = record ? views.find((v) => v.media === groupOf(record)) : undefined;
-      if (!record || !view) return { ok: false as const, code: "notOnShelf" as const, reason: "That record isn't on a shelf." };
-      const settings = toSortSettings(data.config.settings);
-      const group = data.records.filter((r) => groupOf(r) === view.media).map(toLayoutRecord);
-      const result = calibrateLayout({ ...restrictToSlotSection(view.index.slots, group, slotId), placement: data.placement, settings }, recordId, slotId);
-      if (!result.ok) return result;
-      if (result.movedCount > 0) {
-        setBusy(true);
-        try {
-          await applyChange(result.placement, result.moves, { kind: "calibrate", moves: result.moves, movedCount: result.movedCount });
-        } finally {
-          setBusy(false);
-        }
-      }
-      return result;
-    },
-    [data, views, applyChange],
-  );
-
-  /** Calibration by count: "there are N records in this compartment right now". */
-  const calibrateCount = useCallback(
-    async (slotId: string, count: number) => {
-      if (!data?.config) return { ok: false as const, code: "notOnShelf" as const, reason: "Generate a map first." };
-      const view = views.find((v) => v.index.slotById.has(slotId));
-      if (!view) return { ok: false as const, code: "unavailable" as const, reason: "That compartment isn't available." };
-      const settings = toSortSettings(data.config.settings);
-      const group = data.records.filter((r) => groupOf(r) === view.media).map(toLayoutRecord);
-      const result = calibrateCountLayout({ ...restrictToSlotSection(view.index.slots, group, slotId), placement: data.placement, settings }, slotId, count);
-      if (!result.ok) return result;
-      if (result.movedCount > 0) {
-        setBusy(true);
-        try {
-          await applyChange(result.placement, result.moves, { kind: "calibrate", moves: result.moves, movedCount: result.movedCount });
-        } finally {
-          setBusy(false);
-        }
-      }
-      return result;
-    },
-    [data, views, applyChange],
   );
 
   /** "Add a new record": the naive insertion, computed without saving. */
@@ -868,8 +812,6 @@ export function useShelfApp(startParam: string | null) {
     startFromZero: () => importDiscogs(ZERO_START.username),
     previewMap,
     generateMap,
-    calibrate,
-    calibrateCount,
     previewInsert,
     addRecord,
     takeOut,

@@ -41,7 +41,7 @@
   "onboarding": {
     "title": "Armemos el mapa de tu repisa",
     "demoTitle": "Prueba la colección de demostración",
-    "demoText": "1.000 discos reales en repisas ya armadas.",
+    "demoText": "Unos 1.000 discos reales en repisas ya armadas.",
     "demoNoAccount": "No necesitas cuenta.",
     "demoButton": "Cargar la demostración",
     "importTitle": "Importa tu colección de Discogs",
@@ -86,10 +86,6 @@
     "cdsWithoutShelf": {
       "one": "{count} CD todavía no tiene repisa de CD.",
       "other": "{count} CD todavía no tienen repisa de CD."
-    },
-    "others": {
-      "one": "{count} casete u otro formato queda fuera de las repisas.",
-      "other": "{count} casetes u otros formatos quedan fuera de las repisas."
     },
     "seeMoves": "Ver los movimientos",
     "hideMoves": "Ocultar los movimientos",
@@ -178,10 +174,6 @@
     },
     "addFailed": "No se pudo agregar el disco.",
     "demoReadySingles": "Demostración lista: {lps} LP, {singles} singles y {cds} CD en repisas ya armadas, ordenados por artista, luego título.",
-    "singlesBoxAdded": {
-      "one": "Los singles (7″) ahora van en sus propias repisas. Agregamos una caja de singles para tu {count} single, y ningún LP se movió.",
-      "other": "Los singles (7″) ahora van en sus propias repisas. Agregamos una caja de singles para tus {count} singles, y ningún LP se movió."
-    },
     "replacedZero": "Tu colección ahora empieza de cero. Arma tu repisa y después agrega tus discos uno por uno.",
     "zeroFailed": "No se pudo empezar una colección vacía en este momento. Vuelve a intentarlo en un minuto.",
     "replaceZeroFailed": "No se pudo empezar de cero en este momento. Tu colección actual no cambió.",
@@ -261,7 +253,6 @@
     "results": "Resultados de la búsqueda",
     "noMatch": "Ningún disco coincide con “{query}”.",
     "where": "{place}, a un {pct}% desde la izquierda",
-    "notPlaced": "{format}: este formato no va en una repisa",
     "noSinglesShelf": "Fuera del mapa hasta que agregues una repisa de singles",
     "noCdShelf": "Fuera del mapa hasta que agregues una repisa de CD",
     "noLpShelf": "Fuera del mapa hasta que agregues una repisa de LP",
@@ -285,7 +276,6 @@
     "goesAfter": "Va en {place}, justo después de {left}",
     "goesBefore": "Va en {place}, justo antes de {right}",
     "goesIn": "Va en {place}",
-    "notPlaced": "Esta edición es en {format}, así que no va en una repisa.",
     "noShelf": "Todavía no tienes una repisa para {group}. Agrega una en Repisas y orden.",
     "full": "Tus repisas están llenas: no hay lugar para él en ningún lado.",
     "fits": "Cabe. Solo ponlo en su lugar: 1 movimiento.",
@@ -317,8 +307,8 @@
     "recomputeTitle": "¿Recalcular todo el mapa?",
     "generateTitle": "¿Generar el mapa?",
     "willChange": {
-      "one": "{count} disco va a cambiar de compartimiento. Las calibraciones que hiciste se reemplazan por el nuevo orden.",
-      "other": "{count} discos van a cambiar de compartimiento. Las calibraciones que hiciste se reemplazan por el nuevo orden."
+      "one": "{count} disco va a cambiar de compartimiento.",
+      "other": "{count} discos van a cambiar de compartimiento."
     },
     "willPlace": {
       "one": "Se va a ubicar {count} disco.",
@@ -329,10 +319,6 @@
       "other": "{count} discos no caben. Van a aparecer como fuera de la repisa."
     },
     "slackReduced": "Solo cabe usando parte del espacio libre que pediste.",
-    "notPlaced": {
-      "one": "{count} casete, archivo u otro formato queda fuera de las repisas.",
-      "other": "{count} casetes, archivos u otros formatos quedan fuera de las repisas."
-    },
     "cardLine": "{media}, {template}, {rows} × {cols}",
     "holds": "Caben {count}",
     "edit": "Editar",
@@ -439,30 +425,11 @@
       "other": "{count} de {capacity} discos"
     },
     "over": "Marcaste este compartimiento como más lleno que su capacidad. Está bien: el mapa sigue a tu repisa real.",
-    "calibrate": "El primer disco de aquí es otro…",
     "drawingHint": "Pasa el puntero por un disco para verlo; haz clic para ver los detalles y la portada.",
     "list": "Discos de este compartimiento, de izquierda a derecha",
     "empty": "Este compartimiento está vacío.",
     "added": "agregado por ti",
     "position": "{index} de {total}",
-    "calibrateLabel": "¿Cuál es realmente el primer disco de este compartimiento?",
-    "calibratePlaceholder": "Busca en este compartimiento y en el anterior",
-    "calibrateNoMatch": "No hay coincidencias en este compartimiento ni en el anterior.",
-    "calibrateHint": "Solo se mueve el límite con el compartimiento anterior. Todo lo demás queda donde está.",
-    "calibrateFailed": "No se pudo guardar la calibración.",
-    "refusal": {
-      "unavailable": "Ese compartimiento no está disponible.",
-      "notOnShelf": "Ese disco no está en esta repisa.",
-      "firstCompartment": "Este es el primer compartimiento, así que los discos anteriores no tienen adónde ir.",
-      "notAdjacent": "Elige un disco de este compartimiento o del inmediatamente anterior: la calibración solo mueve el límite entre ellos.",
-      "lastCompartment": "Este es el último compartimiento, así que los discos siguientes no tienen adónde ir.",
-      "notEnough": "El compartimiento siguiente no tiene tantos discos para dar.",
-      "badCount": "Escribe un número entero."
-    },
-    "countButton": "Contar los discos de aquí",
-    "countLabel": "¿Cuántos discos hay ahora en este compartimiento?",
-    "countSave": "Guardar el conteo",
-    "countHint": "Solo se mueve el límite con el compartimiento siguiente: los discos de más pasan a él, o los que faltan vienen de él.",
     "places": "{count} de {capacity} lugares"
   },
   "collection": {
@@ -543,11 +510,6 @@
         "text": "Eso es todo. Puedes ver este recorrido de nuevo desde Ayuda, arriba en la página."
       }
     }
-  },
-  "calibration": {
-    "hint": "El mapa supone unos {capacity} discos por compartimiento, una estimación. Si en tu repisa real un compartimiento empieza con otro disco, dile a la app cuál: el mapa sigue a tu repisa.",
-    "start": "Ajustar un compartimiento",
-    "later": "Ahora no"
   },
   "simulator": {
     "title": "Simulador de compras",

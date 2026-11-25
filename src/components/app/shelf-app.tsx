@@ -7,13 +7,12 @@ import { START_TOUR_EVENT, TourOffer, TourOverlay, TourWaiting, useTourState, ty
 import { useSearchParams } from "next/navigation";
 import { SignUpButton } from "@clerk/nextjs";
 import { displayArtist, type Slot } from "@/lib/layout";
-import { groupOf, suggestedConfig, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
+import { groupOf, suggestedConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotTitle } from "@/lib/shelf/describe";
 import { CompartmentSheet } from "./compartment-sheet";
 import { ImportProgress } from "./import-progress";
 import { MapView } from "./map-view";
 import { BrassRail } from "./brass-rail";
-import { CalibrationHint } from "./calibration-hint";
 import { SimulatorCard } from "./simulator-card";
 import { OutOfShelfPanel } from "./temporary";
 import { ShareCard } from "./share-card";
@@ -71,26 +70,6 @@ export function ShelfApp() {
   }, []);
 
   const [adding, setAdding] = useState(false);
-  const [calibrateOnOpen, setCalibrateOnOpen] = useState(false);
-  // The calibration hint can be put off; it also goes away after the first calibration.
-  const [hintDismissed, setHintDismissed] = useState(true);
-  useEffect(() => {
-    let dismissed = false;
-    try {
-      dismissed = localStorage.getItem("ro:calibration-hint") === "dismissed";
-    } catch {
-      // keep showing it
-    }
-    void Promise.resolve().then(() => setHintDismissed(dismissed));
-  }, []);
-  const dismissHint = () => {
-    setHintDismissed(true);
-    try {
-      localStorage.setItem("ro:calibration-hint", "dismissed");
-    } catch {
-      // nothing to do
-    }
-  };
 
   const byId = useMemo(() => new Map((app.data?.records ?? []).map((r) => [r.id, r])), [app.data?.records]);
 
@@ -202,7 +181,6 @@ export function ShelfApp() {
   const config = data.config;
   const views = app.views;
   const leftover = views.reduce((n, v) => n + v.unplaced.length, 0);
-  const others = data.records.filter((r) => groupOf(r) === "other").length;
   const cdsWithoutShelf = config && !config.furniture.some((f) => f.media === "cd") ? data.records.filter((r) => groupOf(r) === "cd").length : 0;
   // Singles (7″) only go on singles shelves: without one, they stay off the map, and every count says so.
   const singlesWithoutShelf = config && !config.furniture.some((f) => f.media === "single") ? data.records.filter((r) => groupOf(r) === "single").length : 0;
@@ -315,7 +293,7 @@ export function ShelfApp() {
                   </button>
                 </Banner>
               )}
-              {(leftover > 0 || others > 0 || cdsWithoutShelf > 0) && (
+              {(leftover > 0 || cdsWithoutShelf > 0) && (
                 <ul className="flex flex-col gap-1 text-sm">
                   {leftover > 0 && (
                     <li>
@@ -323,22 +301,9 @@ export function ShelfApp() {
                     </li>
                   )}
                   {cdsWithoutShelf > 0 && <li className="text-muted">{t("app.cdsWithoutShelf", { count: cdsWithoutShelf })}</li>}
-                  {others > 0 && <li className="text-muted">{t("app.others", { count: others })}</li>}
                 </ul>
               )}
 
-              {hasMap && !data.calibrated && !hintDismissed && (
-                <CalibrationHint
-                  capacity={commonCapacity(config)}
-                  onCalibrate={() => {
-                    const first = views.find((v) => v.index.sorted.length > 0)?.index.slots[1] ?? views.find((v) => v.index.sorted.length > 0)?.index.slots[0];
-                    if (!first) return;
-                    setCalibrateOnOpen(true);
-                    setOpenSlot(first);
-                  }}
-                  onDismiss={dismissHint}
-                />
-              )}
               <OutOfShelfPanel
                 records={data.records}
                 locations={data.locations ?? []}
@@ -405,13 +370,8 @@ export function ShelfApp() {
           view={views.find((v) => v.media === openSlot.media)!}
           config={config}
           byId={byId}
-          app={app}
           highlightId={lastRecord}
-          startCalibrating={calibrateOnOpen}
-          onClose={() => {
-            setOpenSlot(null);
-            setCalibrateOnOpen(false);
-          }}
+          onClose={() => setOpenSlot(null)}
           onPickRecord={(id) => {
             setOpenSlot(null);
             setOpenRecord(id);
@@ -522,9 +482,3 @@ function NoticeBar({
   );
 }
 
-/** The records per compartment most shelves use (for the calibration hint). */
-function commonCapacity(config: ShelfConfig): number {
-  const counts = new Map<number, number>();
-  for (const f of config.furniture) counts.set(f.defaultCapacity, (counts.get(f.defaultCapacity) ?? 0) + f.rows * f.cols);
-  return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 80;
-}
