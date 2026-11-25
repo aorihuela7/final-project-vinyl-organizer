@@ -39,7 +39,7 @@ test("signs up, imports a Discogs collection by username, builds a shelf, and fi
   await expect(page.getByText(/[\d,]+ records imported/)).toBeVisible();
   await page.screenshot({ path: `docs/screenshots/setup-${testInfo.project.name}.png`, fullPage: true });
 
-  // Build it from a template: the suggestion has Kallax shelves; block a compartment and switch one shelf to columns.
+  // Build it from a template: the suggestion has cube shelves; block a compartment and switch one shelf to columns.
   const firstShelf = page.locator("article").first();
   await firstShelf.getByRole("button", { name: /row 1, column 1: available/ }).click();
   await expect(firstShelf.getByRole("button", { name: /row 1, column 1: blocked/ })).toBeVisible();
@@ -53,21 +53,21 @@ test("signs up, imports a Discogs collection by username, builds a shelf, and fi
   await page.getByRole("button", { name: "Generate map" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Generate" }).click();
   await expect(page.getByText(/Map generated/)).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByRole("region", { name: "Kallax 1" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Cube shelf 4×4 (1)" })).toBeVisible();
   await page.screenshot({ path: `docs/screenshots/map-${testInfo.project.name}.png`, fullPage: true });
 
   // 5. Search a record and see shelf, row, column, how far in, and its neighbors.
   await page.getByLabel("Search for an artist or a title in your collection").fill("Faith George Michael");
   await page.getByRole("listbox", { name: "Search results" }).getByRole("option").first().click();
   const card = recordCard(page);
-  await expect(card.getByText(/Kallax \d, row \d, column \d/)).toBeVisible();
+  await expect(card.getByText(/Cube shelf 4×4 \(\d\), row \d+, column \d+/)).toBeVisible();
   await expect(card.getByText(/\d+% in from the left/)).toBeVisible();
   await expect(card.getByText(/Just to the left|Just to the right/).first()).toBeVisible();
   await page.screenshot({ path: `docs/screenshots/record-${testInfo.project.name}.png` });
 
   // Reload: the map is persisted, not recomputed.
   await page.reload();
-  await expect(page.getByRole("region", { name: "Kallax 1" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("region", { name: "Cube shelf 4×4 (1)" })).toBeVisible({ timeout: 60_000 });
 });
 
 test("signs up, loads the demo into the account, and adds a new purchase", async ({ page }, testInfo) => {

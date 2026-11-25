@@ -156,6 +156,7 @@ test("a demo account imports its own Discogs collection: a typo changes nothing,
   expect(collection).toEqual({ source: "discogs", discogs_username: "aorihuelar" });
   const { count: shelves } = await supabase.from("furniture").select("id", { count: "exact", head: true });
   expect(shelves).toBe(0);
-  const { count: records } = await supabase.from("records").select("id", { count: "exact", head: true });
+  // Every record is imported; the app shows the ones that go on a shelf (cassettes and other formats are ignored).
+  const { count: records } = await supabase.from("records").select("id", { count: "exact", head: true }).neq("format_group", "other");
   expect(records).toBe(shownCount);
 });
