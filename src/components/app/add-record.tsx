@@ -21,7 +21,11 @@ type Props = {
   onClose: () => void;
   onShowRecord: (id: string, slotId: string | null) => void;
   /** No shelf for this record's format yet: go build one. */
-  onAddShelf?: (media: ShelfMedia) => void;
+  onAddShelf?: (media: ShelfMedia, record: RecordInput) => void;
+  /** Every shelf for this record's format is full: go make one bigger. */
+  onGrowShelf?: (media: ShelfMedia, record: RecordInput) => void;
+  /** Opens with this record already chosen (back from building its shelf). */
+  initial?: RecordInput | null;
 };
 
 function Step({ n, title, children, muted = false }: { n: number; title: string; children?: React.ReactNode; muted?: boolean }) {
@@ -42,13 +46,13 @@ function Step({ n, title, children, muted = false }: { n: number; title: string;
  * "Add a new record": find it on Discogs, see where it goes (the compartment,
  * the records on each side, and what has to move), then add it.
  */
-export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf }: Props) {
+export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf, onGrowShelf, initial = null }: Props) {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<RecordInput[]>([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chosen, setChosen] = useState<RecordInput | null>(null);
+  const [chosen, setChosen] = useState<RecordInput | null>(initial);
   const [loadingRelease, setLoadingRelease] = useState(false);
 
   // Debounced search through our server route (the Discogs token never reaches the browser).
@@ -239,13 +243,20 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf
               <Banner tone="warning" className="flex flex-wrap items-center justify-between gap-2">
                 <span>{t("add.noShelf", { group: groupLabel })}</span>
                 {onAddShelf && chosen.format_group !== "other" && (
-                  <button type="button" onClick={() => onAddShelf(chosen.format_group as ShelfMedia)} className={btnPrimarySm}>
+                  <button type="button" onClick={() => onAddShelf(chosen.format_group as ShelfMedia, chosen)} className={btnPrimarySm}>
                     {t(`add.addShelf.${chosen.format_group as ShelfMedia}`)}
                   </button>
                 )}
               </Banner>
             ) : !preview.target ? (
-              <Banner tone="warning">{t("add.full")}</Banner>
+              <Banner tone="warning" className="flex flex-wrap items-center justify-between gap-2">
+                <span>{t("add.full")}</span>
+                {onGrowShelf && (
+                  <button type="button" onClick={() => onGrowShelf(preview.media!, chosen)} className={btnPrimarySm}>
+                    {t("add.grow")}
+                  </button>
+                )}
+              </Banner>
             ) : (
               <>
                 {placed && (

@@ -300,7 +300,8 @@
       "cd": "Adicionar uma estante de CDs"
     },
     "already": "Você já tem este disco, em {place}. Adicione de novo só se for uma segunda cópia.",
-    "alreadyOff": "Você já tem este disco. Adicione de novo só se for uma segunda cópia."
+    "alreadyOff": "Você já tem este disco. Adicione de novo só se for uma segunda cópia.",
+    "grow": "Aumentar a estante"
   },
   "levelNames": {
     "genre": "Gênero",
@@ -394,8 +395,9 @@
     "sectionHint": "Os discos de uma seção vão só nas estantes com essa seção, ordenados dentro dela.",
     "customName": "Móvel sob medida {size}",
     "cubeShelf": "Estante de nichos",
-    "newShelfReady": "Sua estante nova está pronta abaixo. Ajuste se precisar, gere o mapa e adicione seu disco de novo.",
-    "capacityHint": "Os discos por nicho são uma estimativa. Se em um nicho da sua estante real cabem mais ou menos, mude aqui (ou toque no nicho para dar a ele a própria capacidade), assim o mapa bate com a sua estante."
+    "newShelfReady": "Sua estante nova está pronta abaixo. Ajuste se precisar e gere o mapa: seu disco abre de novo para você adicioná-lo.",
+    "capacityHint": "Os discos por nicho são uma estimativa. Se em um nicho da sua estante real cabem mais ou menos, mude aqui (ou toque no nicho para dar a ele a própria capacidade), assim o mapa bate com a sua estante.",
+    "grownShelfReady": "Aumentamos sua estante para caber o disco novo (veja abaixo). Ajuste se precisar e gere o mapa: seu disco abre de novo para você adicioná-lo."
   },
   "record": {
     "offMap": "Fora do mapa",

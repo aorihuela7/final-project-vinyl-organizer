@@ -300,7 +300,8 @@
       "cd": "Agregar una repisa de CD"
     },
     "already": "Ya tienes este disco, en {place}. Agrégalo de nuevo solo si es una segunda copia.",
-    "alreadyOff": "Ya tienes este disco. Agrégalo de nuevo solo si es una segunda copia."
+    "alreadyOff": "Ya tienes este disco. Agrégalo de nuevo solo si es una segunda copia.",
+    "grow": "Agrandar la repisa"
   },
   "levelNames": {
     "genre": "Género",
@@ -394,8 +395,9 @@
     "sectionHint": "Los discos de una sección van solo en las repisas con esa sección, ordenados dentro de ella.",
     "customName": "Mueble a medida {size}",
     "cubeShelf": "Estante de cubos",
-    "newShelfReady": "Tu repisa nueva está lista abajo. Ajústala si hace falta, genera el mapa y vuelve a agregar tu disco.",
-    "capacityHint": "Los discos por compartimiento son una estimación. Si en un compartimiento de tu repisa real caben más o menos, cámbialo aquí (o toca el compartimiento para darle su propia capacidad), así el mapa coincide con tu repisa."
+    "newShelfReady": "Tu repisa nueva está lista abajo. Ajústala si hace falta y genera el mapa: tu disco se vuelve a abrir para que lo agregues.",
+    "capacityHint": "Los discos por compartimiento son una estimación. Si en un compartimiento de tu repisa real caben más o menos, cámbialo aquí (o toca el compartimiento para darle su propia capacidad), así el mapa coincide con tu repisa.",
+    "grownShelfReady": "Agrandamos tu repisa para que quepa el disco nuevo (mírala abajo). Ajústala si hace falta y genera el mapa: tu disco se vuelve a abrir para que lo agregues."
   },
   "record": {
     "offMap": "Fuera del mapa",

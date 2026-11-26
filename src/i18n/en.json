@@ -300,7 +300,8 @@
       "cd": "Add a CD shelf"
     },
     "already": "You already have this record, in {place}. Add it again only if it's a second copy.",
-    "alreadyOff": "You already have this record. Add it again only if it's a second copy."
+    "alreadyOff": "You already have this record. Add it again only if it's a second copy.",
+    "grow": "Make the shelf bigger"
   },
   "levelNames": {
     "genre": "Genre",
@@ -394,8 +395,9 @@
     "sectionHint": "Records of a section go only on shelves with that section, sorted inside it.",
     "customName": "Custom shelf {size}",
     "cubeShelf": "Cube shelf",
-    "newShelfReady": "Your new shelf is ready below. Adjust it if you need to, then generate the map and add your record again.",
-    "capacityHint": "Records per compartment is an estimate. If a compartment on your real shelf holds more or fewer, change it here (or tap the compartment to give it its own capacity), so the map matches your shelf."
+    "newShelfReady": "Your new shelf is ready below. Adjust it if you need to, then generate the map: your record opens again so you can add it.",
+    "capacityHint": "Records per compartment is an estimate. If a compartment on your real shelf holds more or fewer, change it here (or tap the compartment to give it its own capacity), so the map matches your shelf.",
+    "grownShelfReady": "We made your shelf bigger so the new record fits (see it below). Adjust it if you need to, then generate the map: your record opens again so you can add it."
   },
   "record": {
     "offMap": "Not on the map",

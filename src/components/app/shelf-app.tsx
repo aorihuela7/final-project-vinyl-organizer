@@ -7,7 +7,7 @@ import { START_TOUR_EVENT, TourOffer, TourOverlay, TourWaiting, useTourState, ty
 import { useSearchParams } from "next/navigation";
 import { SignUpButton } from "@clerk/nextjs";
 import { isZeroStart } from "@/lib/config";
-import { displayArtist, type ShelfMedia, type Slot } from "@/lib/layout";
+import { displayArtist, type Slot } from "@/lib/layout";
 import { groupOf, suggestedConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotTitle } from "@/lib/shelf/describe";
 import { CompartmentSheet } from "./compartment-sheet";
@@ -22,7 +22,8 @@ import { Onboarding } from "./onboarding";
 import { RecordCard, RecordCardEmpty, findLocation } from "./record-details";
 import { useMediaQuery } from "./use-media-query";
 import { SearchRow } from "./search-panel";
-import { SetupView } from "./setup-view";
+import { SetupView, type ShelfPrep } from "./setup-view";
+import type { RecordInput } from "@/lib/discogs/map";
 import { Sheet } from "./sheet";
 import { AddRecord } from "./add-record";
 import { CollectionPanel } from "./collection-panel";
@@ -69,7 +70,9 @@ export function ShelfApp() {
 
   const [adding, setAdding] = useState(false);
   // "Add a new record" found no shelf for the record's format: Shelves & order opens with one added.
-  const [newShelf, setNewShelf] = useState<ShelfMedia | null>(null);
+  const [prepare, setPrepare] = useState<ShelfPrep | null>(null);
+  // …and the record waiting for it, which opens again in "Add a new record" once the map is generated.
+  const [pendingAdd, setPendingAdd] = useState<RecordInput | null>(null);
 
   const byId = useMemo(() => new Map((app.data?.records ?? []).map((r) => [r.id, r])), [app.data?.records]);
   /** Removes a record added by hand, closing its card and clearing the map's mark first. */
@@ -301,7 +304,17 @@ export function ShelfApp() {
 
           {tab === "setup" ? (
             <>
-              <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} addShelf={newShelf} onShelfAdded={() => setNewShelf(null)} />
+              <SetupView
+                app={app}
+                initial={config}
+                records={data.records}
+                onDone={() => {
+                  setTab("map");
+                  if (pendingAdd) setAdding(true);
+                }}
+                prepare={prepare}
+                onPrepared={() => setPrepare(null)}
+              />
               <h2 className="mt-4 border-t border-input-line/60 pt-6 font-display text-2xl text-ink">{t("app.toolsTitle")}</h2>
               <p className="-mt-2 text-sm text-muted">{t("app.toolsText")}</p>
               <SimulatorCard records={data.records} config={config} />
@@ -473,14 +486,26 @@ export function ShelfApp() {
           app={app}
           config={config}
           byId={byId}
-          onClose={() => setAdding(false)}
-          onAddShelf={(media) => {
+          initial={pendingAdd}
+          onClose={() => {
             setAdding(false);
-            setNewShelf(media);
+            setPendingAdd(null);
+          }}
+          onAddShelf={(media, record) => {
+            setAdding(false);
+            setPendingAdd(record);
+            setPrepare({ kind: "add", media });
+            setTab("setup");
+          }}
+          onGrowShelf={(media, record) => {
+            setAdding(false);
+            setPendingAdd(record);
+            setPrepare({ kind: "grow", media });
             setTab("setup");
           }}
           onShowRecord={(id, slotId) => {
             setAdding(false);
+            setPendingAdd(null);
             void slotId;
             showFound(id);
             setOpenRecord(id);

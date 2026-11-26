@@ -11,7 +11,9 @@ import {
   renameForSize,
   resizeAndRename,
   sizeLabel,
+  growForRecords,
   suggestedShelves,
+  uniqueShelfName,
   templateSizeLabel,
   type FurnitureConfig,
   type ShelfConfig,
@@ -34,6 +36,9 @@ const field = "flex flex-col gap-1 text-sm text-muted";
 const control = "rounded-[18px] border border-input-line bg-white px-3.5 py-2 text-[15px] text-ink disabled:opacity-50";
 
 type Counts = Record<ShelfMedia | "other", number>;
+
+/** What "Add a new record" asked Shelves & order to prepare for a record that has no room. */
+export type ShelfPrep = { kind: "add" | "grow"; media: ShelfMedia };
 
 /** A new shelf's name: the template's, with its size ("Tower 1×5", "Custom shelf 3×3"). */
 function shelfName(t: Translator["t"], id: TemplateId): string {
@@ -61,38 +66,49 @@ export function SetupView({
   initial,
   records,
   onDone,
-  addShelf = null,
-  onShelfAdded,
+  prepare = null,
+  onPrepared,
 }: {
   app: ShelfApp;
   initial: ShelfConfig;
   records: StoredRecord[];
   onDone: () => void;
-  /** Open with a new shelf for this format already added (from "Add a new record"), sized for its records plus one. */
-  addShelf?: ShelfMedia | null;
-  onShelfAdded?: () => void;
+  /**
+   * From "Add a new record": open with a new shelf for this format already added
+   * ("add"), or with its last shelf made bigger ("grow"), with room for its
+   * records plus the new one.
+   */
+  prepare?: ShelfPrep | null;
+  onPrepared?: () => void;
 }) {
   const { t } = useI18n();
   // The new shelf, if any, is part of the first draft: SetupView mounts fresh when its tab opens.
-  const [added] = useState(() => {
-    if (!addShelf) return null;
-    const n = records.filter((r) => groupOf(r) === addShelf).length + 1;
+  const [prepared] = useState(() => {
+    if (!prepare) return null;
+    const n = records.filter((r) => groupOf(r) === prepare.media).length + 1;
     const names = { cube: t("builder.cubeShelf"), single: t("builder.suggestedSingles"), cd: t("builder.suggestedCds") };
-    return suggestedShelves(addShelf, n, initial.furniture.length, names);
+    const base = structuredClone(initial.furniture);
+    if (prepare.kind === "grow") {
+      const grown = growForRecords(base, prepare.media, n, names);
+      if (grown) return { kind: "grow" as const, furniture: grown.furniture, key: grown.key };
+    }
+    const added = suggestedShelves(prepare.media, n, base.length, names);
+    for (const f of added) f.name = uniqueShelfName(f.name, [...base, ...added.filter((x) => x !== f)].map((x) => x.name));
+    return { kind: "add" as const, furniture: [...base, ...added], key: added[0]!.key };
   });
   const [draft, setDraft] = useState<ShelfConfig>(() => {
     const copy = structuredClone(initial);
-    return added ? { ...copy, furniture: [...copy.furniture, ...added] } : copy;
+    return prepared ? { ...copy, furniture: prepared.furniture } : copy;
   });
   const [preview, setPreview] = useState<MapPreview | null>(null);
   const [openKey, setOpenKey] = useState<string | null>(() =>
-    added ? added[0]!.key : initial.furniture.length > 0 && !app.data?.config ? [...initial.furniture].sort((a, b) => a.sortIndex - b.sortIndex)[0]!.key : null,
+    prepared ? prepared.key : initial.furniture.length > 0 && !app.data?.config ? [...initial.furniture].sort((a, b) => a.sortIndex - b.sortIndex)[0]!.key : null,
   );
   useEffect(() => {
-    if (!added) return;
-    onShelfAdded?.();
-    // Show the new shelf open in the builder.
-    const timer = setTimeout(() => document.getElementById(`shelf-${added[0]!.key}`)?.scrollIntoView({ block: "start", behavior: "smooth" }), 50);
+    if (!prepared) return;
+    onPrepared?.();
+    // Show the new or bigger shelf open in the builder.
+    const timer = setTimeout(() => document.getElementById(`shelf-${prepared.key}`)?.scrollIntoView({ block: "start", behavior: "smooth" }), 50);
     return () => clearTimeout(timer);
     // Once, on mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -137,7 +153,7 @@ export function SetupView({
     const hasSinglesShelf = draft.furniture.some((f) => f.media === "single");
     const media: ShelfMedia =
       id === "record_box" && counts.single > 0 && !hasSinglesShelf ? "single" : counts.lp === 0 && counts.cd > 0 ? "cd" : "lp";
-    const shelf = newFurniture(id, draft.furniture.length, media, shelfName(t, id));
+    const shelf = newFurniture(id, draft.furniture.length, media, uniqueShelfName(shelfName(t, id), draft.furniture.map((f) => f.name)));
     setDraft((d) => ({ ...d, furniture: [...d.furniture, shelf] }));
     setOpenKey(shelf.key);
   };
@@ -192,7 +208,7 @@ export function SetupView({
         )}
 
         {furniture.length === 0 && <Banner tone="warning">{t("builder.addOne")}</Banner>}
-        {added && <Banner>{t("builder.newShelfReady")}</Banner>}
+        {prepared && <Banner>{t(prepared.kind === "grow" ? "builder.grownShelfReady" : "builder.newShelfReady")}</Banner>}
 
         <TemplatePicker onAdd={add} />
       </section>
@@ -340,10 +356,13 @@ function ShelfBuilder({
   };
 
   // CDs stand in two rows per cube: changeMedia splits or joins the rows.
+  // A name that changes with the size stays unique among the shelves.
+  const otherNames = all.filter((o) => o.key !== f.key).map((o) => o.name);
+  const unique = (before: FurnitureConfig, next: FurnitureConfig) => (next.name === before.name ? next : { ...next, name: uniqueShelfName(next.name, otherNames) });
   const setMedia = (media: ShelfMedia) =>
     onChange((x) => {
       const next = changeMedia(x, media);
-      return { ...next, name: renameForSize(x.name, sizeLabel(x), sizeLabel(next)) };
+      return unique(x, { ...next, name: renameForSize(x.name, sizeLabel(x), sizeLabel(next)) });
     });
 
   const arithmetic =
@@ -373,7 +392,7 @@ function ShelfBuilder({
               value={f.template}
               onChange={(e) => {
                 const id = e.target.value as TemplateId;
-                onChange((x) => withTemplate(t, x, id));
+                onChange((x) => unique(x, withTemplate(t, x, id)));
               }}
               className={control}
             >
@@ -402,7 +421,7 @@ function ShelfBuilder({
               min={1}
               max={maxRows(f.template, f.media)}
               value={f.rows}
-              onChange={(e) => onChange((x) => resizeAndRename(x, clamp(Number(e.target.value), 1, maxRows(x.template, x.media)), x.cols))}
+              onChange={(e) => onChange((x) => unique(x, resizeAndRename(x, clamp(Number(e.target.value), 1, maxRows(x.template, x.media)), x.cols)))}
               className={control}
             />
           </label>
@@ -414,7 +433,7 @@ function ShelfBuilder({
               min={1}
               max={MAX_COLS}
               value={f.cols}
-              onChange={(e) => onChange((x) => resizeAndRename(x, x.rows, clamp(Number(e.target.value), 1, MAX_COLS)))}
+              onChange={(e) => onChange((x) => unique(x, resizeAndRename(x, x.rows, clamp(Number(e.target.value), 1, MAX_COLS))))}
               className={control}
             />
           </label>
