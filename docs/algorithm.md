@@ -97,21 +97,22 @@ The app uses minimum moves for "Add a new record" and for new records found by a
 
 Take a real collection, hold out 100 records at random as purchases, lay out the rest with the initial layout, and replay the purchases in a random order with each method on its own copy of the shelf. "Records moved" counts existing records that changed compartment; "moves" also counts putting each purchase on the shelf (what `layout_events` logs).
 
-Ale's collection (`aorihuelar`, 1,725 records: 1,242 LPs, 150 singles, 327 CDs) on the shelves the app suggests (two Kallax 4×4 for LPs, a record box for singles, a Kallax for CDs), averaged over 10 seeds of 100 purchases (`scripts/simulate.ts`):
+Ale's collection (`aorihuelar`, 1,755 records: 1,272 LPs, 150 singles, 327 CDs) on the shelves the app suggests (room for the collection plus about 20%: a 5×4 cube shelf for LPs, a two-compartment record box for singles, a 4×2 cube shelf for CDs), averaged over 10 seeds of 100 purchases (`scripts/simulate.ts`, November 26, 2026):
 
 | Sort order | Shelves | Naive: records moved | Minimum: records moved |
 | --- | --- | --- | --- |
-| artist | as suggested, 10% free space | 0.0 | 0.0 |
-| artist | 95% full after the purchases | 4.6 | 3.6 |
-| artist | 98% full after the purchases | 17.5 | 13.4 |
-| genre → artist | as suggested, 10% free space | 0.0 | 0.0 |
-| genre → artist | 98% full after the purchases | 16.5 | 15.1 |
-| genre → artist | 100% full after the purchases | 89.4 | 60.6 |
+| artist | as suggested, 10% free space | 0.6 | 0.6 |
+| artist | 95% full after the purchases | 2.9 | 2.6 |
+| artist | 98% full after the purchases | 14.9 | 11.9 |
+| artist | 100% full after the purchases | 38.1 | 31.2 |
+| genre → artist | as suggested, 10% free space | 0.9 | 0.9 |
+| genre → artist | 98% full after the purchases | 18.0 | 16.8 |
+| genre → artist | 100% full after the purchases | 43.6 | 42.5 |
 
 What it shows:
 
-- **The free space is the big win.** With the initial layout spreading 10% free space over every compartment (the library-sort idea), 100 purchases go straight in with either method: not one existing record moves.
-- **Minimum moves matter when the shelf is nearly full.** At 98% full, v2 moves about 23% fewer records sorted by artist; at 100% sorted by genre, about 32% fewer.
+- **The free space is the big win.** With 10% free space kept in every compartment in use (the library-sort idea), 100 purchases go in with either method moving less than one existing record in total.
+- **Minimum moves matter when the shelf is nearly full.** At 98% full, v2 moves about 20% fewer records sorted by artist, and about 7% fewer sorted by genre, then artist.
 - **Greedy has a cost on single purchases.** In one 100%-full run, v2's worst single purchase moved more records than v1's worst, because earlier cheap choices left the room in worse places. The totals were still lower.
 
 ## 7. Calibration (`calibrate.ts`): "This is the first record in this compartment"

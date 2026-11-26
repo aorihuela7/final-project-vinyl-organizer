@@ -372,8 +372,6 @@
     "none": "None",
     "ties": "Ties are always broken by artist, then year, then title.",
     "ignoreArticles": "Ignore leading articles (“The Beatles” under B instead of T, “Los Lobos” under L)",
-    "suggestedLp": "Cube shelf 4×4",
-    "suggestedLpN": "Cube shelf 4×4 ({n})",
     "suggestedSingles": "Singles",
     "suggestedCds": "CD shelf",
     "thickness": "Count double albums and box sets by their number of discs (a double LP takes two places)",

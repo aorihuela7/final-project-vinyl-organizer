@@ -372,8 +372,6 @@
     "none": "Ninguno",
     "ties": "Los empates siempre se resuelven por artista, luego año, luego título.",
     "ignoreArticles": "No contar los artículos iniciales (“The Beatles” en la B en vez de la T, “Los Lobos” en la L)",
-    "suggestedLp": "Estante de cubos 4×4",
-    "suggestedLpN": "Estante de cubos 4×4 ({n})",
     "suggestedSingles": "Singles",
     "suggestedCds": "Repisa de CD",
     "thickness": "Contar los discos dobles y las cajas por su cantidad de discos (un LP doble ocupa dos lugares)",
