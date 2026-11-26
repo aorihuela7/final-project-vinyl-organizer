@@ -56,7 +56,8 @@
     "progress": "{done} of {total} records",
     "progressPages": "{done} of {total} records, page {page} of {pages}",
     "talking": "Talking to Discogs…",
-    "closeTab": "You can close this tab: the import continues from here when you come back."
+    "closeTab": "You can close this tab: the import continues from here when you come back.",
+    "scratch": "Preparing your empty collection…"
   },
   "app": {
     "loadingShelf": "Loading your shelf…",
@@ -275,7 +276,7 @@
     "goesAfter": "It goes in {place}, right after {left}",
     "goesBefore": "It goes in {place}, right before {right}",
     "goesIn": "It goes in {place}",
-    "noShelf": "You don't have a shelf for {group} yet. Add one in Shelves & order.",
+    "noShelf": "You don't have a shelf for {group} yet.",
     "full": "Your shelves are full: there's no room for it anywhere.",
     "fits": "It fits. Just put it in: 1 move.",
     "moves": {
@@ -287,7 +288,12 @@
     "fallback": "({error} Showing the search result's data.)",
     "add": "Add record",
     "adding": "Adding…",
-    "discogsUnchanged": "Adding saves it here only; your Discogs collection doesn't change."
+    "discogsUnchanged": "Adding saves it here only; your Discogs collection doesn't change.",
+    "addShelf": {
+      "lp": "Add an LP shelf",
+      "single": "Add a singles shelf",
+      "cd": "Add a CD shelf"
+    }
   },
   "levelNames": {
     "genre": "Genre",
@@ -380,7 +386,8 @@
     "sectionGenre": "Genre: {name}",
     "sectionHint": "Records of a section go only on shelves with that section, sorted inside it.",
     "customName": "Custom shelf {size}",
-    "cubeShelf": "Cube shelf"
+    "cubeShelf": "Cube shelf",
+    "newShelfReady": "Your new shelf is ready below. Adjust it if you need to, then generate the map and add your record again."
   },
   "record": {
     "offMap": "Not on the map",

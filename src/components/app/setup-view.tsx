@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SORT_LEVELS, type ShelfMedia, type SortLevel } from "@/lib/layout";
 import {
   changeMedia,
@@ -11,6 +11,7 @@ import {
   renameForSize,
   resizeAndRename,
   sizeLabel,
+  suggestedShelves,
   templateSizeLabel,
   type FurnitureConfig,
   type ShelfConfig,
@@ -55,13 +56,47 @@ function withTemplate(t: Translator["t"], f: FurnitureConfig, id: TemplateId): F
 }
 
 /** Shelves & order: the shelves as walnut furniture, one open in the builder at a time, and the sort order. No drag and drop. */
-export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; initial: ShelfConfig; records: StoredRecord[]; onDone: () => void }) {
+export function SetupView({
+  app,
+  initial,
+  records,
+  onDone,
+  addShelf = null,
+  onShelfAdded,
+}: {
+  app: ShelfApp;
+  initial: ShelfConfig;
+  records: StoredRecord[];
+  onDone: () => void;
+  /** Open with a new shelf for this format already added (from "Add a new record"), sized for its records plus one. */
+  addShelf?: ShelfMedia | null;
+  onShelfAdded?: () => void;
+}) {
   const { t } = useI18n();
-  const [draft, setDraft] = useState<ShelfConfig>(() => structuredClone(initial));
+  // The new shelf, if any, is part of the first draft: SetupView mounts fresh when its tab opens.
+  const [added] = useState(() => {
+    if (!addShelf) return null;
+    const n = records.filter((r) => groupOf(r) === addShelf).length + 1;
+    const names = { cube: t("builder.cubeShelf"), single: t("builder.suggestedSingles"), cd: t("builder.suggestedCds") };
+    return suggestedShelves(addShelf, n, initial.furniture.length, names);
+  });
+  const [draft, setDraft] = useState<ShelfConfig>(() => {
+    const copy = structuredClone(initial);
+    return added ? { ...copy, furniture: [...copy.furniture, ...added] } : copy;
+  });
   const [preview, setPreview] = useState<MapPreview | null>(null);
   const [openKey, setOpenKey] = useState<string | null>(() =>
-    initial.furniture.length > 0 && !app.data?.config ? [...initial.furniture].sort((a, b) => a.sortIndex - b.sortIndex)[0]!.key : null,
+    added ? added[0]!.key : initial.furniture.length > 0 && !app.data?.config ? [...initial.furniture].sort((a, b) => a.sortIndex - b.sortIndex)[0]!.key : null,
   );
+  useEffect(() => {
+    if (!added) return;
+    onShelfAdded?.();
+    // Show the new shelf open in the builder.
+    const timer = setTimeout(() => document.getElementById(`shelf-${added[0]!.key}`)?.scrollIntoView({ block: "start", behavior: "smooth" }), 50);
+    return () => clearTimeout(timer);
+    // Once, on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Records per group, or places with thickness by format (a double album counts 2).
   const thickness = !!draft.settings.thicknessByFormat;
@@ -157,6 +192,7 @@ export function SetupView({ app, initial, records, onDone }: { app: ShelfApp; in
         )}
 
         {furniture.length === 0 && <Banner tone="warning">{t("builder.addOne")}</Banner>}
+        {added && <Banner>{t("builder.newShelfReady")}</Banner>}
 
         <TemplatePicker onAdd={add} />
       </section>
@@ -316,7 +352,7 @@ function ShelfBuilder({
       : t("builder.arithmetic", { count: holds.open, open: holds.open, capacity: f.defaultCapacity });
 
   return (
-    <article className="grid items-start gap-[22px] min-[900px]:grid-cols-2" aria-labelledby={`${id}-title`}>
+    <article id={id} className="scroll-mt-4 grid items-start gap-[22px] min-[900px]:grid-cols-2" aria-labelledby={`${id}-title`}>
       <div className={`${card} flex flex-col gap-3.5 p-[18px]`}>
         <div className="flex items-start justify-between gap-2">
           <h3 id={`${id}-title`} className="font-display text-xl text-ink">

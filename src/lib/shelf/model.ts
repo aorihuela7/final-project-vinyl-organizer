@@ -363,35 +363,33 @@ export function suggestedConfig(records: readonly StoredRecord[], names: Suggest
   const lps = count("lp");
   const singles = count("single");
   const cds = count("cd");
-  const needed = (n: number, perCompartment: number) => Math.max(1, Math.ceil((n * SUGGESTED_ROOM) / perCompartment));
   const furniture: FurnitureConfig[] = [];
-
-  // "Cube shelf 3×2", or "Cube shelf 5×5 (1)", "(2)"… when one group needs several.
-  const addCubes = (cubes: number, media: ShelfMedia, base: string) => {
-    const shapes = cubeShelves(cubes);
-    shapes.forEach((shape, i) => {
-      const name = `${base} ${shape[0]}×${shape[1]}${shapes.length > 1 ? ` (${i + 1})` : ""}`;
-      furniture.push(cubeShelf(shape, furniture.length, media, name));
-    });
-  };
-
-  if (lps > 0 || singles + cds === 0) addCubes(needed(lps, defaultCapacity("kallax_4x4", "lp")), "lp", names.cube);
-  if (singles > 0) {
-    const perBox = defaultCapacity("record_box", "single");
-    const boxes = needed(singles, perBox);
-    if (boxes <= template("record_box").cols) {
-      const box = newFurniture("record_box", furniture.length, "single", names.single);
-      furniture.push(resizeFurniture(box, 1, boxes));
-    } else {
-      addCubes(needed(singles, defaultCapacity("kallax_4x4", "single")), "single", names.single);
-    }
-  }
-  if (cds > 0) {
-    // A cube holds two rows of CDs.
-    const perCube = defaultCapacity("kallax_4x4", "cd") * rowsPerCube("kallax_4x4", "cd");
-    addCubes(needed(cds, perCube), "cd", names.cd);
-  }
+  const add = (media: ShelfMedia, n: number) => furniture.push(...suggestedShelves(media, n, furniture.length, names));
+  if (lps > 0 || singles + cds === 0) add("lp", lps);
+  if (singles > 0) add("single", singles);
+  if (cds > 0) add("cd", cds);
   return { furniture, settings: DEFAULT_SETTINGS };
+}
+
+/**
+ * The shelves suggested for n records of one format group, from sort index
+ * `start` on (also used to add a missing shelf for a format from "Add a new record").
+ */
+export function suggestedShelves(media: ShelfMedia, n: number, start: number, names: SuggestedNames = SUGGESTED_NAMES): FurnitureConfig[] {
+  const needed = (perCompartment: number) => Math.max(1, Math.ceil((n * SUGGESTED_ROOM) / perCompartment));
+  // "Cube shelf 3×2", or "Cube shelf 5×5 (1)", "(2)"… when a group needs several.
+  const cubes = (count: number, base: string) => {
+    const shapes = cubeShelves(count);
+    return shapes.map((shape, i) => cubeShelf(shape, start + i, media, `${base} ${shape[0]}×${shape[1]}${shapes.length > 1 ? ` (${i + 1})` : ""}`));
+  };
+  if (media === "single") {
+    const boxes = needed(defaultCapacity("record_box", "single"));
+    if (boxes <= template("record_box").cols) return [resizeFurniture(newFurniture("record_box", start, "single", names.single), 1, boxes)];
+    return cubes(needed(defaultCapacity("kallax_4x4", "single")), names.single);
+  }
+  // A cube holds two rows of CDs.
+  if (media === "cd") return cubes(needed(defaultCapacity("kallax_4x4", "cd") * rowsPerCube("kallax_4x4", "cd")), names.cd);
+  return cubes(needed(defaultCapacity("kallax_4x4", "lp")), names.cube);
 }
 
 /** Position key (sortIndex:row:col) of each slot id, for comparing placements across saves. */

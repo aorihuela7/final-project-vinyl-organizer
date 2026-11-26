@@ -70,7 +70,8 @@ export type AppData = {
 export type Status =
   | { kind: "loading"; message: Msg }
   | { kind: "onboarding"; error?: Msg; username?: string }
-  | { kind: "importing"; job: JobRow | null; message: Msg }
+  /** scratch: starting from scratch (an import behind the scenes that the screen never calls one). */
+  | { kind: "importing"; job: JobRow | null; message: Msg; scratch?: boolean }
   | { kind: "ready" }
   | { kind: "error"; message: Msg };
 
@@ -337,7 +338,10 @@ export function useShelfApp(startParam: string | null) {
         current = step.job;
         if (!alive.current) break;
         if (background) setSyncJob(current);
-        else setStatus({ kind: "importing", job: current, message: msg("importing.importing") });
+        else {
+          const scratch = isZeroStart(current.discogs_username);
+          setStatus({ kind: "importing", job: current, message: msg(scratch ? "importing.scratch" : "importing.importing"), scratch });
+        }
         if (step.retryAfterMs) await sleep(step.retryAfterMs);
       }
       void client;
@@ -438,7 +442,9 @@ export function useShelfApp(startParam: string | null) {
   const startRemoteImport = useCallback(
     async (client: SupabaseClient, input: { source: "discogs"; username: string } | { source: "demo" }, background: boolean, replacing = false) => {
       const username = input.source === "discogs" ? input.username : "demo";
-      if (!background) setStatus({ kind: "importing", job: null, message: msg(input.source === "demo" ? "importing.loadingDemo" : "importing.starting") });
+      const scratch = input.source === "discogs" && isZeroStart(input.username);
+      if (!background)
+        setStatus({ kind: "importing", job: null, message: msg(input.source === "demo" ? "importing.loadingDemo" : scratch ? "importing.scratch" : "importing.starting"), scratch });
       try {
         const { job } = await api<{ job: JobRow }>("/api/import/start", input);
         if (background) setSyncJob(job);

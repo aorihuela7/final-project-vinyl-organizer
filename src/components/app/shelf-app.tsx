@@ -6,7 +6,8 @@ import { useSupabase } from "@/lib/supabase/browser";
 import { START_TOUR_EVENT, TourOffer, TourOverlay, TourWaiting, useTourState, type TourStep } from "./tour";
 import { useSearchParams } from "next/navigation";
 import { SignUpButton } from "@clerk/nextjs";
-import { displayArtist, type Slot } from "@/lib/layout";
+import { isZeroStart } from "@/lib/config";
+import { displayArtist, type ShelfMedia, type Slot } from "@/lib/layout";
 import { groupOf, suggestedConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotTitle } from "@/lib/shelf/describe";
 import { CompartmentSheet } from "./compartment-sheet";
@@ -67,6 +68,8 @@ export function ShelfApp() {
   }, []);
 
   const [adding, setAdding] = useState(false);
+  // "Add a new record" found no shelf for the record's format: Shelves & order opens with one added.
+  const [newShelf, setNewShelf] = useState<ShelfMedia | null>(null);
 
   const byId = useMemo(() => new Map((app.data?.records ?? []).map((r) => [r.id, r])), [app.data?.records]);
 
@@ -152,7 +155,7 @@ export function ShelfApp() {
     return (
       <div className="flex flex-col gap-4">
         {tourWaiting}
-        <ImportProgress job={app.status.job} message={renderMsg(t, app.status.message)} />
+        <ImportProgress job={app.status.job} message={renderMsg(t, app.status.message)} scratch={app.status.scratch} />
       </div>
     );
   if (app.status.kind === "error" || !app.data) {
@@ -208,7 +211,8 @@ export function ShelfApp() {
           </SignUpButton>
         </Banner>
       )}
-      {app.syncJob && (
+      {/* A collection started from scratch also syncs (to refresh its records' Discogs data), but quietly. */}
+      {app.syncJob && !isZeroStart(app.syncJob.discogs_username) && (
         <Banner className="flex items-center gap-2">
           <span className="size-3 animate-spin rounded-full border-2 border-brass-light border-t-walnut" aria-hidden />
           {app.syncJob.items_total ? t("app.updatingCount", { done: app.syncJob.items_done, total: app.syncJob.items_total }) : t("app.updating")}
@@ -251,7 +255,7 @@ export function ShelfApp() {
 
           {tab === "setup" ? (
             <>
-              <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} />
+              <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} addShelf={newShelf} onShelfAdded={() => setNewShelf(null)} />
               <h2 className="mt-4 border-t border-input-line/60 pt-6 font-display text-2xl text-ink">{t("app.toolsTitle")}</h2>
               <p className="-mt-2 text-sm text-muted">{t("app.toolsText")}</p>
               <SimulatorCard records={data.records} config={config} />
@@ -422,6 +426,11 @@ export function ShelfApp() {
           config={config}
           byId={byId}
           onClose={() => setAdding(false)}
+          onAddShelf={(media) => {
+            setAdding(false);
+            setNewShelf(media);
+            setTab("setup");
+          }}
           onShowRecord={(id, slotId) => {
             setAdding(false);
             void slotId;

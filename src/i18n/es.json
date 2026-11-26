@@ -56,7 +56,8 @@
     "progress": "{done} de {total} discos",
     "progressPages": "{done} de {total} discos, página {page} de {pages}",
     "talking": "Conectando con Discogs…",
-    "closeTab": "Puedes cerrar esta pestaña: la importación sigue desde aquí cuando vuelvas."
+    "closeTab": "Puedes cerrar esta pestaña: la importación sigue desde aquí cuando vuelvas.",
+    "scratch": "Preparando tu colección vacía…"
   },
   "app": {
     "loadingShelf": "Cargando tu repisa…",
@@ -275,7 +276,7 @@
     "goesAfter": "Va en {place}, justo después de {left}",
     "goesBefore": "Va en {place}, justo antes de {right}",
     "goesIn": "Va en {place}",
-    "noShelf": "Todavía no tienes una repisa para {group}. Agrega una en Repisas y orden.",
+    "noShelf": "Todavía no tienes una repisa para {group}.",
     "full": "Tus repisas están llenas: no hay lugar para él en ningún lado.",
     "fits": "Cabe. Solo ponlo en su lugar: 1 movimiento.",
     "moves": {
@@ -287,7 +288,12 @@
     "fallback": "({error} Se muestran los datos del resultado de búsqueda.)",
     "add": "Agregar disco",
     "adding": "Agregando…",
-    "discogsUnchanged": "Agregarlo lo guarda solo aquí; tu colección de Discogs no cambia."
+    "discogsUnchanged": "Agregarlo lo guarda solo aquí; tu colección de Discogs no cambia.",
+    "addShelf": {
+      "lp": "Agregar una repisa de LP",
+      "single": "Agregar una repisa de singles",
+      "cd": "Agregar una repisa de CD"
+    }
   },
   "levelNames": {
     "genre": "Género",
@@ -380,7 +386,8 @@
     "sectionGenre": "Género: {name}",
     "sectionHint": "Los discos de una sección van solo en las repisas con esa sección, ordenados dentro de ella.",
     "customName": "Mueble a medida {size}",
-    "cubeShelf": "Estante de cubos"
+    "cubeShelf": "Estante de cubos",
+    "newShelfReady": "Tu repisa nueva está lista abajo. Ajústala si hace falta, genera el mapa y vuelve a agregar tu disco."
   },
   "record": {
     "offMap": "Fuera del mapa",

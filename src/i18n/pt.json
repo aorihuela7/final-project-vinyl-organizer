@@ -56,7 +56,8 @@
     "progress": "{done} de {total} discos",
     "progressPages": "{done} de {total} discos, página {page} de {pages}",
     "talking": "Conectando ao Discogs…",
-    "closeTab": "Você pode fechar esta aba: a importação continua daqui quando você voltar."
+    "closeTab": "Você pode fechar esta aba: a importação continua daqui quando você voltar.",
+    "scratch": "Preparando sua coleção vazia…"
   },
   "app": {
     "loadingShelf": "Carregando sua estante…",
@@ -275,7 +276,7 @@
     "goesAfter": "Ele vai em {place}, logo depois de {left}",
     "goesBefore": "Ele vai em {place}, logo antes de {right}",
     "goesIn": "Ele vai em {place}",
-    "noShelf": "Você ainda não tem uma estante para {group}. Adicione uma em Estantes e ordem.",
+    "noShelf": "Você ainda não tem uma estante para {group}.",
     "full": "Suas estantes estão cheias: não há lugar para ele em lugar nenhum.",
     "fits": "Cabe. É só colocar no lugar: 1 mudança.",
     "moves": {
@@ -287,7 +288,12 @@
     "fallback": "({error} Mostrando os dados do resultado da busca.)",
     "add": "Adicionar disco",
     "adding": "Adicionando…",
-    "discogsUnchanged": "Adicionar salva só aqui; sua coleção do Discogs não muda."
+    "discogsUnchanged": "Adicionar salva só aqui; sua coleção do Discogs não muda.",
+    "addShelf": {
+      "lp": "Adicionar uma estante de LPs",
+      "single": "Adicionar uma estante de compactos",
+      "cd": "Adicionar uma estante de CDs"
+    }
   },
   "levelNames": {
     "genre": "Gênero",
@@ -380,7 +386,8 @@
     "sectionGenre": "Gênero: {name}",
     "sectionHint": "Os discos de uma seção vão só nas estantes com essa seção, ordenados dentro dela.",
     "customName": "Móvel sob medida {size}",
-    "cubeShelf": "Estante de nichos"
+    "cubeShelf": "Estante de nichos",
+    "newShelfReady": "Sua estante nova está pronta abaixo. Ajuste se precisar, gere o mapa e adicione seu disco de novo."
   },
   "record": {
     "offMap": "Fora do mapa",
