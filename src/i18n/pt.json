@@ -177,7 +177,8 @@
     "replaceZeroFailed": "Não foi possível começar do zero agora. Sua coleção atual não mudou.",
     "discogsDown": "O Discogs não respondeu. Tente de novo mais tarde.",
     "replacedDemo": "A coleção demo substituiu a anterior.",
-    "replaceDemoFailed": "Não foi possível carregar a coleção demo agora. Sua coleção atual não mudou."
+    "replaceDemoFailed": "Não foi possível carregar a coleção demo agora. Sua coleção atual não mudou.",
+    "mapGeneratedEmpty": "Mapa gerado. Sua estante está pronta para o seu primeiro disco."
   },
   "demo": {
     "living": "Sala",
@@ -387,7 +388,8 @@
     "sectionHint": "Os discos de uma seção vão só nas estantes com essa seção, ordenados dentro dela.",
     "customName": "Móvel sob medida {size}",
     "cubeShelf": "Estante de nichos",
-    "newShelfReady": "Sua estante nova está pronta abaixo. Ajuste se precisar, gere o mapa e adicione seu disco de novo."
+    "newShelfReady": "Sua estante nova está pronta abaixo. Ajuste se precisar, gere o mapa e adicione seu disco de novo.",
+    "capacityHint": "Os discos por nicho são uma estimativa. Se em um nicho da sua estante real cabem mais ou menos, mude aqui (ou toque no nicho para dar a ele a própria capacidade), assim o mapa bate com a sua estante."
   },
   "record": {
     "offMap": "Fora do mapa",
@@ -431,7 +433,7 @@
       "one": "{count} de {capacity} discos",
       "other": "{count} de {capacity} discos"
     },
-    "over": "Você marcou este nicho como mais cheio do que a capacidade. Tudo bem: o mapa segue a sua estante real.",
+    "over": "Este nicho tem mais discos do que a capacidade dele. Aumente a capacidade em Estantes e ordem, ou gere o mapa de novo.",
     "drawingHint": "Aponte para um disco para vê-lo; clique para ver os detalhes e a capa.",
     "list": "Discos deste nicho, da esquerda para a direita",
     "empty": "Este nicho está vazio.",

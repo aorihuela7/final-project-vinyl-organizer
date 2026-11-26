@@ -177,7 +177,8 @@
     "replaceZeroFailed": "No se pudo empezar de cero en este momento. Tu colección actual no cambió.",
     "discogsDown": "Discogs no respondió. Vuelve a intentarlo más tarde.",
     "replacedDemo": "La colección demo reemplazó a la anterior.",
-    "replaceDemoFailed": "No se pudo cargar la colección demo en este momento. Tu colección actual no cambió."
+    "replaceDemoFailed": "No se pudo cargar la colección demo en este momento. Tu colección actual no cambió.",
+    "mapGeneratedEmpty": "Mapa generado. Tu repisa está lista para tu primer disco."
   },
   "demo": {
     "living": "Sala",
@@ -387,7 +388,8 @@
     "sectionHint": "Los discos de una sección van solo en las repisas con esa sección, ordenados dentro de ella.",
     "customName": "Mueble a medida {size}",
     "cubeShelf": "Estante de cubos",
-    "newShelfReady": "Tu repisa nueva está lista abajo. Ajústala si hace falta, genera el mapa y vuelve a agregar tu disco."
+    "newShelfReady": "Tu repisa nueva está lista abajo. Ajústala si hace falta, genera el mapa y vuelve a agregar tu disco.",
+    "capacityHint": "Los discos por compartimiento son una estimación. Si en un compartimiento de tu repisa real caben más o menos, cámbialo aquí (o toca el compartimiento para darle su propia capacidad), así el mapa coincide con tu repisa."
   },
   "record": {
     "offMap": "Fuera del mapa",
@@ -431,7 +433,7 @@
       "one": "{count} de {capacity} discos",
       "other": "{count} de {capacity} discos"
     },
-    "over": "Marcaste este compartimiento como más lleno que su capacidad. Está bien: el mapa sigue a tu repisa real.",
+    "over": "Este compartimiento tiene más discos que su capacidad. Sube su capacidad en Repisas y orden, o vuelve a generar el mapa.",
     "drawingHint": "Pasa el puntero por un disco para verlo; haz clic para ver los detalles y la portada.",
     "list": "Discos de este compartimiento, de izquierda a derecha",
     "empty": "Este compartimiento está vacío.",

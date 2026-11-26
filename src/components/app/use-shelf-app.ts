@@ -734,7 +734,9 @@ export function useShelfApp(startParam: string | null) {
               ? msg("notices.mapLeftover", { count: preview.leftover })
               : preview.hasMap
                 ? msg("notices.mapUpdated", { count: preview.changed })
-                : msg("notices.mapGenerated", { count: preview.placed }),
+                : preview.placed === 0 && data.records.length === 0
+                  ? msg("notices.mapGeneratedEmpty")
+                  : msg("notices.mapGenerated", { count: preview.placed }),
         });
       } catch (err) {
         setNotice({ tone: "warning", msg: errorMsg(err, msg("notices.mapSaveFailed")) });

@@ -177,7 +177,8 @@
     "replaceZeroFailed": "Couldn't start from scratch right now. Your current collection didn't change.",
     "discogsDown": "Discogs didn't answer. Try again later.",
     "replacedDemo": "The demo collection replaced your previous one.",
-    "replaceDemoFailed": "Couldn't load the demo collection right now. Your current collection didn't change."
+    "replaceDemoFailed": "Couldn't load the demo collection right now. Your current collection didn't change.",
+    "mapGeneratedEmpty": "Map generated. Your shelf is ready for your first record."
   },
   "demo": {
     "living": "Living room",
@@ -387,7 +388,8 @@
     "sectionHint": "Records of a section go only on shelves with that section, sorted inside it.",
     "customName": "Custom shelf {size}",
     "cubeShelf": "Cube shelf",
-    "newShelfReady": "Your new shelf is ready below. Adjust it if you need to, then generate the map and add your record again."
+    "newShelfReady": "Your new shelf is ready below. Adjust it if you need to, then generate the map and add your record again.",
+    "capacityHint": "Records per compartment is an estimate. If a compartment on your real shelf holds more or fewer, change it here (or tap the compartment to give it its own capacity), so the map matches your shelf."
   },
   "record": {
     "offMap": "Not on the map",
@@ -431,7 +433,7 @@
       "one": "{count} of {capacity} records",
       "other": "{count} of {capacity} records"
     },
-    "over": "You marked this compartment as fuller than its capacity. That's fine: the map follows your real shelf.",
+    "over": "This compartment has more records than its capacity. Raise its capacity in Shelves & order, or generate the map again.",
     "drawingHint": "Point at a record to see it; click it for the details and the cover.",
     "list": "Records in this compartment, left to right",
     "empty": "This compartment is empty.",

@@ -438,6 +438,8 @@ function ShelfBuilder({
               <span aria-hidden>%</span>
             </span>
           </label>
+          {/* The only way to match the map to the real shelf: the capacity is an estimate. */}
+          <p className="col-span-2 -mt-1 text-xs text-muted">{t("builder.capacityHint")}</p>
           <label className={`${field} col-span-2`}>
             {t("builder.section")}
             <select value={f.section ?? ""} onChange={(e) => onChange((x) => ({ ...x, section: e.target.value || null }))} className={control}>
