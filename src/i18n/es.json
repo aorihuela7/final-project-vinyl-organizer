@@ -117,13 +117,13 @@
   "landing": {
     "title": "Sabe dónde está cada disco, y dónde va el próximo.",
     "tryDemo": "Probar la colección de demostración",
-    "signUp": "Crear cuenta",
     "noAccount": "No necesitas cuenta para la demostración. Crea una solo cuando quieras guardar.",
     "importTitle": "Importa tu colección de Discogs",
     "heroLabel": "Una repisa de ejemplo",
     "heroCaption": "Cada compartimiento muestra sus letras y qué tan lleno está. Busca un disco y la app te muestra el compartimiento, qué tan adentro está y los discos de cada lado.",
     "heroShelf": "Estante de cubos, LP (12″ y 10″)",
-    "turntable": "Tocadiscos"
+    "turntable": "Tocadiscos",
+    "aboutDiscogs": "{discogs} es la base de datos de música más grande de internet, donde muchos coleccionistas registran sus discos. Si la tuya está ahí y es pública, impórtala con tu usuario."
   },
   "notFound": {
     "title": "Esta página no existe",
@@ -177,7 +177,9 @@
     "replacedZero": "Tu colección ahora empieza de cero. Arma tu repisa y después agrega tus discos uno por uno.",
     "zeroFailed": "No se pudo empezar una colección vacía en este momento. Vuelve a intentarlo en un minuto.",
     "replaceZeroFailed": "No se pudo empezar de cero en este momento. Tu colección actual no cambió.",
-    "discogsDown": "Discogs no respondió. Vuelve a intentarlo más tarde."
+    "discogsDown": "Discogs no respondió. Vuelve a intentarlo más tarde.",
+    "replacedDemo": "La colección demo reemplazó a la anterior.",
+    "replaceDemoFailed": "No se pudo cargar la colección demo en este momento. Tu colección actual no cambió."
   },
   "demo": {
     "living": "Sala",
@@ -470,7 +472,9 @@
       "other": "Empezaste de cero: {count} discos agregados a mano."
     },
     "startZero": "Mejor empezar de cero",
-    "confirmZeroTitle": "¿Empezar de cero, con una colección vacía?"
+    "confirmZeroTitle": "¿Empezar de cero, con una colección vacía?",
+    "confirmDemoTitle": "¿Reemplazar tu colección por la colección demo?",
+    "keep": "Conservar mi colección"
   },
   "cover": {
     "none": "{artist}, {title} (sin portada)"

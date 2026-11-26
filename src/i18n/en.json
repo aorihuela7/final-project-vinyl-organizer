@@ -117,13 +117,13 @@
   "landing": {
     "title": "Know where every record is, and where the next one goes.",
     "tryDemo": "Try the demo collection",
-    "signUp": "Sign up",
     "noAccount": "No account needed for the demo. Sign up only when you want to save.",
     "importTitle": "Import your collection from Discogs",
     "heroLabel": "An example shelf",
     "heroCaption": "Every compartment shows its letters and how full it is. Search for a record and the app shows the compartment, how far in it is, and the records on each side.",
     "heroShelf": "Cube shelf, LPs (12″ and 10″)",
-    "turntable": "Turntable"
+    "turntable": "Turntable",
+    "aboutDiscogs": "{discogs} is the largest online database of music releases, where many collectors catalog their records. If yours is there and public, import it with your username."
   },
   "notFound": {
     "title": "This page doesn't exist",
@@ -177,7 +177,9 @@
     "replacedZero": "Your collection now starts from scratch. Build your shelf, then add your records one by one.",
     "zeroFailed": "Couldn't start an empty collection right now. Try again in a minute.",
     "replaceZeroFailed": "Couldn't start from scratch right now. Your current collection didn't change.",
-    "discogsDown": "Discogs didn't answer. Try again later."
+    "discogsDown": "Discogs didn't answer. Try again later.",
+    "replacedDemo": "The demo collection replaced your previous one.",
+    "replaceDemoFailed": "Couldn't load the demo collection right now. Your current collection didn't change."
   },
   "demo": {
     "living": "Living room",
@@ -470,7 +472,9 @@
       "other": "Started from scratch: {count} records added by hand."
     },
     "startZero": "Start from scratch instead",
-    "confirmZeroTitle": "Start from scratch, with an empty collection?"
+    "confirmZeroTitle": "Start from scratch, with an empty collection?",
+    "confirmDemoTitle": "Replace your collection with the demo collection?",
+    "keep": "Keep my collection"
   },
   "cover": {
     "none": "{artist}, {title} (no cover)"

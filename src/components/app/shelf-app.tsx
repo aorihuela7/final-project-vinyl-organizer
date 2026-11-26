@@ -29,7 +29,7 @@ import { CollectionPanel } from "./collection-panel";
 import { useShelfApp, type Notice } from "./use-shelf-app";
 import { useI18n } from "@/i18n/client";
 import { renderMsg } from "@/i18n/core";
-import { Banner, btnPrimary, btnPrimarySm, btnSecondary, btnText, card } from "../ui";
+import { Banner, btnPrimary, btnPrimarySm, btnSecondary, btnSecondarySm, btnText, card } from "../ui";
 import { collectionSummary } from "./summary";
 
 export function ShelfApp() {
@@ -151,6 +151,33 @@ export function ShelfApp() {
         <Onboarding app={app} />
       </div>
     );
+  if (app.status.kind === "confirmReplace") {
+    const { target, count } = app.status;
+    const title =
+      target.source === "demo"
+        ? t("collection.confirmDemoTitle")
+        : isZeroStart(target.username)
+          ? t("collection.confirmZeroTitle")
+          : t("collection.confirmTitle", { username: target.username });
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+        <Banner tone="warning" role="alert">
+          <h1 id="replace-title" className="font-display text-xl text-ink">
+            {title}
+          </h1>
+          <p className="mt-1">{t("collection.confirmText", { count })}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" onClick={() => void app.confirmReplace()} className={btnPrimarySm}>
+              {t("collection.replace")}
+            </button>
+            <button type="button" onClick={() => void app.keepCollection()} className={btnSecondarySm}>
+              {t("collection.keep")}
+            </button>
+          </div>
+        </Banner>
+      </div>
+    );
+  }
   if (app.status.kind === "importing")
     return (
       <div className="flex flex-col gap-4">

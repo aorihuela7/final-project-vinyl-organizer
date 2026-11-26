@@ -117,13 +117,13 @@
   "landing": {
     "title": "Saiba onde está cada disco, e onde vai o próximo.",
     "tryDemo": "Experimentar a coleção de demonstração",
-    "signUp": "Criar conta",
     "noAccount": "Não precisa de conta para a demonstração. Crie uma só quando quiser salvar.",
     "importTitle": "Importe sua coleção do Discogs",
     "heroLabel": "Uma estante de exemplo",
     "heroCaption": "Cada nicho mostra suas letras e o quanto está cheio. Busque um disco e o app mostra o nicho, a que altura ele está e os discos de cada lado.",
     "heroShelf": "Estante de nichos, LPs (12″ e 10″)",
-    "turntable": "Toca-discos"
+    "turntable": "Toca-discos",
+    "aboutDiscogs": "{discogs} é o maior banco de dados de discos da internet, onde muitos colecionadores catalogam seus discos. Se a sua está lá e é pública, importe com seu usuário."
   },
   "notFound": {
     "title": "Esta página não existe",
@@ -177,7 +177,9 @@
     "replacedZero": "Sua coleção agora começa do zero. Monte sua estante e depois adicione seus discos um por um.",
     "zeroFailed": "Não foi possível começar uma coleção vazia agora. Tente de novo em um minuto.",
     "replaceZeroFailed": "Não foi possível começar do zero agora. Sua coleção atual não mudou.",
-    "discogsDown": "O Discogs não respondeu. Tente de novo mais tarde."
+    "discogsDown": "O Discogs não respondeu. Tente de novo mais tarde.",
+    "replacedDemo": "A coleção demo substituiu a anterior.",
+    "replaceDemoFailed": "Não foi possível carregar a coleção demo agora. Sua coleção atual não mudou."
   },
   "demo": {
     "living": "Sala",
@@ -470,7 +472,9 @@
       "other": "Começou do zero: {count} discos adicionados à mão."
     },
     "startZero": "Começar do zero em vez disso",
-    "confirmZeroTitle": "Começar do zero, com uma coleção vazia?"
+    "confirmZeroTitle": "Começar do zero, com uma coleção vazia?",
+    "confirmDemoTitle": "Substituir a sua coleção pela coleção demo?",
+    "keep": "Manter minha coleção"
   },
   "cover": {
     "none": "{artist}, {title} (sem capa)"

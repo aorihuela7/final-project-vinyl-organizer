@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { FRESHNESS_MS, ZERO_START, isZeroStart } from "@/lib/config";
+import { DEMO, FRESHNESS_MS, ZERO_START, isZeroStart } from "@/lib/config";
 import { msg, rawMsg, type Msg } from "@/i18n/core";
 import { useI18n } from "@/i18n/client";
 import type { RecordInput } from "@/lib/discogs/map";
@@ -72,6 +72,8 @@ export type Status =
   | { kind: "onboarding"; error?: Msg; username?: string }
   /** scratch: starting from scratch (an import behind the scenes that the screen never calls one). */
   | { kind: "importing"; job: JobRow | null; message: Msg; scratch?: boolean }
+  /** Another collection was asked for (from the landing page) while the user has one: confirm before replacing it. */
+  | { kind: "confirmReplace"; target: ReplaceTarget; count: number }
   | { kind: "ready" }
   | { kind: "error"; message: Msg };
 
@@ -104,10 +106,25 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** Drops ?start=demo from the address once it's been answered, so a reload doesn't ask again. */
+function dropStartParam() {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("start")) return;
+  url.searchParams.delete("start");
+  window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+}
+
+/** Stands for the demo where a username is expected (no Discogs username has parentheses). */
+const DEMO_KEY = "(demo)";
+
 const replacedNotice = (username: string): Notice => ({
   tone: "success",
-  msg: isZeroStart(username) ? msg("notices.replacedZero") : msg("notices.replaced", { username }),
+  msg: username === DEMO_KEY ? msg("notices.replacedDemo") : isZeroStart(username) ? msg("notices.replacedZero") : msg("notices.replaced", { username }),
 });
+
+/** What would replace the collection the user has, waiting for them to confirm. */
+export type ReplaceTarget = { source: "demo" } | { source: "discogs"; username: string };
 
 // "Start from zero" is an import of an empty Discogs collection behind the
 // scenes: its username and its Discogs errors never reach the screen.
@@ -205,6 +222,8 @@ export function useShelfApp(startParam: string | null) {
   const [busy, setBusy] = useState(false);
   const started = useRef<string | null>(null);
   const alive = useRef(true);
+  // A replacement waiting for the user's answer, with the shelf to go back to if they keep it.
+  const pendingReplace = useRef<{ target: ReplaceTarget; next: AppData; local: boolean } | null>(null);
   const mode: "local" | "remote" | null = !isLoaded ? null : isSignedIn ? "remote" : "local";
 
   useEffect(() => {
@@ -436,12 +455,20 @@ export function useShelfApp(startParam: string | null) {
   /** A replacement failed: nothing changed, so go back to the current collection and say why. */
   const failReplacement = useCallback((username: string, message: string) => {
     setStatus({ kind: "ready" });
-    setNotice({ tone: "warning", msg: isZeroStart(username) ? msg("notices.replaceZeroFailed") : msg("notices.replaceFailed", { username, message }) });
+    setNotice({
+      tone: "warning",
+      msg:
+        username === DEMO_KEY
+          ? msg("notices.replaceDemoFailed")
+          : isZeroStart(username)
+            ? msg("notices.replaceZeroFailed")
+            : msg("notices.replaceFailed", { username, message }),
+    });
   }, []);
 
   const startRemoteImport = useCallback(
     async (client: SupabaseClient, input: { source: "discogs"; username: string } | { source: "demo" }, background: boolean, replacing = false) => {
-      const username = input.source === "discogs" ? input.username : "demo";
+      const username = input.source === "discogs" ? input.username : DEMO_KEY;
       const scratch = input.source === "discogs" && isZeroStart(input.username);
       if (!background)
         setStatus({ kind: "importing", job: null, message: msg(input.source === "demo" ? "importing.loadingDemo" : scratch ? "importing.scratch" : "importing.starting"), scratch });
@@ -508,6 +535,30 @@ export function useShelfApp(startParam: string | null) {
       try {
         const { state, next } = await reloadRemote(client);
         if (!alive.current) return;
+        // Another collection was asked for while they have one (or a demo in this browser): ask first.
+        const pendingTarget: ReplaceTarget | null = peekPendingImport()
+          ? { source: "discogs", username: peekPendingImport()! }
+          : startParam === "demo"
+            ? { source: "demo" }
+            : null;
+        const local = !state.collection ? loadLocal() : null;
+        const hasShelf = state.records.length > 0 || !!state.config;
+        const differs =
+          pendingTarget !== null &&
+          !!state.collection &&
+          replacesCollection(state.collection, pendingTarget.source === "demo" ? { source: "demo", discogs_username: DEMO.username } : { source: "discogs", discogs_username: pendingTarget.username });
+        if (pendingTarget && ((differs && hasShelf) || (local && pendingTarget.source === "discogs"))) {
+          takePendingImport();
+          pendingReplace.current = { target: pendingTarget, next, local: !!local };
+          setStatus({ kind: "confirmReplace", target: pendingTarget, count: local ? withoutOtherFormats(local.records).length : state.records.length });
+          return;
+        }
+        if (pendingTarget?.source === "demo" && differs) {
+          // Nothing on their shelf yet (an empty collection without shelves): nothing to lose, so no question.
+          dropStartParam();
+          await startRemoteImport(client, { source: "demo" }, false);
+          return;
+        }
         const pending = takePendingImport();
         if (pending) {
           // A different collection than the one they have replaces it: show it as a full import, not a quiet re-sync.
@@ -529,7 +580,7 @@ export function useShelfApp(startParam: string | null) {
           }
           const finished = await runJob(client, state.activeJob, background);
           if (!alive.current) return;
-          const username = finished.source === "demo" ? "demo" : finished.discogs_username;
+          const username = finished.source === "demo" ? DEMO_KEY : finished.discogs_username;
           if (finished.status === "error") {
             if (background) setNotice(syncFailedNotice(username, finished.last_error));
             else if (replacing) failReplacement(username, finished.last_error ?? "The import failed.");
@@ -584,6 +635,28 @@ export function useShelfApp(startParam: string | null) {
   }, [mode, userId, supabase, startParam, startLocalDemo, refreshLocalDemo, reloadRemote, startRemoteImport, runJob, afterImport, failReplacement, demoNames]);
 
   // ------------------------------------------------------------ actions
+  /** The user confirmed: the other collection replaces theirs. */
+  const confirmReplace = useCallback(async () => {
+    const waiting = pendingReplace.current;
+    if (!waiting || !supabase) return;
+    pendingReplace.current = null;
+    dropStartParam();
+    // A demo in this browser isn't a saved collection: importing simply leaves it behind.
+    await startRemoteImport(supabase, waiting.target, false, !waiting.local);
+  }, [supabase, startRemoteImport]);
+
+  /** The user kept their collection. */
+  const keepCollection = useCallback(async () => {
+    const waiting = pendingReplace.current;
+    if (!waiting || !supabase) return;
+    pendingReplace.current = null;
+    dropStartParam();
+    // The demo in this browser goes to the new account, as it would have without the detour.
+    if (waiting.local) return void (await startRemoteImport(supabase, { source: "demo" }, false));
+    setData(waiting.next);
+    setStatus({ kind: "ready" });
+  }, [supabase, startRemoteImport]);
+
   const startDemo = useCallback(() => {
     if (mode === "remote" && supabase) void startRemoteImport(supabase, { source: "demo" }, false);
     else void startLocalDemo();
@@ -817,6 +890,8 @@ export function useShelfApp(startParam: string | null) {
     startDemo,
     importDiscogs,
     startFromZero: () => importDiscogs(ZERO_START.username),
+    confirmReplace,
+    keepCollection,
     previewMap,
     generateMap,
     previewInsert,
