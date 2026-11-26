@@ -37,6 +37,7 @@ import {
   type LayoutEvent,
 } from "@/lib/store/remote";
 import { replacesCollection } from "@/lib/import/replace";
+import { localizeShelfNames } from "@/lib/shelf/localize";
 import {
   buildViews,
   computeInitial,
@@ -207,7 +208,7 @@ async function removeMisplaced(client: SupabaseClient, data: AppData): Promise<A
 
 export function useShelfApp(startParam: string | null) {
   const { isLoaded, isSignedIn, userId } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const tRef = useRef(t);
   useEffect(() => {
     tRef.current = t;
@@ -681,7 +682,9 @@ export function useShelfApp(startParam: string | null) {
     [mode, supabase, startRemoteImport, data, clerk],
   );
 
-  const views: MediaView[] = useMemo(() => (data?.config ? buildViews(data.records, data.config, data.placement) : []), [data]);
+  // What the screens get: automatic shelf names in the current language (saved shelves keep what they were saved with).
+  const shownData = useMemo(() => (data?.config ? { ...data, config: localizeShelfNames(data.config, locale) } : data), [data, locale]);
+  const views: MediaView[] = useMemo(() => (shownData?.config ? buildViews(shownData.records, shownData.config, shownData.placement) : []), [shownData]);
 
   /** What "Generate map" would do, before saving. */
   const previewMap = useCallback(
@@ -934,7 +937,7 @@ export function useShelfApp(startParam: string | null) {
   return {
     mode,
     status,
-    data,
+    data: shownData,
     views,
     syncJob,
     notice,
