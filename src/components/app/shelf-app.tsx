@@ -46,9 +46,8 @@ export function ShelfApp() {
     setOpenRecordState(id);
     if (id) setLastRecord(id);
   };
-  // The found record: its compartment gets the mustard outline and the record lifts (the "found moment").
+  // The found record: its compartment gets the mustard outline and the record turns mustard.
   const [found, setFound] = useState<string | null>(null);
-  const [lifted, setLifted] = useState(false);
   // A compartment highlighted briefly after jumping to it from the rail.
   const [flashSlot, setFlashSlot] = useState<string | null>(null);
   const jumpTo = useCallback((slotId: string) => {
@@ -58,12 +57,10 @@ export function ShelfApp() {
   }, []);
   const showFound = useCallback((id: string | null) => {
     setFound(id);
-    setLifted(false);
     if (!id) return;
-    // Two frames later, so the lift and the outline animate from the resting state.
+    // Two frames later, once the outline is on the new compartment.
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
-        setLifted(true);
         document.querySelector('[data-map] [data-found="true"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
       }),
     );
@@ -321,7 +318,6 @@ export function ShelfApp() {
                   byId={byId}
                   foundId={found}
                   foundSlot={found ? (findLocation(views, found)?.slot.id ?? null) : null}
-                  lifted={lifted}
                   onOpen={(slot) => setOpenSlot(slot)}
                   flashSlot={flashSlot}
                   railFor={(view) => (
@@ -379,7 +375,7 @@ export function ShelfApp() {
           onPickRecord={(id) => {
             setOpenSlot(null);
             setOpenRecord(id);
-            // Same as a search: the outline, the rail marker, and the lift follow the record.
+            // Same as a search: the outline, the rail marker, and the mustard follow the record.
             showFound(id);
           }}
         />

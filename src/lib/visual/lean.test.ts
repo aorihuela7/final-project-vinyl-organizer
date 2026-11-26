@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { corners, leanLayout, type LeanInput, type LeanRecord, type RecordSize } from "./lean";
+import { MAX_LEAN, corners, leanLayout, type LeanInput, type LeanRecord, type RecordSize } from "./lean";
 
 const CAPACITY = 80;
 const SEEDS = Array.from({ length: 20 }, (_, i) => i * 7919 + 13);
@@ -124,6 +124,17 @@ describe("leanLayout", () => {
     expect(ratio).toBeLessThan(0.43);
     // Thicker too: 30 CDs per row against 80 LPs per cube.
     expect(cd.width / 2.1).toBeGreaterThan(lp.width * 2.4);
+  });
+
+  it("never leans past 18°, even with two or three records in a big compartment", () => {
+    for (const n of [2, 3, 4, 5, 10, 40]) {
+      for (const seed of SEEDS.slice(0, 5)) {
+        const { records } = leanLayout(inputs(n, seed, MIXES[0]!), { capacity: CAPACITY, width: 100, height: 100, seed });
+        for (const r of records) expect(r.angle).toBeLessThanOrEqual(MAX_LEAN + 1e-9);
+        // Every record stands on the floor: its bottom-left corner is the pivot at y = 0.
+        for (const r of records) expect(corners(r)[0]![1]).toBe(0);
+      }
+    }
   });
 
   it("gives a larger or equal maximum angle with more free space", () => {

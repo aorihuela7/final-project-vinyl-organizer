@@ -230,7 +230,7 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord }: Props) {
               <>
                 {placed && (
                   <div className="surface-interior relative w-full max-w-72 border-8 border-walnut" style={{ aspectRatio: aspect }}>
-                    <CompartmentDrawing records={placed.drawing} capacity={placed.location.slot.capacity} width={100 * aspect} height={100} foundId={preview.record.id} lifted />
+                    <CompartmentDrawing records={placed.drawing} capacity={placed.location.slot.capacity} width={100 * aspect} height={100} foundId={preview.record.id} />
                   </div>
                 )}
                 {preview.movedCount <= 1 ? (

@@ -30,7 +30,7 @@ export function LandingHero() {
             <Compartment key={i} blocked={t("landing.turntable")} />
           ) : (
             <Compartment key={i} found={cube.found !== undefined} plate={<Plate lines={[cube.plate]} />}>
-              <CompartmentDrawing records={records(i, cube.n)} capacity={CAPACITY} foundId={cube.found !== undefined ? `hero-${i}-${cube.found}` : null} lifted={cube.found !== undefined} />
+              <CompartmentDrawing records={records(i, cube.n)} capacity={CAPACITY} foundId={cube.found !== undefined ? `hero-${i}-${cube.found}` : null} />
               <CountBadge count={cube.n} capacity={CAPACITY} long={t("map.badge", { count: cube.n, capacity: CAPACITY })} short={String(cube.n)} />
             </Compartment>
           ),

@@ -16,10 +16,9 @@ type Props = {
   config: ShelfConfig;
   views: MediaView[];
   byId: Map<string, StoredRecord>;
-  /** The record that was found: its compartment gets the mustard outline and the record lifts. */
+  /** The record that was found: its compartment gets the mustard outline and the record turns mustard. */
   foundId: string | null;
   foundSlot: string | null;
-  lifted: boolean;
   onOpen: (slot: Slot) => void;
   /** A compartment to highlight briefly (after jumping to it from the rail). */
   flashSlot?: string | null;
@@ -75,7 +74,7 @@ const EMPTY: DrawingRecord[] = [];
  * furniture. Every compartment shows a drawing of its records, its letters on
  * a brass plate, and how full it is.
  */
-export function MapView({ config, views, byId, foundId, foundSlot, lifted, onOpen, flashSlot = null, railFor }: Props) {
+export function MapView({ config, views, byId, foundId, foundSlot, onOpen, flashSlot = null, railFor }: Props) {
   const { t, n, locale } = useI18n();
   const groups = useGroupData(views, config, byId);
   const furniture = [...config.furniture].sort((a, b) => a.sortIndex - b.sortIndex);
@@ -104,7 +103,6 @@ export function MapView({ config, views, byId, foundId, foundSlot, lifted, onOpe
                   group={group}
                   foundId={foundId}
                   foundSlot={foundSlot}
-                  lifted={lifted}
                   flashSlot={flashSlot}
                   onOpen={onOpen}
                   plateLines={(p) => plateLines(p, genre, genresCount)}
@@ -129,7 +127,6 @@ function ShelfFurniture({
   group,
   foundId,
   foundSlot,
-  lifted,
   flashSlot,
   onOpen,
   plateLines,
@@ -143,7 +140,6 @@ function ShelfFurniture({
   group: GroupData;
   foundId: string | null;
   foundSlot: string | null;
-  lifted: boolean;
   flashSlot: string | null;
   onOpen: (slot: Slot) => void;
   plateLines: (p: PlateData) => PlateLineText[];
@@ -208,7 +204,6 @@ function ShelfFurniture({
               width={100 * aspect}
               height={100}
               foundId={isFound ? foundId : null}
-              lifted={isFound && lifted}
             />
             <CountBadge count={count} capacity={slot.capacity} long={t("map.badge", { count, capacity: slot.capacity })} short={n(count)} />
           </Compartment>
