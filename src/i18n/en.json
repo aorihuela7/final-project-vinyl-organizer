@@ -40,9 +40,7 @@
   },
   "onboarding": {
     "title": "Let's map your shelf",
-    "demoTitle": "Try the demo collection",
     "demoText": "About 1,000 real records on prebuilt shelves.",
-    "demoNoAccount": "No account needed.",
     "demoButton": "Load the demo",
     "importTitle": "Import your collection from Discogs",
     "importLabel": "Your Discogs username (the collection must be public)",
@@ -123,7 +121,7 @@
     "heroCaption": "Every compartment shows its letters and how full it is. Search for a record and the app shows the compartment, how far in it is, and the records on each side.",
     "heroShelf": "Cube shelf, LPs (12″ and 10″)",
     "turntable": "Turntable",
-    "aboutDiscogs": "{discogs} is the largest online database of music releases, where many collectors catalog their records. If yours is there and public, import it with your username."
+    "aboutDiscogs": "{discogs} is the largest online database of music releases, where many collectors catalog their records. If yours is there and public, import it with your Discogs username."
   },
   "notFound": {
     "title": "This page doesn't exist",
@@ -606,8 +604,6 @@
     "freshness": "Guests see the shelf while its Discogs data is less than six hours old; opening the app refreshes it."
   },
   "zero": {
-    "title": "Start from scratch",
-    "text": "No Discogs account? Start with an empty collection and add your records one by one with “Add a new record”. The app tells you where each one goes.",
     "button": "Start from scratch"
   },
   "samples": {
