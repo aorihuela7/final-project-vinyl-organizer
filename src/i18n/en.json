@@ -614,7 +614,10 @@
     "signUp": "Sign up to share your shelf with a link.",
     "failed": "Couldn't change the link. Try again.",
     "label": "Guest link",
-    "freshness": "Guests see the shelf while its Discogs data is less than six hours old; opening the app refreshes it."
+    "until": "Guests can see your shelf until {time}: its Discogs data must be less than six hours old. Updating it gives six more hours.",
+    "expired": "Guests can't see your shelf right now: its Discogs data is more than six hours old. Update it to show it again.",
+    "update": "Update now",
+    "updating": "Updating…"
   },
   "zero": {
     "button": "Start from scratch"

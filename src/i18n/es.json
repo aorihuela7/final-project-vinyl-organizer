@@ -614,7 +614,10 @@
     "signUp": "Crea una cuenta para compartir tu repisa con un enlace.",
     "failed": "No se pudo cambiar el enlace. Intenta de nuevo.",
     "label": "Enlace para invitados",
-    "freshness": "Los invitados ven la repisa mientras sus datos de Discogs tengan menos de seis horas; abrir la app los actualiza."
+    "until": "Los invitados pueden ver tu repisa hasta las {time}: sus datos de Discogs deben tener menos de seis horas. Actualizarla da seis horas más.",
+    "expired": "Los invitados no pueden ver tu repisa ahora: sus datos de Discogs tienen más de seis horas. Actualízala para que se vuelva a ver.",
+    "update": "Actualizar ahora",
+    "updating": "Actualizando…"
   },
   "zero": {
     "button": "Empezar de cero"

@@ -614,7 +614,10 @@
     "signUp": "Crie uma conta para compartilhar sua estante com um link.",
     "failed": "Não foi possível mudar o link. Tente de novo.",
     "label": "Link para convidados",
-    "freshness": "Os convidados veem a estante enquanto os dados do Discogs tiverem menos de seis horas; abrir o app os atualiza."
+    "until": "Os convidados podem ver sua estante até {time}: os dados do Discogs precisam ter menos de seis horas. Atualizar dá mais seis horas.",
+    "expired": "Os convidados não podem ver sua estante agora: os dados do Discogs têm mais de seis horas. Atualize para que ela volte a aparecer.",
+    "update": "Atualizar agora",
+    "updating": "Atualizando…"
   },
   "zero": {
     "button": "Começar do zero"

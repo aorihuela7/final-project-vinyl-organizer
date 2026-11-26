@@ -664,6 +664,17 @@ export function useShelfApp(startParam: string | null) {
     setStatus({ kind: "ready" });
   }, [supabase, startRemoteImport]);
 
+  /** Syncs with Discogs now (it also gives a shared link six more hours). */
+  const syncNow = useCallback(() => {
+    const collection = data?.collection;
+    if (mode !== "remote" || !supabase || !collection || syncJob) return;
+    const input =
+      collection.source === "demo" || !collection.discogs_username
+        ? ({ source: "demo" } as const)
+        : ({ source: "discogs", username: collection.discogs_username } as const);
+    void startRemoteImport(supabase, input, true);
+  }, [mode, supabase, data?.collection, syncJob, startRemoteImport]);
+
   const startDemo = useCallback(() => {
     if (mode === "remote" && supabase) void startRemoteImport(supabase, { source: "demo" }, false);
     else void startLocalDemo();
@@ -956,6 +967,7 @@ export function useShelfApp(startParam: string | null) {
     takeOut,
     putBack,
     removeRecord,
+    syncNow,
     resetLocal,
   };
 }

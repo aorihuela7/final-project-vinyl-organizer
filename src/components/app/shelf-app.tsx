@@ -321,7 +321,7 @@ export function ShelfApp() {
               <h2 className="mt-4 border-t border-input-line/60 pt-6 font-display text-2xl text-ink">{t("app.toolsTitle")}</h2>
               <p className="-mt-2 text-sm text-muted">{t("app.toolsText")}</p>
               <SimulatorCard records={data.records} config={config} />
-              <ShareCard signedIn={app.mode === "remote"} />
+              <ShareCard signedIn={app.mode === "remote"} syncedAt={data.collection?.last_synced_at ?? null} onUpdate={app.syncNow} updating={!!app.syncJob} />
               <CollectionPanel app={app} />
             </>
           ) : (
