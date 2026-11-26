@@ -40,9 +40,7 @@
   },
   "onboarding": {
     "title": "Armemos el mapa de tu repisa",
-    "demoTitle": "Prueba la colección de demostración",
     "demoText": "Unos 1.000 discos reales en repisas ya armadas.",
-    "demoNoAccount": "No necesitas cuenta.",
     "demoButton": "Cargar la demostración",
     "importTitle": "Importa tu colección de Discogs",
     "importLabel": "Tu usuario de Discogs (la colección tiene que ser pública)",
@@ -123,7 +121,7 @@
     "heroCaption": "Cada compartimiento muestra sus letras y qué tan lleno está. Busca un disco y la app te muestra el compartimiento, qué tan adentro está y los discos de cada lado.",
     "heroShelf": "Estante de cubos, LP (12″ y 10″)",
     "turntable": "Tocadiscos",
-    "aboutDiscogs": "{discogs} es la base de datos de música más grande de internet, donde muchos coleccionistas registran sus discos. Si la tuya está ahí y es pública, impórtala con tu usuario."
+    "aboutDiscogs": "{discogs} es la base de datos de música más grande de internet, donde muchos coleccionistas registran sus discos. Si la tuya está ahí y es pública, impórtala con tu usuario de Discogs."
   },
   "notFound": {
     "title": "Esta página no existe",
@@ -606,8 +604,6 @@
     "freshness": "Los invitados ven la repisa mientras sus datos de Discogs tengan menos de seis horas; abrir la app los actualiza."
   },
   "zero": {
-    "title": "Empezar de cero",
-    "text": "¿No tienes cuenta en Discogs? Empieza con una colección vacía y agrega tus discos uno por uno con “Agregar un disco nuevo”. La app te dice dónde va cada uno.",
     "button": "Empezar de cero"
   },
   "samples": {

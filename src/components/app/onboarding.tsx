@@ -27,23 +27,18 @@ export function Onboarding({ app }: { app: ShelfApp }) {
           {renderMsg(t, previous.error)}
         </Banner>
       )}
-      <div className={`${card} p-5`}>
-        <h2 className="font-display text-lg text-ink">{t("onboarding.demoTitle")}</h2>
-        <p className="mt-1 text-sm text-muted">
-          {t("onboarding.demoText")} {app.mode === "local" ? t("onboarding.demoNoAccount") : ""}
-        </p>
-        <button type="button" onClick={app.startDemo} className={`${btnPrimary} mt-3`}>
+      {/* As on the landing page: the demo and starting from scratch side by side. */}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <button type="button" onClick={app.startDemo} className={btnPrimary}>
           {t("onboarding.demoButton")}
         </button>
-      </div>
-      <div className={`${card} p-5`}>
-        <h2 className="font-display text-lg text-ink">{t("zero.title")}</h2>
-        <p className="mt-1 text-sm text-muted">{t("zero.text")}</p>
-        <button type="button" onClick={app.startFromZero} className={`${btnSecondary} mt-3`}>
+        <button type="button" onClick={app.startFromZero} className={btnSecondary}>
           {t("zero.button")}
         </button>
-        {app.mode === "local" && <p className="mt-2 text-xs text-muted">{t("onboarding.importAccount")}</p>}
       </div>
+      <p className="-mt-1 text-sm text-muted">
+        {t("onboarding.demoText")} {app.mode === "local" ? t("landing.noAccount") : ""}
+      </p>
       <form
         noValidate
         onSubmit={(e) => {

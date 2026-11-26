@@ -19,14 +19,9 @@ export default async function Home() {
           <Link href="/app?start=demo" className={btnPrimary}>
             {t("landing.tryDemo")}
           </Link>
-        </div>
-        <p className="text-sm text-muted">{t("landing.noAccount")}</p>
-
-        <div className={`${card} flex flex-col items-start gap-2 p-5`}>
-          <h2 className="font-display text-lg text-ink">{t("zero.title")}</h2>
-          <p className="text-sm text-muted">{t("zero.text")}</p>
           <StartFromScratch />
         </div>
+        <p className="text-sm text-muted">{t("landing.noAccount")}</p>
 
         <div className={`${card} p-5`}>
           <h2 className="font-display text-lg text-ink">{t("landing.importTitle")}</h2>

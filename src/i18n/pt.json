@@ -40,9 +40,7 @@
   },
   "onboarding": {
     "title": "Vamos mapear a sua estante",
-    "demoTitle": "Experimente a coleção de demonstração",
     "demoText": "Cerca de 1.000 discos reais em estantes já montadas.",
-    "demoNoAccount": "Não precisa de conta.",
     "demoButton": "Carregar a demonstração",
     "importTitle": "Importe sua coleção do Discogs",
     "importLabel": "Seu usuário do Discogs (a coleção precisa ser pública)",
@@ -123,7 +121,7 @@
     "heroCaption": "Cada nicho mostra suas letras e o quanto está cheio. Busque um disco e o app mostra o nicho, a que altura ele está e os discos de cada lado.",
     "heroShelf": "Estante de nichos, LPs (12″ e 10″)",
     "turntable": "Toca-discos",
-    "aboutDiscogs": "{discogs} é o maior banco de dados de discos da internet, onde muitos colecionadores catalogam seus discos. Se a sua está lá e é pública, importe com seu usuário."
+    "aboutDiscogs": "{discogs} é o maior banco de dados de discos da internet, onde muitos colecionadores catalogam seus discos. Se a sua está lá e é pública, importe com seu usuário do Discogs."
   },
   "notFound": {
     "title": "Esta página não existe",
@@ -606,8 +604,6 @@
     "freshness": "Os convidados veem a estante enquanto os dados do Discogs tiverem menos de seis horas; abrir o app os atualiza."
   },
   "zero": {
-    "title": "Começar do zero",
-    "text": "Não tem conta no Discogs? Comece com uma coleção vazia e adicione seus discos um por um com “Adicionar um disco novo”. O app diz onde vai cada um.",
     "button": "Começar do zero"
   },
   "samples": {
