@@ -60,7 +60,7 @@ test("signs up, imports a Discogs collection by username, builds a shelf, and fi
   await page.getByLabel("Search for an artist or a title in your collection").fill("Faith George Michael");
   await page.getByRole("listbox", { name: "Search results" }).getByRole("option").first().click();
   const card = recordCard(page);
-  await expect(card.getByText(/Cube shelf \d+×\d+( \(\d\))?, row \d+, column \d+/)).toBeVisible();
+  await expect(card.getByText(/Cube shelf \d+×\d+( \(\d\))?, row \d+, column \d+/).first()).toBeVisible();
   await expect(card.getByText(/\d+% in from the left/)).toBeVisible();
   await expect(card.getByText(/Just to the left|Just to the right/).first()).toBeVisible();
   await page.screenshot({ path: `docs/screenshots/record-${testInfo.project.name}.png` });
