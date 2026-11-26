@@ -298,7 +298,9 @@
       "lp": "Adicionar uma estante de LPs",
       "single": "Adicionar uma estante de compactos",
       "cd": "Adicionar uma estante de CDs"
-    }
+    },
+    "already": "Você já tem este disco, em {place}. Adicione de novo só se for uma segunda cópia.",
+    "alreadyOff": "Você já tem este disco. Adicione de novo só se for uma segunda cópia."
   },
   "levelNames": {
     "genre": "Gênero",

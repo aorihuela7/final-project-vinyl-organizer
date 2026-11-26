@@ -118,6 +118,13 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf
     return m;
   }, [byId, preview]);
 
+  // The same release is already in the collection (a second copy is fine, but usually it's a mistake).
+  const already = useMemo(() => {
+    if (!chosen || !app.data) return null;
+    const existing = app.data.records.find((r) => r.discogs_release_id === chosen.discogs_release_id);
+    return existing ? { id: existing.id, slot: app.data.placement.get(existing.id) ?? null } : null;
+  }, [chosen, app.data]);
+
   const slotName = (id: string | null) => {
     if (id === null) return t("app.offTheShelf");
     for (const v of app.views) {
@@ -217,6 +224,12 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf
                 </button>
               </div>
             </div>
+          )}
+          {already && (
+            // Same release already in the collection: say where, and still allow a second copy.
+            <Banner tone="warning">
+              {already.slot ? t("add.already", { place: slotName(already.slot) }) : t("add.alreadyOff")}
+            </Banner>
           )}
         </Step>
 

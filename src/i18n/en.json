@@ -298,7 +298,9 @@
       "lp": "Add an LP shelf",
       "single": "Add a singles shelf",
       "cd": "Add a CD shelf"
-    }
+    },
+    "already": "You already have this record, in {place}. Add it again only if it's a second copy.",
+    "alreadyOff": "You already have this record. Add it again only if it's a second copy."
   },
   "levelNames": {
     "genre": "Genre",

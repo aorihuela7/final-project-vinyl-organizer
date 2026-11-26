@@ -298,7 +298,9 @@
       "lp": "Agregar una repisa de LP",
       "single": "Agregar una repisa de singles",
       "cd": "Agregar una repisa de CD"
-    }
+    },
+    "already": "Ya tienes este disco, en {place}. Agrégalo de nuevo solo si es una segunda copia.",
+    "alreadyOff": "Ya tienes este disco. Agrégalo de nuevo solo si es una segunda copia."
   },
   "levelNames": {
     "genre": "Género",
