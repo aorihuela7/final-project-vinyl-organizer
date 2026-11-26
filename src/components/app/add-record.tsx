@@ -283,8 +283,18 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf
                         );
                       })}
                     </ol>
-                    {preview.overflow.length > 0 && <p className="mt-1">{t("add.overflow")}</p>}
                   </div>
+                )}
+                {preview.overflow.length > 0 && (
+                  // Adding would push a record off the shelves: offer to make room first.
+                  <Banner tone="warning" className="flex flex-wrap items-center justify-between gap-2">
+                    <span>{t("add.overflow")}</span>
+                    {onGrowShelf && (
+                      <button type="button" onClick={() => onGrowShelf(preview.media!, chosen)} className={btnPrimarySm}>
+                        {t("add.grow")}
+                      </button>
+                    )}
+                  </Banner>
                 )}
               </>
             ))}
