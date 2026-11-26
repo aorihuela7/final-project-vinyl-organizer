@@ -81,16 +81,30 @@ describe("traversal", () => {
 });
 
 describe("initial layout", () => {
-  it("distributes proportionally to effective capacity, spreading the gaps (library sort)", () => {
-    // 3 compartments of 100 with 10% slack hold 270; 135 records fill each to 45.
+  it("uses the fewest compartments that hold the collection, spreading the records evenly over them", () => {
+    // 3 compartments of 100 with 10% slack hold 90 each: 135 records need 2, so 68 and 67, and the third stays empty.
     const slots = traverse([shelf({ rows: 1, cols: 3, defaultCapacity: 100 })], "lp");
-    expect(distribute(135, slots, 10)).toEqual({ counts: [45, 45, 45], leftover: 0, slackReduced: false });
-    // Uneven capacities: proportional, not first-fit.
+    expect(distribute(135, slots, 10)).toEqual({ counts: [68, 67, 0], leftover: 0, slackReduced: false });
+    // A collection that fills every compartment's effective capacity uses them all, evenly (library sort).
+    expect(distribute(270, slots, 10).counts).toEqual([90, 90, 90]);
+    expect(distribute(181, slots, 10).counts).toEqual([60, 61, 60]);
+    // Uneven capacities: proportional within the compartments used, not first-fit.
     const uneven = traverse(
       [shelf({ rows: 1, cols: 3, defaultCapacity: 100, compartments: [{ row: 0, col: 1, status: "available", capacity: 50 }] })],
       "lp",
     );
-    expect(distribute(100, uneven, 10).counts).toEqual([40, 20, 40]);
+    expect(distribute(100, uneven, 10).counts).toEqual([67, 33, 0]);
+  });
+
+  it("keeps a small collection together: two records of one artist share a compartment, even with two shelves", () => {
+    const shelves = [shelf({ rows: 4, cols: 4, defaultCapacity: 80 }), shelf({ key: "b", rows: 4, cols: 4, defaultCapacity: 80, sortIndex: 1 })];
+    const records = [rec("Fito Páez", { id: "a" }), rec("Fito Páez", { id: "b" })];
+    const result = initialLayout(records, shelves, byArtist, 10);
+    expect(result.placement.get("a")).toBe(result.groups.lp.slots[0]!.id);
+    expect(result.placement.get("b")).toBe(result.groups.lp.slots[0]!.id);
+    // 100 records need 2 compartments of 72: 50 each, the other 30 compartments empty.
+    const hundred = initialLayout(numbered(100), shelves, byArtist, 10);
+    expect([...hundred.groups.lp.counts.values()].filter((c) => c > 0)).toEqual([50, 50]);
   });
 
   it("keeps both invariants on a Kallax with blocked compartments, by rows and by columns", () => {

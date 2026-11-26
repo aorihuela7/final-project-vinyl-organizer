@@ -48,19 +48,25 @@ The sorted collection is cut into consecutive runs, one per compartment in trave
 
 The naive answer is to fill each compartment to the top before moving on. Then all the free space ends up at the end of the shelf, and the first purchase that belongs in "A" pushes every record after it. Instead we **spread the free space over the whole shelf**, the way a librarian leaves a little room at the end of each shelf. This is the idea behind *library sort* (gapped insertion sort): gaps left everywhere make later insertions cheap.
 
-Concretely, every compartment gets an **effective capacity** = capacity × (1 − slack). With 80 records per cube and 10% slack, that's 72. Each compartment receives records **in proportion to its effective capacity**. To make the counts add up exactly, we round the cumulative boundaries, not each count:
+Concretely, every compartment gets an **effective capacity** = capacity × (1 − slack). With 80 records per cube and 10% slack, that's 72.
 
-> boundary_k = round(N × (e_1 + … + e_k) / (e_1 + … + e_n)), and compartment k gets boundary_k − boundary_(k−1) records.
+**Step 1: how many compartments.** We use the **fewest compartments, in traversal order, whose effective capacities add up to at least N**. The ones after them stay empty, at the end of the shelf. Spreading a small collection over every compartment would scatter it: two records by the same artist could end up several compartments apart, with empty compartments between them. Two records need one compartment; 100 records at 72 per cube need two.
+
+**Step 2: how many in each.** The compartments in use receive records **in proportion to their effective capacity**, so the free space is spread evenly among them (100 records in two cubes: 50 and 50, not 72 and 28). To make the counts add up exactly, we round the cumulative boundaries, not each count:
+
+> boundary_k = round(N × (e_1 + … + e_k) / (e_1 + … + e_u)), where u is the number of compartments in use, and compartment k gets boundary_k − boundary_(k−1) records.
+
+When the collection fills the shelf at its effective capacity, u is every compartment and this is plain proportional spreading.
 
 There are three cases:
 
 | Collection size N | What happens |
 | --- | --- |
-| N ≤ total effective capacity | Proportional to effective capacity; the slack is kept everywhere. |
+| N ≤ total effective capacity | The fewest compartments that hold N, proportional to their effective capacity; the slack is kept in each of them. |
 | effective total < N ≤ total capacity | Proportional to the real capacity: the collection fits, but with less slack than asked. The app says so. |
 | N > total capacity | Every compartment full; the last N − capacity records in sort order are reported as not fitting. |
 
-**Why capacity can't be exceeded.** In the first case, compartment k's exact share is N × e_k / E. That's at most e_k, which is at most its capacity. Cumulative rounding can give a compartment at most the ceiling of its exact share, and the ceiling of a number that is ≤ an integer is still ≤ that integer. The other two cases work the same way with the real capacity. The code also has a safety net that carries any excess forward; by the argument above it never has to act.
+**Why capacity can't be exceeded.** In the first case, compartment k's exact share is N × e_k / E, where E is the effective capacity of the compartments in use (E ≥ N by step 1). That's at most e_k, which is at most its capacity. Cumulative rounding can give a compartment at most the ceiling of its exact share, and the ceiling of a number that is ≤ an integer is still ≤ that integer. The other two cases work the same way with the real capacity. The code also has a safety net that carries any excess forward; by the argument above it never has to act.
 
 ## 6. Inserting a new record (`insert.ts`), the v1 naive method
 
@@ -126,7 +132,7 @@ The computed map can drift from the real shelf (double albums, box sets, a 10" h
 
 A setting counts double albums and box sets by their number of discs (`format_qty` from Discogs, 1 to 12), so a compartment's capacity is measured in **places**: an 80-place cube holds 80 single LPs or 40 doubles. With it on:
 
-- **Initial layout** (`distributeWeighted`): each compartment's share of the collection's places is proportional to its effective capacity, as before. Records are walked in sort order; a record stays in the current compartment while its midpoint stays inside that compartment's cumulative share and it fits. Contiguity holds by construction, and no compartment goes over its capacity in places (a record thicker than a whole compartment goes alone in an empty one, flagged).
+- **Initial layout** (`distributeWeighted`): the fewest compartments whose effective capacity holds the collection's places are used, and each one's share of the places is proportional to its effective capacity, as before. Records are walked in sort order; a record stays in the current compartment while its midpoint stays inside that compartment's cumulative share and it fits. Contiguity holds by construction, and no compartment goes over its capacity in places (a record thicker than a whole compartment goes alone in an empty one, flagged).
 - **Insertion** checks room in places, and a cascade moves as many records as it takes to make room. The minimum-move proof (6b) is for one place per record; with weights it's the same nearest-room rule, used as a heuristic.
 - **Calibration** flags over capacity in places.
 - **Drawings** make each record as wide as its places.
@@ -157,7 +163,7 @@ One shelf with 3 compartments (C1, C2, C3), capacity 5 each, slack 20%, sorted b
 
 **Sorted collection** (articles ignored, suffix stripped): ABBA, The Beatles, Björk, Blondie, The Cure, Daft Punk, Fleetwood Mac, Nirvana (2), Radiohead, Talking Heads.
 
-**Effective capacity:** 5 × (1 − 0.2) = 4 per compartment, total 12. N = 10 ≤ 12, so case 1.
+**Effective capacity:** 5 × (1 − 0.2) = 4 per compartment, total 12. N = 10 ≤ 12, so case 1. Two compartments hold only 8, so all three are in use.
 
 **Boundaries:** round(10 × 4/12) = round(3.33) = 3; round(10 × 8/12) = round(6.67) = 7; then 10. **Counts: 3, 4, 3.** The free space is spread out (2, 1, 2 free), not piled at the end.
 
@@ -189,7 +195,7 @@ Sorting n records is O(n log n), and the comparisons use normalized keys compute
 
 - **Sort key:** articles (The Beatles with and without, and "Beatles" next to "The Beatles"), suffixes (Nirvana (2)), two artists, no genre, accents and numbers, ties, unknown years, three levels.
 - **Traversal:** a Kallax 4×4 with two blocked compartments, by rows and by columns; several shelves; capacity override.
-- **Initial layout:** proportional counts, both invariants for every size from 0 to 60 records, slack reduced, a collection that doesn't fit, vinyl vs CD vs other, an empty shelf, and the 3,000-record timing test.
+- **Initial layout:** the fewest compartments and proportional counts (a small collection stays together), both invariants for every size from 0 to 60 records, slack reduced, a collection that doesn't fit, vinyl vs CD vs other, an empty shelf, and the 3,000-record timing test.
 - **Insertion:** fits (1 move), next compartment, an empty compartment in between, a new first record with an empty compartment before it, a cascade across three compartments, the new record itself pushed forward, overflow at the end, an empty shelf, 200 random insertions that keep both invariants, and collapsing repeated moves.
 - **Calibration:** boundary moved back (with the over-capacity flag), moved forward, only one boundary touched, no-op, and refusals.
 - **Position, neighbors, ranges, and spine colors.**

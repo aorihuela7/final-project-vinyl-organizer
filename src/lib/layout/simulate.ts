@@ -84,6 +84,19 @@ function fillTo(records: readonly LayoutRecord[], shelves: readonly ShelfSpec[],
   }));
 }
 
+/** The free space, in %, that leaves exactly the shelves' room for the purchases. */
+function roomForPurchases(before: readonly LayoutRecord[], shelves: readonly ShelfSpec[]): number {
+  let capacity = 0;
+  let count = 0;
+  for (const media of SHELF_MEDIA) {
+    const slots = traverse(shelves, media);
+    if (slots.length === 0) continue;
+    capacity += slots.reduce((n, s) => n + s.capacity, 0);
+    count += before.filter((r) => r.media === media).length;
+  }
+  return capacity > 0 ? Math.max(0, 100 * (1 - count / capacity)) : 0;
+}
+
 export function simulatePurchases(records: readonly LayoutRecord[], inputShelves: readonly ShelfSpec[], settings: SortSettings, options: SimulationOptions): SimulationResult {
   let shelves = inputShelves;
   const random = rng(options.seed);
@@ -93,7 +106,10 @@ export function simulatePurchases(records: readonly LayoutRecord[], inputShelves
   const bought = new Set(purchases.map((r) => r.id));
   const before = records.filter((r) => !bought.has(r.id));
   if (options.fill !== undefined) shelves = fillTo(records, shelves, options.fill);
-  const slackPct = options.fill !== undefined ? 0 : options.slackPct;
+  // With `fill`, the room the purchases will take is the free space: it's spread
+  // over every compartment from the start (the layout uses the fewest
+  // compartments that hold the collection with its free space, which is all of them here).
+  const slackPct = options.fill !== undefined ? roomForPurchases(before, shelves) : options.slackPct;
   const { placement } = initialLayout(before, shelves, settings, slackPct);
   const slotsOf = new Map(SHELF_MEDIA.map((m) => [m, traverse(shelves, m)]));
 

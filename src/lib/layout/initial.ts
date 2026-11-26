@@ -1,10 +1,13 @@
 /**
  * Initial layout. The sorted collection is cut into consecutive runs, one per
  * compartment in traversal order (so each compartment holds a continuous
- * range). Run sizes are proportional to each compartment's effective capacity,
- * capacity × (1 − slack), so the free space is spread over the whole shelf
- * instead of piling up at the end: the "library sort" idea, where gaps left
- * everywhere make later insertions cheap.
+ * range). It uses the fewest compartments, in traversal order, whose effective
+ * capacity, capacity × (1 − slack), holds the collection, and spreads the
+ * records over those in proportion to their effective capacity. The free space
+ * is spread among the records instead of piling up at the end (the "library
+ * sort" idea: gaps everywhere make later insertions cheap), and a small
+ * collection stays together instead of scattering across empty furniture;
+ * the compartments it doesn't need stay empty, at the end.
  */
 import { sortRecords } from "./sort";
 import { sectionKeyOf, sectionSlots, sectionsOf } from "./sections";
@@ -21,9 +24,24 @@ export type Distribution = {
 };
 
 /**
+ * The fewest slots, in traversal order, whose effective capacity adds up to at
+ * least `amount` (all of them if even the total falls short).
+ */
+export function slotsNeeded(effective: readonly number[], amount: number): number {
+  let sum = 0;
+  for (let i = 0; i < effective.length; i++) {
+    sum += effective[i]!;
+    if (sum >= amount - 1e-9) return i + 1;
+  }
+  return effective.length;
+}
+
+/**
  * How many of n sorted records go in each slot.
  *
- * - n ≤ effective total: proportional to effective capacity (the slack is kept).
+ * - n ≤ effective total: only the fewest slots that hold n at effective
+ *   capacity are used, proportional to their effective capacity (the slack
+ *   is kept); the slots after them stay empty.
  * - effective total < n ≤ capacity total: proportional to raw capacity (less slack).
  * - n > capacity total: every slot full; the rest are left over and reported.
  *
@@ -45,7 +63,8 @@ export function distribute(n: number, slots: readonly Slot[], slackPct: number):
   let m: number;
   let slackReduced = false;
   if (n <= effectiveTotal) {
-    weights = effective;
+    const used = slotsNeeded(effective, n);
+    weights = effective.map((e, i) => (i < used ? e : 0));
     m = n;
   } else {
     weights = caps;
@@ -92,8 +111,9 @@ export type LayoutResult = {
 };
 
 /**
- * Thickness by format: the same idea with weights. Each compartment's share of
- * the collection's places is proportional to its effective capacity; records
+ * Thickness by format: the same idea with weights. The fewest compartments
+ * whose effective capacity holds the collection's places are used, and each
+ * one's share of the places is proportional to its effective capacity; records
  * are walked in order and a record goes in the current compartment while its
  * midpoint stays within that compartment's cumulative share and it fits.
  * A record thicker than a whole compartment goes alone in an empty one (flagged
@@ -109,7 +129,8 @@ export function distributeWeighted(weights: readonly number[], slots: readonly S
   const counts = caps.map(() => 0);
   if (weights.length === 0 || capacityTotal === 0) return { counts, leftover: weights.length, slackReduced: false };
   const useEffective = total <= effectiveTotal;
-  const shares = useEffective ? effective : caps;
+  const used = useEffective ? slotsNeeded(effective, total) : caps.length;
+  const shares = (useEffective ? effective : caps).map((s, i) => (i < used ? s : 0));
   const shareTotal = shares.reduce((a, b) => a + b, 0);
   const placeable = Math.min(total, capacityTotal);
   const cumulative: number[] = [];
