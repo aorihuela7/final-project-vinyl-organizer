@@ -86,24 +86,25 @@ export function ShelfApp() {
   // ------------------------------------------------------------ guided tour
   const { userId } = useAuth();
   const supabase = useSupabase();
-  const hasMap = !!app.data?.config && app.views.some((v) => v.index.sorted.length > 0);
+  // The tour runs on any map, even an empty one (started from scratch): it waits for the map, not for records.
+  const mapShown = !!app.data?.config;
   const tour = useTourState({
     mode: app.mode,
     userId,
     supabase,
     // The first demo visit, or right after signing up (even before there are records).
     ready: app.status.kind === "ready" || (app.mode === "remote" && app.status.kind === "onboarding"),
-    hasMap,
+    hasMap: mapShown,
   });
   const { start: startTour, accept: acceptTour } = tour;
   const startTourOnMap = useCallback(() => {
     // Before the first map (onboarding, an import): start as soon as the shelf is ready.
-    if (!hasMap) return acceptTour();
+    if (!mapShown) return acceptTour();
     setTab("map");
     setOpenSlot(null);
     setAdding(false);
     startTour();
-  }, [hasMap, startTour, acceptTour]);
+  }, [mapShown, startTour, acceptTour]);
   // "Help" in the header, or /app?tour=1 from another page.
   useEffect(() => {
     const onStart = () => startTourOnMap();
@@ -123,7 +124,7 @@ export function ShelfApp() {
     return () => clearTimeout(timer);
   }, [wantsTour, tourReady, startTourOnMap]);
   const sample = app.views.find((v) => v.index.sorted.length > 0)?.index.sorted[0]?.id ?? null;
-  const tourSteps: TourStep[] = [
+  const allTourSteps: TourStep[] = [
     { id: "search", target: '[data-tour="search"]' },
     { id: "rail", target: '[data-map] nav[data-tour="rail"]' },
     { id: "compartment", target: "[data-map] [data-slot]" },
@@ -142,6 +143,8 @@ export function ShelfApp() {
     { id: "setup", target: '[data-tour="setup"]' },
     { id: "done" },
   ];
+  // An empty map has no rail and no record to show: those steps are skipped.
+  const tourSteps = sample ? allTourSteps : allTourSteps.filter((s) => s.id !== "rail" && s.id !== "record");
   const tourOffer = tour.offer ? <TourOffer onAccept={tour.accept} onDecline={tour.decline} /> : null;
   const tourWaiting = tour.waiting ? <TourWaiting /> : null;
 
@@ -237,7 +240,7 @@ export function ShelfApp() {
     <div className="flex flex-col gap-4">
       {tourOffer}
       {tourWaiting}
-      {tour.active && hasMap && <TourOverlay steps={tourSteps} onEnd={tour.end} />}
+      {tour.active && mapShown && <TourOverlay steps={tourSteps} onEnd={tour.end} />}
       {app.mode === "local" && (
         <Banner className="flex flex-wrap items-center justify-between gap-2">
           <span>{t("app.demoBanner")}</span>
