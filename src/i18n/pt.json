@@ -103,7 +103,8 @@
     "toolsTitle": "Mais para a sua coleção",
     "toolsText": "Isto se salva sozinho; não precisa de “Gerar o mapa”.",
     "buildTextEmpty": "Por enquanto sua coleção está vazia. Escolha seus móveis e sua ordem, e depois adicione seus discos um por um: o app diz onde vai cada um.",
-    "emptyShelf": "Sua estante está vazia. Adicione seu primeiro disco e o app diz onde ele vai."
+    "emptyShelf": "Sua estante está vazia. Adicione seu primeiro disco e o app diz onde ele vai.",
+    "undo": "Desfazer"
   },
   "levels": {
     "genre": "gênero",
@@ -178,7 +179,10 @@
     "discogsDown": "O Discogs não respondeu. Tente de novo mais tarde.",
     "replacedDemo": "A coleção demo substituiu a anterior.",
     "replaceDemoFailed": "Não foi possível carregar a coleção demo agora. Sua coleção atual não mudou.",
-    "mapGeneratedEmpty": "Mapa gerado. Sua estante está pronta para o seu primeiro disco."
+    "mapGeneratedEmpty": "Mapa gerado. Sua estante está pronta para o seu primeiro disco.",
+    "undone": "Desfeito: “{title}” saiu da sua estante e tudo voltou ao lugar.",
+    "removed": "“{title}” saiu da sua estante. Nenhum outro disco se moveu e nada mudou no Discogs.",
+    "removeFailed": "Não foi possível tirar o disco. Tente de novo."
   },
   "demo": {
     "living": "Sala",
@@ -413,7 +417,10 @@
     "side": "Lado {side}",
     "disc": "Disco {n}",
     "emptyTitle": "Encontre um disco",
-    "emptyText": "Busque um artista ou um título para ver onde está um disco, os discos de cada lado e a lista de faixas. Clique em um nicho para ver o que tem dentro."
+    "emptyText": "Busque um artista ou um título para ver onde está um disco, os discos de cada lado e a lista de faixas. Clique em um nicho para ver o que tem dentro.",
+    "remove": "Tirar da minha coleção",
+    "removeConfirm": "Tirar “{title}” da sua coleção? O lugar dele na estante fica livre. Nada muda no Discogs.",
+    "removeYes": "Tirar"
   },
   "rail": {
     "label": "Seus {media} de {first} a {last}",

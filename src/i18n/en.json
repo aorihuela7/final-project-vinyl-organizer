@@ -103,7 +103,8 @@
     "toolsTitle": "More for your collection",
     "toolsText": "These save on their own; they don't need “Generate map”.",
     "buildTextEmpty": "Your collection is empty for now. Pick your furniture and your sort order, then add your records one by one: the app tells you where each one goes.",
-    "emptyShelf": "Your shelf is empty. Add your first record and the app tells you where it goes."
+    "emptyShelf": "Your shelf is empty. Add your first record and the app tells you where it goes.",
+    "undo": "Undo"
   },
   "levels": {
     "genre": "genre",
@@ -178,7 +179,10 @@
     "discogsDown": "Discogs didn't answer. Try again later.",
     "replacedDemo": "The demo collection replaced your previous one.",
     "replaceDemoFailed": "Couldn't load the demo collection right now. Your current collection didn't change.",
-    "mapGeneratedEmpty": "Map generated. Your shelf is ready for your first record."
+    "mapGeneratedEmpty": "Map generated. Your shelf is ready for your first record.",
+    "undone": "Undone: “{title}” is off your shelf, and everything is back where it was.",
+    "removed": "“{title}” is off your shelf. Nothing else moved, and nothing changed on Discogs.",
+    "removeFailed": "Couldn't remove the record. Try again."
   },
   "demo": {
     "living": "Living room",
@@ -413,7 +417,10 @@
     "side": "Side {side}",
     "disc": "Disc {n}",
     "emptyTitle": "Find a record",
-    "emptyText": "Search for an artist or a title to see where a record is, the records on each side, and its tracklist. Click a compartment to see what's inside."
+    "emptyText": "Search for an artist or a title to see where a record is, the records on each side, and its tracklist. Click a compartment to see what's inside.",
+    "remove": "Remove from my collection",
+    "removeConfirm": "Remove “{title}” from your collection? Its place on the shelf is left free. Nothing changes on Discogs.",
+    "removeYes": "Remove it"
   },
   "rail": {
     "label": "Your {media} from {first} to {last}",

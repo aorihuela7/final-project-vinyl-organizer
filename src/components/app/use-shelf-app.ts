@@ -77,7 +77,8 @@ export type Status =
   | { kind: "ready" }
   | { kind: "error"; message: Msg };
 
-export type Notice = { tone: "info" | "success" | "warning"; msg: Msg; moves?: Move[] };
+/** undo: a record just added, and the moves its insertion made, so "Undo" can put everything back. */
+export type Notice = { tone: "info" | "success" | "warning"; msg: Msg; moves?: Move[]; undo?: { recordId: string; moves: Move[] } };
 
 export type MapPreview = { config: ShelfConfig; changed: number; placed: number; leftover: number; notPlaced: number; hasMap: boolean; slackReduced: boolean };
 
@@ -216,12 +217,17 @@ export function useShelfApp(startParam: string | null) {
   const clerk = useClerk();
   const supabase = useSupabase();
   const [data, setData] = useState<AppData | null>(null);
+  useEffect(() => {
+    latestData.current = data;
+  }, [data]);
   const [status, setStatus] = useState<Status>({ kind: "loading", message: msg("app.loadingShelf") });
   const [syncJob, setSyncJob] = useState<JobRow | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
   const started = useRef<string | null>(null);
   const alive = useRef(true);
+  // The latest data, for actions started from an older render (Undo on a notice).
+  const latestData = useRef<AppData | null>(null);
   // A replacement waiting for the user's answer, with the shelf to go back to if they keep it.
   const pendingReplace = useRef<{ target: ReplaceTarget; next: AppData; local: boolean } | null>(null);
   const mode: "local" | "remote" | null = !isLoaded ? null : isSignedIn ? "remote" : "local";
@@ -806,6 +812,7 @@ export function useShelfApp(startParam: string | null) {
           tone: "success",
           msg: result.movedCount <= 1 ? msg("notices.addedOneMove") : msg("notices.addedMoves", { count: result.movedCount }),
           moves: result.moves,
+          undo: { recordId: stored.id, moves: result.moves },
         });
         return { stored, preview: result };
       } catch (err) {
@@ -816,6 +823,51 @@ export function useShelfApp(startParam: string | null) {
       }
     },
     [data, mode, supabase, userId, views, applyChange],
+  );
+
+  /**
+   * Removes a record added by hand (imported ones come back with the next sync:
+   * they're removed on Discogs). Its place is left free; no other record moves.
+   * With `moves` (Undo right after adding it), the records its insertion
+   * pushed go back to where they were.
+   */
+  const removeRecord = useCallback(
+    async (recordId: string, moves: Move[] = []) => {
+      const current = latestData.current;
+      if (!current) return false;
+      const record = current.records.find((r) => r.id === recordId);
+      if (!record || record.origin !== "added") return false;
+      setBusy(true);
+      try {
+        const placement = new Map(current.placement);
+        placement.delete(recordId);
+        // Undo: move back the records the insertion pushed, if they're still where it left them.
+        const back: Move[] = moves
+          .filter((m) => m.recordId !== recordId && m.from !== null && m.to !== null && placement.get(m.recordId) === m.to)
+          .map((m) => ({ recordId: m.recordId, from: m.to, to: m.from }));
+        for (const m of back) placement.set(m.recordId, m.to!);
+        if (mode === "remote" && supabase) {
+          const { error } = await supabase.from("records").delete().eq("id", recordId);
+          if (error) throw new Error("delete");
+          if (back.length > 0) await applyPlacementsRemote(supabase, placement, back, { kind: "insert", moves: back, movedCount: back.length });
+        }
+        const next: AppData = { ...current, records: current.records.filter((r) => r.id !== recordId), placement };
+        if (mode !== "remote") persistLocal(next);
+        setData(next);
+        setNotice({
+          tone: "info",
+          msg: moves.length > 0 ? msg("notices.undone", { title: record.title }) : msg("notices.removed", { title: record.title }),
+          moves: back.length > 0 ? back : undefined,
+        });
+        return true;
+      } catch {
+        setNotice({ tone: "warning", msg: msg("notices.removeFailed") });
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [mode, supabase, persistLocal],
   );
 
   /** Takes a record out to a temporary location (created if it's new). It keeps its spot on the shelf. */
@@ -900,6 +952,7 @@ export function useShelfApp(startParam: string | null) {
     addRecord,
     takeOut,
     putBack,
+    removeRecord,
     resetLocal,
   };
 }

@@ -103,7 +103,8 @@
     "toolsTitle": "Más para tu colección",
     "toolsText": "Esto se guarda solo; no necesita “Generar el mapa”.",
     "buildTextEmpty": "Por ahora tu colección está vacía. Elige tus muebles y tu orden, y después agrega tus discos uno por uno: la app te dice dónde va cada uno.",
-    "emptyShelf": "Tu repisa está vacía. Agrega tu primer disco y la app te dice dónde va."
+    "emptyShelf": "Tu repisa está vacía. Agrega tu primer disco y la app te dice dónde va.",
+    "undo": "Deshacer"
   },
   "levels": {
     "genre": "género",
@@ -178,7 +179,10 @@
     "discogsDown": "Discogs no respondió. Vuelve a intentarlo más tarde.",
     "replacedDemo": "La colección demo reemplazó a la anterior.",
     "replaceDemoFailed": "No se pudo cargar la colección demo en este momento. Tu colección actual no cambió.",
-    "mapGeneratedEmpty": "Mapa generado. Tu repisa está lista para tu primer disco."
+    "mapGeneratedEmpty": "Mapa generado. Tu repisa está lista para tu primer disco.",
+    "undone": "Deshecho: “{title}” salió de tu repisa y todo volvió a su lugar.",
+    "removed": "“{title}” salió de tu repisa. Ningún otro disco se movió y nada cambió en Discogs.",
+    "removeFailed": "No se pudo quitar el disco. Vuelve a intentarlo."
   },
   "demo": {
     "living": "Sala",
@@ -413,7 +417,10 @@
     "side": "Lado {side}",
     "disc": "Disco {n}",
     "emptyTitle": "Encuentra un disco",
-    "emptyText": "Busca un artista o un título para ver dónde está un disco, los discos de cada lado y su lista de canciones. Haz clic en un compartimiento para ver qué hay adentro."
+    "emptyText": "Busca un artista o un título para ver dónde está un disco, los discos de cada lado y su lista de canciones. Haz clic en un compartimiento para ver qué hay adentro.",
+    "remove": "Quitar de mi colección",
+    "removeConfirm": "¿Quitar “{title}” de tu colección? Su lugar en la repisa queda libre. Nada cambia en Discogs.",
+    "removeYes": "Quitarlo"
   },
   "rail": {
     "label": "Tus {media} de {first} a {last}",

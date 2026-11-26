@@ -11,7 +11,7 @@ import { CD_ROW_ASPECT } from "@/lib/shelf/templates";
 import { OutBanner, TakeOutChooser } from "./temporary";
 import { genreName } from "@/i18n/core";
 import { useI18n } from "@/i18n/client";
-import { btnSecondarySm, card } from "../ui";
+import { Banner, btnPrimarySm, btnSecondarySm, card } from "../ui";
 import { CompartmentDrawing } from "./compartment-drawing";
 import { Cover } from "./cover";
 import { DiscogsAttribution } from "./discogs-attribution";
@@ -40,6 +40,8 @@ type CardProps = {
   busy?: boolean;
   onTakeOut?: (name: string) => void;
   onPutBack?: () => void;
+  /** Records added by hand can be removed (not in the guest view). */
+  onRemove?: () => void;
 };
 
 /**
@@ -61,9 +63,11 @@ export function RecordCard({
   busy = false,
   onTakeOut,
   onPutBack,
+  onRemove,
 }: CardProps) {
   const { t, locale } = useI18n();
   const [choosing, setChoosing] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const outside = record.temp_location_id ? (locations.find((l) => l.id === record.temp_location_id) ?? null) : null;
   const furniture = location ? config.furniture.find((f) => f.key === location.slot.shelfKey) : undefined;
   const group = groupOf(record);
@@ -163,6 +167,20 @@ export function RecordCard({
         </div>
       )}
 
+      {removing && onRemove && (
+        <Banner tone="warning" role="alert" className="mx-[18px]">
+          <p>{t("record.removeConfirm", { title: record.title })}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button type="button" disabled={busy} onClick={onRemove} className={btnPrimarySm}>
+              {t("record.removeYes")}
+            </button>
+            <button type="button" onClick={() => setRemoving(false)} className={btnSecondarySm}>
+              {t("common.cancel")}
+            </button>
+          </div>
+        </Banner>
+      )}
+
       <div className="mx-[18px] flex flex-wrap items-center justify-between gap-2.5 text-[13px]">
         <DiscogsAttribution href={releaseUrl(record.discogs_release_id)} className="text-[13px] text-ink" />
         <span className="flex flex-wrap gap-2">
@@ -174,6 +192,11 @@ export function RecordCard({
           {location && onShowOnMap && (
             <button type="button" onClick={onShowOnMap} className={btnSecondarySm}>
               {t("record.showOnMap")}
+            </button>
+          )}
+          {record.origin === "added" && onRemove && !removing && (
+            <button type="button" onClick={() => setRemoving(true)} className={btnSecondarySm}>
+              {t("record.remove")}
             </button>
           )}
         </span>

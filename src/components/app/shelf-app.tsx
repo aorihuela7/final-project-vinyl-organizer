@@ -72,6 +72,13 @@ export function ShelfApp() {
   const [newShelf, setNewShelf] = useState<ShelfMedia | null>(null);
 
   const byId = useMemo(() => new Map((app.data?.records ?? []).map((r) => [r.id, r])), [app.data?.records]);
+  /** Removes a record added by hand, closing its card and clearing the map's mark first. */
+  const removeOpen = async (id: string) => {
+    const ok = await app.removeRecord(id);
+    if (!ok) return;
+    setOpenRecord(null);
+    if (found === id) showFound(null);
+  };
 
   // ------------------------------------------------------------ guided tour
   const { userId } = useAuth();
@@ -245,7 +252,19 @@ export function ShelfApp() {
           {app.syncJob.items_total ? t("app.updatingCount", { done: app.syncJob.items_done, total: app.syncJob.items_total }) : t("app.updating")}
         </Banner>
       )}
-      {app.notice && <NoticeBar notice={app.notice} byId={byId} slotName={slotName} onDismiss={app.dismissNotice} />}
+      {app.notice && (
+        <NoticeBar
+          notice={app.notice}
+          byId={byId}
+          slotName={slotName}
+          onDismiss={app.dismissNotice}
+          onUndo={(undo) => {
+            if (openRecord === undo.recordId) setOpenRecord(null);
+            if (found === undo.recordId) showFound(null);
+            void app.removeRecord(undo.recordId, undo.moves);
+          }}
+        />
+      )}
 
       {!config ? (
         <div className="flex flex-col gap-3">
@@ -383,6 +402,7 @@ export function ShelfApp() {
                         busy={app.busy}
                         onTakeOut={(name) => void app.takeOut(recordInSheet.id, name)}
                         onPutBack={() => void app.putBack(recordInSheet.id).then((ok) => ok && showFound(recordInSheet.id))}
+                        onRemove={() => void removeOpen(recordInSheet.id)}
                       />
                     ) : (
                       <RecordCardEmpty />
@@ -435,6 +455,7 @@ export function ShelfApp() {
             locations={data.locations ?? []}
             busy={app.busy}
             onTakeOut={(name) => void app.takeOut(recordInSheet.id, name)}
+            onRemove={() => void removeOpen(recordInSheet.id)}
             onPutBack={() =>
               void app.putBack(recordInSheet.id).then((ok) => {
                 if (!ok) return;
@@ -475,11 +496,13 @@ function NoticeBar({
   byId,
   slotName,
   onDismiss,
+  onUndo,
 }: {
   notice: Notice;
   byId: Map<string, StoredRecord>;
   slotName: (id: string | null) => string;
   onDismiss: () => void;
+  onUndo: (undo: NonNullable<Notice["undo"]>) => void;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -488,6 +511,11 @@ function NoticeBar({
       <div className="flex items-start justify-between gap-2">
         <p>{renderMsg(t, notice.msg)}</p>
         <div className="flex shrink-0 gap-1">
+          {notice.undo && (
+            <button type="button" onClick={() => onUndo(notice.undo!)} className={btnText}>
+              {t("app.undo")}
+            </button>
+          )}
           {notice.moves && notice.moves.length > 0 && (
             <button type="button" onClick={() => setOpen((o) => !o)} className={btnText}>
               {open ? t("app.hideMoves") : t("app.seeMoves")}
