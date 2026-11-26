@@ -189,3 +189,13 @@ Demo collection source: the 1,000 most recently added records of the public Disc
 - Drawing (November 26, 2026): records never lift off the floor, and lean at most 18°.
 - Landing page (November 26, 2026): "Start from scratch" above the Discogs import, which says in one sentence what Discogs is (with a link); no Sign up button next to the demo. Choosing another collection from the landing page while you have one asks first. Starting from scratch never shows "importing" or Discogs.
 - Missing shelf (November 26, 2026): when a new record's format has no shelf, "Add a new record" offers a button that opens Shelves & order with that shelf added.
+- Record colors (November 26, 2026): each record keeps the color of its ID; mustard marks the selected record. No change.
+- User issues (November 26, 2026), all fixed:
+  - Records added by hand can be removed from their card; "Record added" has an Undo that also moves the pushed records back.
+  - "Add a new record" warns when the same release is already in the collection, and still allows a second copy.
+  - A full shelf can grow from "Add a new record" (the group's last shelf gets wider, up to 20 columns; then a new shelf), and the record opens again once the map is generated. The same happens after "Add a CD shelf".
+  - Shelf names stay unique ("CD shelf 1×1 (2)").
+  - The tour starts on any generated map, even an empty one, skipping the steps that need records.
+  - The builder says records per compartment is an estimate and how to change it (the way to match the map without calibration).
+  - Automatic shelf names show in the current language; names the user wrote don't change.
+  - The share card says until when guests can see the shelf, with "Update now". A refresh without the owner isn't possible within the rules (no service key, daily cron).
