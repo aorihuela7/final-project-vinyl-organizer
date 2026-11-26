@@ -70,6 +70,18 @@ test("start from scratch: an empty collection, and records added by hand stay in
   await expect(a.getByRole("listbox", { name: "Search results" }).getByText(/% in from the left/).first()).toBeVisible();
   await expect(a.getByText("Your shelf is empty.", { exact: false })).toHaveCount(0);
 
+  // Choosing the demo from the landing page asks before replacing what they built.
+  await a.goto("/app?start=demo");
+  await expect(a.getByRole("heading", { name: "Replace your collection with the demo collection?" })).toBeVisible({ timeout: 60_000 });
+  await expect(a.getByText("Your 1 record and your shelves are replaced")).toBeVisible();
+  await a.getByRole("button", { name: "Keep my collection" }).click();
+  await expect(a.locator("[data-map]")).toBeVisible();
+  await expect(a.getByText("1 record, sorted by artist")).toBeVisible();
+  await a.goto("/app?start=demo");
+  await a.getByRole("button", { name: "Replace my collection" }).click();
+  await expect(a.getByRole("region", { name: "Living room" })).toBeVisible({ timeout: 120_000 });
+  await expect(a.getByText("The demo collection replaced your previous one.")).toBeVisible();
+
   // Person B, on another browser, also starts from scratch: their collection is empty.
   const second = await browser.newContext();
   await skipTour(second);

@@ -296,31 +296,100 @@ export function demoConfig(records: readonly StoredRecord[] = [], names: DemoNam
   return { furniture, settings: { sortLevels: ["artist", "title"], ignoreArticles: false, slackPct: DEFAULT_SLACK_PCT } };
 }
 
-export type SuggestedNames = { lp: (n: number | null) => string; single: string; cd: string };
-const SUGGESTED_NAMES: SuggestedNames = { lp: (n) => (n === null ? "Kallax" : `Kallax ${n}`), single: "Singles", cd: "CD shelf" };
+/** Base names for suggested shelves ("Cube shelf", "Singles", "CD shelf"); the size is added to them. */
+export type SuggestedNames = { cube: string; single: string; cd: string };
+const SUGGESTED_NAMES: SuggestedNames = { cube: "Cube shelf", single: "Singles", cd: "CD shelf" };
+
+/** Suggested shelves hold the collection plus about 20% free. */
+export const SUGGESTED_ROOM = 1.2;
+/** The largest suggested shelf is 5×5; a bigger collection gets several. */
+const MAX_SIDE = 5;
 
 /**
- * A first suggestion for an imported collection: enough Kallax 4×4 for the LPs,
- * a record box (or a Kallax, if they don't fit in one) for the singles, and a
- * Kallax for CDs if there are any.
+ * The smallest rectangle of cubes, at most 5×5, with at least `cubes` cubes
+ * (the squarer one on ties, then the wider): [columns, rows].
+ */
+export function cubeShape(cubes: number): [number, number] {
+  let best: [number, number] = [MAX_SIDE, MAX_SIDE];
+  for (let rows = 1; rows <= MAX_SIDE; rows++) {
+    for (let cols = rows; cols <= MAX_SIDE; cols++) {
+      if (cols * rows < cubes) continue;
+      const area = cols * rows;
+      const bestArea = best[0] * best[1];
+      if (area < bestArea || (area === bestArea && cols - rows < best[0] - best[1])) best = [cols, rows];
+    }
+  }
+  return best;
+}
+
+/** Shelves for `cubes` cubes: as many 5×5 as it takes, and the smallest rectangle for the rest. */
+export function cubeShelves(cubes: number): Array<[number, number]> {
+  const shapes: Array<[number, number]> = [];
+  let left = Math.max(1, cubes);
+  while (left > MAX_SIDE * MAX_SIDE) {
+    shapes.push([MAX_SIDE, MAX_SIDE]);
+    left -= MAX_SIDE * MAX_SIDE;
+  }
+  shapes.push(cubeShape(left));
+  return shapes;
+}
+
+/** The template a shelf of cubes of this shape matches (the cube presets, or custom). */
+function cubeTemplate([cols, rows]: [number, number]): TemplateId {
+  if (cols === 4 && rows === 4) return "kallax_4x4";
+  if (cols === 5 && rows === 5) return "kallax_5x5";
+  if (cols === 4 && rows === 2) return "low_2x4";
+  return "custom";
+}
+
+/** A shelf of cubes of a given shape for a format group (CDs stand in two rows per cube). */
+function cubeShelf(shape: [number, number], sortIndex: number, media: ShelfMedia, name: string): FurnitureConfig {
+  const id = cubeTemplate(shape);
+  const f = newFurniture(id, sortIndex, media, name);
+  return { ...resizeFurniture(f, shape[1] * rowsPerCube(id, media), shape[0]), traversal: "rows" };
+}
+
+/**
+ * A first suggestion for an imported collection, sized to it: room for every
+ * record plus about 20% free (SUGGESTED_ROOM), at least one compartment, and
+ * never so little that a record doesn't fit. LPs get the smallest rectangle
+ * of cubes that holds them (several shelves past 5×5), singles a record box
+ * with as many compartments as they need (or cubes, past three boxes' worth),
+ * and CDs cubes of two rows each. An empty collection (started from scratch)
+ * gets one cube for LPs.
  */
 export function suggestedConfig(records: readonly StoredRecord[], names: SuggestedNames = SUGGESTED_NAMES): ShelfConfig {
   const count = (g: string) => records.filter((r) => groupOf(r) === g).length;
   const lps = count("lp");
   const singles = count("single");
   const cds = count("cd");
-  const usable = (capacity: number, compartments: number) => compartments * Math.floor(capacity * (1 - DEFAULT_SLACK_PCT / 100));
   const furniture: FurnitureConfig[] = [];
-  const lpShelves = Math.max(1, Math.ceil(lps / usable(defaultCapacity("kallax_4x4", "lp"), 16)));
-  for (let i = 0; i < lpShelves; i++) {
-    furniture.push(newFurniture("kallax_4x4", furniture.length, "lp", names.lp(lpShelves > 1 ? i + 1 : null)));
-  }
-  if (singles > 0) {
-    const fitsInBox = singles <= usable(defaultCapacity("record_box", "single"), 3);
-    furniture.push(newFurniture(fitsInBox ? "record_box" : "kallax_4x4", furniture.length, "single", names.single));
-  }
-  if (cds > 0) furniture.push(newFurniture("kallax_4x4", furniture.length, "cd", names.cd));
+  const add = (media: ShelfMedia, n: number) => furniture.push(...suggestedShelves(media, n, furniture.length, names));
+  if (lps > 0 || singles + cds === 0) add("lp", lps);
+  if (singles > 0) add("single", singles);
+  if (cds > 0) add("cd", cds);
   return { furniture, settings: DEFAULT_SETTINGS };
+}
+
+/**
+ * The shelves suggested for n records of one format group, from sort index
+ * `start` on (also used to add a missing shelf for a format from "Add a new record").
+ */
+export function suggestedShelves(media: ShelfMedia, n: number, start: number, names: SuggestedNames = SUGGESTED_NAMES): FurnitureConfig[] {
+  const needed = (perCompartment: number) => Math.max(1, Math.ceil((n * SUGGESTED_ROOM) / perCompartment));
+  // "Cube shelf 3×2", or "Cube shelf 5×5 (1)", "(2)"… when a group needs several.
+  const cubes = (count: number, base: string) => {
+    const shapes = cubeShelves(count);
+    return shapes.map((shape, i) => cubeShelf(shape, start + i, media, `${base} ${shape[0]}×${shape[1]}${shapes.length > 1 ? ` (${i + 1})` : ""}`));
+  };
+  if (media === "single") {
+    const boxes = needed(defaultCapacity("record_box", "single"));
+    if (boxes <= template("record_box").cols) return [resizeFurniture(newFurniture("record_box", start, "single", names.single), 1, boxes)];
+    return cubes(needed(defaultCapacity("kallax_4x4", "single")), names.single);
+  }
+  // A cube holds two rows of CDs.
+  if (media === "cd") return cubes(needed(defaultCapacity("kallax_4x4", "cd") * rowsPerCube("kallax_4x4", "cd")), names.cd);
+  return cubes(needed(defaultCapacity("kallax_4x4", "lp")), names.cube);
 }
 
 /** Position key (sortIndex:row:col) of each slot id, for comparing placements across saves. */

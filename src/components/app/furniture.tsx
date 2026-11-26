@@ -49,9 +49,9 @@ export function Furniture({
   return (
     <section aria-label={label} className={`relative mb-[34px] w-full ${className}`} style={{ maxWidth }}>
       <div className="surface-walnut relative rounded-[4px] px-[14px] pt-[14px] pb-3 shadow-[inset_0_1px_0_rgb(255_255_255/0.15)]">
-        {/* On a narrow shelf (a one-column tower) the count wraps under the name instead of cutting it. */}
+        {/* On a narrow shelf (a one-column tower, a single cube) the name wraps and the count goes under it, instead of cutting them. */}
         <div className="-mt-1 mb-2.5 flex flex-wrap justify-between gap-x-2.5 px-0.5 font-display text-sm text-on-walnut">
-          <span className="min-w-0 truncate">{title}</span>
+          <span className="min-w-0 [overflow-wrap:anywhere]">{title}</span>
           {aside !== undefined && <span className="shrink-0 tabular-nums">{aside}</span>}
         </div>
         <div className="grid gap-2.5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>

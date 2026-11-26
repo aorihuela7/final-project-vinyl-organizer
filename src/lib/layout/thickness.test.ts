@@ -34,7 +34,7 @@ function assertContiguous(records: LayoutRecord[], placement: Placement, slots: 
 }
 
 describe("thickness by format", () => {
-  it("spreads places, not records, in proportion to effective capacity, never over capacity", () => {
+  it("spreads places, not records, over the fewest compartments that hold them, never over capacity", () => {
     const shelves: ShelfSpec[] = [shelf({ rows: 2, cols: 4, defaultCapacity: 40 })];
     const slots = traverse(shelves, "lp");
     for (const n of [0, 1, 37, 120, 160, 200]) {
@@ -45,10 +45,12 @@ describe("thickness by format", () => {
       for (const load of loads(placed, result.placement, slots)) expect(load).toBeLessThanOrEqual(40);
       expect(result.placement.size + result.groups.lp.leftover.length).toBe(n);
     }
-    // 120 records weigh 180 places: with 10% free space (288 places), each compartment gets about 180 / 8.
+    // 120 records weigh 180 places: compartments of 40 hold 36 places with 10% free space, so the
+    // fewest that hold them are 5, with about 36 places each; the last 3 stay empty.
     const records = mixed(120);
     const spread = loads(records, initialLayout(records, shelves, byArtist, 10).placement, slots);
-    for (const load of spread) expect(Math.abs(load - 180 / 8)).toBeLessThanOrEqual(2);
+    for (const load of spread.slice(0, 5)) expect(Math.abs(load - 36)).toBeLessThanOrEqual(2);
+    expect(spread.slice(5)).toEqual([0, 0, 0]);
   });
 
   it("ignores weights when the setting is off (v1: one place per record)", () => {

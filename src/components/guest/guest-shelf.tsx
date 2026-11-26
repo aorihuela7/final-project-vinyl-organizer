@@ -26,7 +26,6 @@ export function GuestShelf({ token }: { token: string }) {
   const { t } = useI18n();
   const [state, setState] = useState<State>({ status: "loading" });
   const [found, setFound] = useState<string | null>(null);
-  const [lifted, setLifted] = useState(false);
   const [openRecord, setOpenRecord] = useState<string | null>(null);
   const [openSlot, setOpenSlot] = useState<Slot | null>(null);
   const wide = useMediaQuery("(min-width: 900px)");
@@ -55,10 +54,8 @@ export function GuestShelf({ token }: { token: string }) {
 
   const showFound = useCallback((id: string) => {
     setFound(id);
-    setLifted(false);
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
-        setLifted(true);
         document.querySelector('[data-map] [data-found="true"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
       }),
     );
@@ -124,7 +121,6 @@ export function GuestShelf({ token }: { token: string }) {
           byId={byId}
           foundId={found}
           foundSlot={found ? (findLocation(views, found)?.slot.id ?? null) : null}
-          lifted={lifted}
           onOpen={(slot) => setOpenSlot(slot)}
           railFor={(view) => (
             <BrassRail

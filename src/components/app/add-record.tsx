@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { releaseUrl, type RecordInput } from "@/lib/discogs/map";
-import { buildIndex, displayArtist, locate } from "@/lib/layout";
+import { buildIndex, displayArtist, locate, type ShelfMedia } from "@/lib/layout";
 import { formatLine, slotTitle } from "@/lib/shelf/describe";
 import { drawingSize, toLayoutRecord, toSortSettings, type ShelfConfig, type StoredRecord } from "@/lib/shelf/model";
 import { compartmentAspect } from "@/lib/shelf/templates";
 import { useI18n } from "@/i18n/client";
-import { Banner, btnPrimary, btnSecondary, input } from "../ui";
+import { Banner, btnPrimary, btnPrimarySm, btnSecondary, input } from "../ui";
 import { CompartmentDrawing } from "./compartment-drawing";
 import { Cover } from "./cover";
 import { DiscogsAttribution } from "./discogs-attribution";
@@ -20,6 +20,8 @@ type Props = {
   byId: Map<string, StoredRecord>;
   onClose: () => void;
   onShowRecord: (id: string, slotId: string | null) => void;
+  /** No shelf for this record's format yet: go build one. */
+  onAddShelf?: (media: ShelfMedia) => void;
 };
 
 function Step({ n, title, children, muted = false }: { n: number; title: string; children?: React.ReactNode; muted?: boolean }) {
@@ -40,7 +42,7 @@ function Step({ n, title, children, muted = false }: { n: number; title: string;
  * "Add a new record": find it on Discogs, see where it goes (the compartment,
  * the records on each side, and what has to move), then add it.
  */
-export function AddRecord({ app, config, byId, onClose, onShowRecord }: Props) {
+export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf }: Props) {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<RecordInput[]>([]);
@@ -221,8 +223,13 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord }: Props) {
         <Step n={2} title={goesIn ?? t("add.step2")} muted={!chosen}>
           {chosen &&
             (!preview?.media ? (
-              <Banner tone="warning">
-                {t("add.noShelf", { group: groupLabel })}
+              <Banner tone="warning" className="flex flex-wrap items-center justify-between gap-2">
+                <span>{t("add.noShelf", { group: groupLabel })}</span>
+                {onAddShelf && chosen.format_group !== "other" && (
+                  <button type="button" onClick={() => onAddShelf(chosen.format_group as ShelfMedia)} className={btnPrimarySm}>
+                    {t(`add.addShelf.${chosen.format_group as ShelfMedia}`)}
+                  </button>
+                )}
               </Banner>
             ) : !preview.target ? (
               <Banner tone="warning">{t("add.full")}</Banner>
@@ -230,7 +237,7 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord }: Props) {
               <>
                 {placed && (
                   <div className="surface-interior relative w-full max-w-72 border-8 border-walnut" style={{ aspectRatio: aspect }}>
-                    <CompartmentDrawing records={placed.drawing} capacity={placed.location.slot.capacity} width={100 * aspect} height={100} foundId={preview.record.id} lifted />
+                    <CompartmentDrawing records={placed.drawing} capacity={placed.location.slot.capacity} width={100 * aspect} height={100} foundId={preview.record.id} />
                   </div>
                 )}
                 {preview.movedCount <= 1 ? (

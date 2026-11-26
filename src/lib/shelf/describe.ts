@@ -19,8 +19,9 @@ export function slotPlace(
   return t("place.rowCol", { row: slot.row + 1, col: slot.col + 1 });
 }
 
-/** "Kallax 1, row 2, column 3". */
+/** "Cube shelf 4×4, row 2, column 3"; just the shelf's name when it has a single compartment. */
 export function slotTitle(slot: Slot, furniture: FurnitureConfig | undefined, t: T): string {
+  if (furniture && furniture.rows * furniture.cols === 1) return slot.shelfName;
   return t("place.title", { shelf: slot.shelfName, place: slotPlace(slot, furniture, t) });
 }
 

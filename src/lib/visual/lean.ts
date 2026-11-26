@@ -70,6 +70,11 @@ export type LeanLayout = {
  * height when both compartments are the same width.
  */
 const HEIGHT_SHARE: Record<RecordSize, number> = { 12: 1, 10: 0.8, 7: 0.56, cd: 0.85 };
+/**
+ * The steepest a record leans, in degrees. Steeper, a jacket's bottom would
+ * slide out on a smooth floor, so even a nearly empty compartment stays calm.
+ */
+export const MAX_LEAN = 18;
 /** How many earlier records each leaning record checks for contact (a short one can sit between tall ones). */
 const LOOKBACK = 12;
 const MAX_TRIES = 20;
@@ -122,7 +127,7 @@ export function leanParams(n: number, capacity: number): { free: number; k: numb
     maxAngle = 1.2;
   } else {
     k = Math.min(n, Math.max(2, Math.round(3 + 14 * free + 0.05 * n)));
-    maxAngle = Math.min(40, 4 + 42 * free);
+    maxAngle = Math.min(MAX_LEAN, 4 + 30 * free);
   }
   k = Math.min(k, Math.floor(n / 2));
   if (k === 0) maxAngle = 0;

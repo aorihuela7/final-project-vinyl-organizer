@@ -6,7 +6,8 @@ import { useSupabase } from "@/lib/supabase/browser";
 import { START_TOUR_EVENT, TourOffer, TourOverlay, TourWaiting, useTourState, type TourStep } from "./tour";
 import { useSearchParams } from "next/navigation";
 import { SignUpButton } from "@clerk/nextjs";
-import { displayArtist, type Slot } from "@/lib/layout";
+import { isZeroStart } from "@/lib/config";
+import { displayArtist, type ShelfMedia, type Slot } from "@/lib/layout";
 import { groupOf, suggestedConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotTitle } from "@/lib/shelf/describe";
 import { CompartmentSheet } from "./compartment-sheet";
@@ -28,7 +29,7 @@ import { CollectionPanel } from "./collection-panel";
 import { useShelfApp, type Notice } from "./use-shelf-app";
 import { useI18n } from "@/i18n/client";
 import { renderMsg } from "@/i18n/core";
-import { Banner, btnPrimary, btnPrimarySm, btnSecondary, btnText, card } from "../ui";
+import { Banner, btnPrimary, btnPrimarySm, btnSecondary, btnSecondarySm, btnText, card } from "../ui";
 import { collectionSummary } from "./summary";
 
 export function ShelfApp() {
@@ -46,9 +47,8 @@ export function ShelfApp() {
     setOpenRecordState(id);
     if (id) setLastRecord(id);
   };
-  // The found record: its compartment gets the mustard outline and the record lifts (the "found moment").
+  // The found record: its compartment gets the mustard outline and the record turns mustard.
   const [found, setFound] = useState<string | null>(null);
-  const [lifted, setLifted] = useState(false);
   // A compartment highlighted briefly after jumping to it from the rail.
   const [flashSlot, setFlashSlot] = useState<string | null>(null);
   const jumpTo = useCallback((slotId: string) => {
@@ -58,18 +58,18 @@ export function ShelfApp() {
   }, []);
   const showFound = useCallback((id: string | null) => {
     setFound(id);
-    setLifted(false);
     if (!id) return;
-    // Two frames later, so the lift and the outline animate from the resting state.
+    // Two frames later, once the outline is on the new compartment.
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
-        setLifted(true);
         document.querySelector('[data-map] [data-found="true"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
       }),
     );
   }, []);
 
   const [adding, setAdding] = useState(false);
+  // "Add a new record" found no shelf for the record's format: Shelves & order opens with one added.
+  const [newShelf, setNewShelf] = useState<ShelfMedia | null>(null);
 
   const byId = useMemo(() => new Map((app.data?.records ?? []).map((r) => [r.id, r])), [app.data?.records]);
 
@@ -151,11 +151,38 @@ export function ShelfApp() {
         <Onboarding app={app} />
       </div>
     );
+  if (app.status.kind === "confirmReplace") {
+    const { target, count } = app.status;
+    const title =
+      target.source === "demo"
+        ? t("collection.confirmDemoTitle")
+        : isZeroStart(target.username)
+          ? t("collection.confirmZeroTitle")
+          : t("collection.confirmTitle", { username: target.username });
+    return (
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+        <Banner tone="warning" role="alert">
+          <h1 id="replace-title" className="font-display text-xl text-ink">
+            {title}
+          </h1>
+          <p className="mt-1">{t("collection.confirmText", { count })}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" onClick={() => void app.confirmReplace()} className={btnPrimarySm}>
+              {t("collection.replace")}
+            </button>
+            <button type="button" onClick={() => void app.keepCollection()} className={btnSecondarySm}>
+              {t("collection.keep")}
+            </button>
+          </div>
+        </Banner>
+      </div>
+    );
+  }
   if (app.status.kind === "importing")
     return (
       <div className="flex flex-col gap-4">
         {tourWaiting}
-        <ImportProgress job={app.status.job} message={renderMsg(t, app.status.message)} />
+        <ImportProgress job={app.status.job} message={renderMsg(t, app.status.message)} scratch={app.status.scratch} />
       </div>
     );
   if (app.status.kind === "error" || !app.data) {
@@ -211,7 +238,8 @@ export function ShelfApp() {
           </SignUpButton>
         </Banner>
       )}
-      {app.syncJob && (
+      {/* A collection started from scratch also syncs (to refresh its records' Discogs data), but quietly. */}
+      {app.syncJob && !isZeroStart(app.syncJob.discogs_username) && (
         <Banner className="flex items-center gap-2">
           <span className="size-3 animate-spin rounded-full border-2 border-brass-light border-t-walnut" aria-hidden />
           {app.syncJob.items_total ? t("app.updatingCount", { done: app.syncJob.items_done, total: app.syncJob.items_total }) : t("app.updating")}
@@ -225,7 +253,7 @@ export function ShelfApp() {
             <h1 className="font-display text-2xl text-ink">{t("app.buildTitle")}</h1>
             <p className="text-sm text-muted">{data.records.length === 0 ? t("app.buildTextEmpty") : t("app.buildText", { count: data.records.length })}</p>
           </div>
-          <SetupView app={app} initial={suggestedConfig(data.records, { lp: (n) => (n === null ? t("builder.suggestedLp") : t("builder.suggestedLpN", { n })), single: t("builder.suggestedSingles"), cd: t("builder.suggestedCds") })} records={data.records} onDone={() => setTab("map")} />
+          <SetupView app={app} initial={suggestedConfig(data.records, { cube: t("builder.cubeShelf"), single: t("builder.suggestedSingles"), cd: t("builder.suggestedCds") })} records={data.records} onDone={() => setTab("map")} />
           <CollectionPanel app={app} />
         </div>
       ) : (
@@ -254,7 +282,7 @@ export function ShelfApp() {
 
           {tab === "setup" ? (
             <>
-              <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} />
+              <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} addShelf={newShelf} onShelfAdded={() => setNewShelf(null)} />
               <h2 className="mt-4 border-t border-input-line/60 pt-6 font-display text-2xl text-ink">{t("app.toolsTitle")}</h2>
               <p className="-mt-2 text-sm text-muted">{t("app.toolsText")}</p>
               <SimulatorCard records={data.records} config={config} />
@@ -321,7 +349,6 @@ export function ShelfApp() {
                   byId={byId}
                   foundId={found}
                   foundSlot={found ? (findLocation(views, found)?.slot.id ?? null) : null}
-                  lifted={lifted}
                   onOpen={(slot) => setOpenSlot(slot)}
                   flashSlot={flashSlot}
                   railFor={(view) => (
@@ -379,7 +406,7 @@ export function ShelfApp() {
           onPickRecord={(id) => {
             setOpenSlot(null);
             setOpenRecord(id);
-            // Same as a search: the outline, the rail marker, and the lift follow the record.
+            // Same as a search: the outline, the rail marker, and the mustard follow the record.
             showFound(id);
           }}
         />
@@ -426,6 +453,11 @@ export function ShelfApp() {
           config={config}
           byId={byId}
           onClose={() => setAdding(false)}
+          onAddShelf={(media) => {
+            setAdding(false);
+            setNewShelf(media);
+            setTab("setup");
+          }}
           onShowRecord={(id, slotId) => {
             setAdding(false);
             void slotId;

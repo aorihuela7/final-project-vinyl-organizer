@@ -13,10 +13,8 @@ type Props = {
   /** viewBox size: 100 × 100 for a square cube, 160 × 100 for the record detail. */
   width?: number;
   height?: number;
-  /** The record that was found: mustard with an ink stroke. */
+  /** The record that was found: mustard with an ink stroke. It stays where it is, on the floor like the rest. */
   foundId?: string | null;
-  /** Lift the found record along its own angle (the "found moment"). */
-  lifted?: boolean;
   /** Called with the record under the pointer (compartment view only). */
   onHover?: (id: string | null) => void;
   onPick?: (id: string) => void;
@@ -43,7 +41,6 @@ export const CompartmentDrawing = memo(function CompartmentDrawing({
   width = 100,
   height = 100,
   foundId = null,
-  lifted = false,
   onHover,
   onPick,
   className = "",
@@ -66,7 +63,6 @@ export const CompartmentDrawing = memo(function CompartmentDrawing({
           out={!!records[i]?.out}
           floor={layout.floor}
           found={r.id === foundId}
-          lifted={lifted && r.id === foundId}
           scale={scale}
           interactive={interactive}
           onHover={onHover}
@@ -82,7 +78,6 @@ function RecordShape({
   out,
   floor,
   found,
-  lifted,
   scale,
   interactive,
   onHover,
@@ -92,7 +87,6 @@ function RecordShape({
   out: boolean;
   floor: number;
   found: boolean;
-  lifted: boolean;
   scale: number;
   interactive: boolean;
   onHover?: (id: string | null) => void;
@@ -105,13 +99,11 @@ function RecordShape({
         y={(floor - r.height).toFixed(2)}
         width={r.width.toFixed(2)}
         height={r.height.toFixed(2)}
-        className="transition-transform duration-500 ease-[cubic-bezier(.2,.8,.2,1)]"
         style={{
           fill: found ? "var(--color-mustard)" : out ? "none" : recordColor(r.id),
           stroke: found ? "var(--color-ink)" : out ? "var(--color-on-walnut)" : "var(--color-record-stroke)",
           strokeWidth: (found ? 0.35 : out ? 0.3 : 0.2) * scale,
           strokeDasharray: out && !found ? `${1.2 * scale} ${0.8 * scale}` : undefined,
-          transform: lifted ? `translateY(${-6 * scale}px)` : undefined,
           cursor: interactive ? "pointer" : undefined,
         }}
         onMouseEnter={onHover ? () => onHover(r.id) : undefined}

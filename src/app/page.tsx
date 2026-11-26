@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { AboutDiscogs } from "@/components/about-discogs";
 import { ImportForm, StartFromScratch } from "@/components/import-form";
 import { LandingHero } from "@/components/landing-hero";
-import { btnPrimary, btnSecondary, card } from "@/components/ui";
+import { btnPrimary, card } from "@/components/ui";
 import { getTranslator } from "@/i18n/server";
 
 export default async function Home() {
@@ -18,21 +19,19 @@ export default async function Home() {
           <Link href="/app?start=demo" className={btnPrimary}>
             {t("landing.tryDemo")}
           </Link>
-          <Link href="/sign-up" className={btnSecondary}>
-            {t("landing.signUp")}
-          </Link>
         </div>
         <p className="text-sm text-muted">{t("landing.noAccount")}</p>
-
-        <div className={`${card} p-5`}>
-          <h2 className="mb-3 font-display text-lg text-ink">{t("landing.importTitle")}</h2>
-          <ImportForm />
-        </div>
 
         <div className={`${card} flex flex-col items-start gap-2 p-5`}>
           <h2 className="font-display text-lg text-ink">{t("zero.title")}</h2>
           <p className="text-sm text-muted">{t("zero.text")}</p>
           <StartFromScratch />
+        </div>
+
+        <div className={`${card} p-5`}>
+          <h2 className="font-display text-lg text-ink">{t("landing.importTitle")}</h2>
+          <AboutDiscogs text={t("landing.aboutDiscogs")} className="mt-1 mb-3" />
+          <ImportForm />
         </div>
       </section>
 

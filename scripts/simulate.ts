@@ -2,8 +2,9 @@
  * Purchase simulator on a real collection: naive insertion (v1) vs minimum moves (v2).
  *
  * Reads a public Discogs collection with the app's token, suggests shelves for
- * it (Kallax 4×4 for LPs, a box or a Kallax for singles, a Kallax for CDs, as
- * the app does), holds out 100 records as purchases, lays out the rest, and
+ * it as the app does (room for the collection plus about 20%: cubes for LPs, a
+ * record box or cubes for singles, cubes for CDs), holds out 100 records as
+ * purchases, lays out the rest, and
  * replays the purchases with both methods. Prints a Markdown table.
  *
  * Run: npx tsx --env-file=.env.local scripts/simulate.ts [username]

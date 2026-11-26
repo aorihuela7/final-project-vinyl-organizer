@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usernameIssue, type UsernameIssue } from "@/lib/validation";
 import { useI18n } from "@/i18n/client";
 import { renderMsg } from "@/i18n/core";
+import { AboutDiscogs } from "../about-discogs";
 import { UsernameField } from "../sample-collections";
 import { Banner, btnPrimary, btnSecondary, card } from "../ui";
 import type { ShelfApp } from "./use-shelf-app";
@@ -35,6 +36,14 @@ export function Onboarding({ app }: { app: ShelfApp }) {
           {t("onboarding.demoButton")}
         </button>
       </div>
+      <div className={`${card} p-5`}>
+        <h2 className="font-display text-lg text-ink">{t("zero.title")}</h2>
+        <p className="mt-1 text-sm text-muted">{t("zero.text")}</p>
+        <button type="button" onClick={app.startFromZero} className={`${btnSecondary} mt-3`}>
+          {t("zero.button")}
+        </button>
+        {app.mode === "local" && <p className="mt-2 text-xs text-muted">{t("onboarding.importAccount")}</p>}
+      </div>
       <form
         noValidate
         onSubmit={(e) => {
@@ -47,6 +56,7 @@ export function Onboarding({ app }: { app: ShelfApp }) {
         className={`${card} p-5`}
       >
         <h2 className="font-display text-lg text-ink">{t("onboarding.importTitle")}</h2>
+        <AboutDiscogs text={t("landing.aboutDiscogs")} className="mt-1" />
         <label htmlFor="onboarding-username" className="mt-2 block text-sm text-muted">
           {t("onboarding.importLabel")}
         </label>
@@ -63,14 +73,6 @@ export function Onboarding({ app }: { app: ShelfApp }) {
         )}
         {app.mode === "local" && <p className="mt-2 text-xs text-muted">{t("onboarding.importAccount")}</p>}
       </form>
-      <div className={`${card} p-5`}>
-        <h2 className="font-display text-lg text-ink">{t("zero.title")}</h2>
-        <p className="mt-1 text-sm text-muted">{t("zero.text")}</p>
-        <button type="button" onClick={app.startFromZero} className={`${btnSecondary} mt-3`}>
-          {t("zero.button")}
-        </button>
-        {app.mode === "local" && <p className="mt-2 text-xs text-muted">{t("onboarding.importAccount")}</p>}
-      </div>
     </div>
   );
 }

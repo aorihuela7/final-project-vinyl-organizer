@@ -141,7 +141,7 @@ export function RecordCard({
             role="img"
             aria-label={t("record.drawingLabel", { index: location.indexInSlot + 1, total: location.totalInSlot })}
           >
-            <CompartmentDrawing records={drawing} capacity={location.slot.capacity} width={100 * detailAspect} height={100} foundId={record.id} lifted />
+            <CompartmentDrawing records={drawing} capacity={location.slot.capacity} width={100 * detailAspect} height={100} foundId={record.id} />
           </div>
           <Neighbors location={location} record={record} config={config} byId={byId} onPick={onPickRecord} />
         </>

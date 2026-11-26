@@ -56,7 +56,8 @@
     "progress": "{done} of {total} records",
     "progressPages": "{done} of {total} records, page {page} of {pages}",
     "talking": "Talking to Discogs…",
-    "closeTab": "You can close this tab: the import continues from here when you come back."
+    "closeTab": "You can close this tab: the import continues from here when you come back.",
+    "scratch": "Preparing your empty collection…"
   },
   "app": {
     "loadingShelf": "Loading your shelf…",
@@ -116,13 +117,13 @@
   "landing": {
     "title": "Know where every record is, and where the next one goes.",
     "tryDemo": "Try the demo collection",
-    "signUp": "Sign up",
     "noAccount": "No account needed for the demo. Sign up only when you want to save.",
     "importTitle": "Import your collection from Discogs",
     "heroLabel": "An example shelf",
     "heroCaption": "Every compartment shows its letters and how full it is. Search for a record and the app shows the compartment, how far in it is, and the records on each side.",
     "heroShelf": "Cube shelf, LPs (12″ and 10″)",
-    "turntable": "Turntable"
+    "turntable": "Turntable",
+    "aboutDiscogs": "{discogs} is the largest online database of music releases, where many collectors catalog their records. If yours is there and public, import it with your username."
   },
   "notFound": {
     "title": "This page doesn't exist",
@@ -176,7 +177,9 @@
     "replacedZero": "Your collection now starts from scratch. Build your shelf, then add your records one by one.",
     "zeroFailed": "Couldn't start an empty collection right now. Try again in a minute.",
     "replaceZeroFailed": "Couldn't start from scratch right now. Your current collection didn't change.",
-    "discogsDown": "Discogs didn't answer. Try again later."
+    "discogsDown": "Discogs didn't answer. Try again later.",
+    "replacedDemo": "The demo collection replaced your previous one.",
+    "replaceDemoFailed": "Couldn't load the demo collection right now. Your current collection didn't change."
   },
   "demo": {
     "living": "Living room",
@@ -275,7 +278,7 @@
     "goesAfter": "It goes in {place}, right after {left}",
     "goesBefore": "It goes in {place}, right before {right}",
     "goesIn": "It goes in {place}",
-    "noShelf": "You don't have a shelf for {group} yet. Add one in Shelves & order.",
+    "noShelf": "You don't have a shelf for {group} yet.",
     "full": "Your shelves are full: there's no room for it anywhere.",
     "fits": "It fits. Just put it in: 1 move.",
     "moves": {
@@ -287,7 +290,12 @@
     "fallback": "({error} Showing the search result's data.)",
     "add": "Add record",
     "adding": "Adding…",
-    "discogsUnchanged": "Adding saves it here only; your Discogs collection doesn't change."
+    "discogsUnchanged": "Adding saves it here only; your Discogs collection doesn't change.",
+    "addShelf": {
+      "lp": "Add an LP shelf",
+      "single": "Add a singles shelf",
+      "cd": "Add a CD shelf"
+    }
   },
   "levelNames": {
     "genre": "Genre",
@@ -372,8 +380,6 @@
     "none": "None",
     "ties": "Ties are always broken by artist, then year, then title.",
     "ignoreArticles": "Ignore leading articles (“The Beatles” under B instead of T, “Los Lobos” under L)",
-    "suggestedLp": "Cube shelf 4×4",
-    "suggestedLpN": "Cube shelf 4×4 ({n})",
     "suggestedSingles": "Singles",
     "suggestedCds": "CD shelf",
     "thickness": "Count double albums and box sets by their number of discs (a double LP takes two places)",
@@ -382,7 +388,8 @@
     "sectionGenre": "Genre: {name}",
     "sectionHint": "Records of a section go only on shelves with that section, sorted inside it.",
     "customName": "Custom shelf {size}",
-    "cubeShelf": "Cube shelf"
+    "cubeShelf": "Cube shelf",
+    "newShelfReady": "Your new shelf is ready below. Adjust it if you need to, then generate the map and add your record again."
   },
   "record": {
     "offMap": "Not on the map",
@@ -465,7 +472,9 @@
       "other": "Started from scratch: {count} records added by hand."
     },
     "startZero": "Start from scratch instead",
-    "confirmZeroTitle": "Start from scratch, with an empty collection?"
+    "confirmZeroTitle": "Start from scratch, with an empty collection?",
+    "confirmDemoTitle": "Replace your collection with the demo collection?",
+    "keep": "Keep my collection"
   },
   "cover": {
     "none": "{artist}, {title} (no cover)"

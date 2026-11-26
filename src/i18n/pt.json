@@ -56,7 +56,8 @@
     "progress": "{done} de {total} discos",
     "progressPages": "{done} de {total} discos, página {page} de {pages}",
     "talking": "Conectando ao Discogs…",
-    "closeTab": "Você pode fechar esta aba: a importação continua daqui quando você voltar."
+    "closeTab": "Você pode fechar esta aba: a importação continua daqui quando você voltar.",
+    "scratch": "Preparando sua coleção vazia…"
   },
   "app": {
     "loadingShelf": "Carregando sua estante…",
@@ -116,13 +117,13 @@
   "landing": {
     "title": "Saiba onde está cada disco, e onde vai o próximo.",
     "tryDemo": "Experimentar a coleção de demonstração",
-    "signUp": "Criar conta",
     "noAccount": "Não precisa de conta para a demonstração. Crie uma só quando quiser salvar.",
     "importTitle": "Importe sua coleção do Discogs",
     "heroLabel": "Uma estante de exemplo",
     "heroCaption": "Cada nicho mostra suas letras e o quanto está cheio. Busque um disco e o app mostra o nicho, a que altura ele está e os discos de cada lado.",
     "heroShelf": "Estante de nichos, LPs (12″ e 10″)",
-    "turntable": "Toca-discos"
+    "turntable": "Toca-discos",
+    "aboutDiscogs": "{discogs} é o maior banco de dados de discos da internet, onde muitos colecionadores catalogam seus discos. Se a sua está lá e é pública, importe com seu usuário."
   },
   "notFound": {
     "title": "Esta página não existe",
@@ -176,7 +177,9 @@
     "replacedZero": "Sua coleção agora começa do zero. Monte sua estante e depois adicione seus discos um por um.",
     "zeroFailed": "Não foi possível começar uma coleção vazia agora. Tente de novo em um minuto.",
     "replaceZeroFailed": "Não foi possível começar do zero agora. Sua coleção atual não mudou.",
-    "discogsDown": "O Discogs não respondeu. Tente de novo mais tarde."
+    "discogsDown": "O Discogs não respondeu. Tente de novo mais tarde.",
+    "replacedDemo": "A coleção demo substituiu a anterior.",
+    "replaceDemoFailed": "Não foi possível carregar a coleção demo agora. Sua coleção atual não mudou."
   },
   "demo": {
     "living": "Sala",
@@ -275,7 +278,7 @@
     "goesAfter": "Ele vai em {place}, logo depois de {left}",
     "goesBefore": "Ele vai em {place}, logo antes de {right}",
     "goesIn": "Ele vai em {place}",
-    "noShelf": "Você ainda não tem uma estante para {group}. Adicione uma em Estantes e ordem.",
+    "noShelf": "Você ainda não tem uma estante para {group}.",
     "full": "Suas estantes estão cheias: não há lugar para ele em lugar nenhum.",
     "fits": "Cabe. É só colocar no lugar: 1 mudança.",
     "moves": {
@@ -287,7 +290,12 @@
     "fallback": "({error} Mostrando os dados do resultado da busca.)",
     "add": "Adicionar disco",
     "adding": "Adicionando…",
-    "discogsUnchanged": "Adicionar salva só aqui; sua coleção do Discogs não muda."
+    "discogsUnchanged": "Adicionar salva só aqui; sua coleção do Discogs não muda.",
+    "addShelf": {
+      "lp": "Adicionar uma estante de LPs",
+      "single": "Adicionar uma estante de compactos",
+      "cd": "Adicionar uma estante de CDs"
+    }
   },
   "levelNames": {
     "genre": "Gênero",
@@ -372,8 +380,6 @@
     "none": "Nenhum",
     "ties": "Os empates sempre se resolvem por artista, depois ano, depois título.",
     "ignoreArticles": "Ignorar os artigos iniciais (“The Beatles” no B em vez do T, “Los Lobos” no L)",
-    "suggestedLp": "Estante de nichos 4×4",
-    "suggestedLpN": "Estante de nichos 4×4 ({n})",
     "suggestedSingles": "Compactos",
     "suggestedCds": "Estante de CD",
     "thickness": "Contar discos duplos e caixas pela quantidade de discos (um LP duplo ocupa dois lugares)",
@@ -382,7 +388,8 @@
     "sectionGenre": "Gênero: {name}",
     "sectionHint": "Os discos de uma seção vão só nas estantes com essa seção, ordenados dentro dela.",
     "customName": "Móvel sob medida {size}",
-    "cubeShelf": "Estante de nichos"
+    "cubeShelf": "Estante de nichos",
+    "newShelfReady": "Sua estante nova está pronta abaixo. Ajuste se precisar, gere o mapa e adicione seu disco de novo."
   },
   "record": {
     "offMap": "Fora do mapa",
@@ -465,7 +472,9 @@
       "other": "Começou do zero: {count} discos adicionados à mão."
     },
     "startZero": "Começar do zero em vez disso",
-    "confirmZeroTitle": "Começar do zero, com uma coleção vazia?"
+    "confirmZeroTitle": "Começar do zero, com uma coleção vazia?",
+    "confirmDemoTitle": "Substituir a sua coleção pela coleção demo?",
+    "keep": "Manter minha coleção"
   },
   "cover": {
     "none": "{artist}, {title} (sem capa)"
