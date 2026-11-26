@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeInitial, cubeShape, cubeShelves, sizeLabel, suggestedConfig, type StoredRecord } from "./model";
+import { computeInitial, cubeShape, cubeShelves, growForRecords, resizeAndRename, sizeLabel, suggestedConfig, uniqueShelfName, type StoredRecord } from "./model";
 
 const records = (n: number, group: "lp" | "single" | "cd", from = 0) =>
   Array.from({ length: n }, (_, i) => ({ id: `${group}${from + i}`, media: group === "cd" ? "cd" : "vinyl", format_group: group, artist: `Artist ${String(from + i).padStart(5, "0")}`, title: "T" }) as unknown as StoredRecord);
@@ -53,5 +53,36 @@ describe("suggested shelves", () => {
     expect(cds.map((f) => f.media)).toEqual(["cd"]);
     expect([cds[0]!.cols, cds[0]!.rows]).toEqual([2, 2]);
     expect(cds[0]!.name).toBe("CD shelf 2×1");
+  });
+});
+
+describe("making room for one more record", () => {
+  it("names a new shelf so no two are alike", () => {
+    expect(uniqueShelfName("CD shelf 1×1", ["Cube shelf 1×1"])).toBe("CD shelf 1×1");
+    expect(uniqueShelfName("CD shelf 1×1", ["CD shelf 1×1"])).toBe("CD shelf 1×1 (2)");
+    expect(uniqueShelfName("CD shelf 1×1", ["cd shelf 1×1", "CD shelf 1×1 (2)"])).toBe("CD shelf 1×1 (3)");
+  });
+
+  it("widens a full one-cube shelf started from scratch, and its name follows", () => {
+    const { furniture } = suggestedConfig(records(0, "lp"));
+    const grown = growForRecords(furniture, "lp", 81)!;
+    expect(grown.furniture).toHaveLength(1);
+    // 81 records + 20% need 98 places: two cubes of 80.
+    expect(sizeLabel(grown.furniture[0]!)).toBe("2×1");
+    expect(grown.furniture[0]!.name).toBe("Cube shelf 2×1");
+    expect(grown.key).toBe(furniture[0]!.key);
+  });
+
+  it("adds a new shelf once the last one would pass 20 columns", () => {
+    const wide = suggestedConfig(records(0, "lp")).furniture.map((f) => ({ ...resizeAndRename(f, 1, 20) }));
+    const grown = growForRecords(wide, "lp", 20 * 80 + 1)!;
+    expect(grown.furniture).toHaveLength(2);
+    expect(grown.furniture[0]!.cols).toBe(20);
+    expect(grown.furniture[1]!.media).toBe("lp");
+    expect(new Set(grown.furniture.map((f) => f.name)).size).toBe(2);
+  });
+
+  it("does nothing without a shelf for that format", () => {
+    expect(growForRecords(suggestedConfig(records(5, "lp")).furniture, "cd", 1)).toBeNull();
   });
 });

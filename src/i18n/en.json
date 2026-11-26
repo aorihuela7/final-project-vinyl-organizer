@@ -103,7 +103,8 @@
     "toolsTitle": "More for your collection",
     "toolsText": "These save on their own; they don't need “Generate map”.",
     "buildTextEmpty": "Your collection is empty for now. Pick your furniture and your sort order, then add your records one by one: the app tells you where each one goes.",
-    "emptyShelf": "Your shelf is empty. Add your first record and the app tells you where it goes."
+    "emptyShelf": "Your shelf is empty. Add your first record and the app tells you where it goes.",
+    "undo": "Undo"
   },
   "levels": {
     "genre": "genre",
@@ -177,7 +178,11 @@
     "replaceZeroFailed": "Couldn't start from scratch right now. Your current collection didn't change.",
     "discogsDown": "Discogs didn't answer. Try again later.",
     "replacedDemo": "The demo collection replaced your previous one.",
-    "replaceDemoFailed": "Couldn't load the demo collection right now. Your current collection didn't change."
+    "replaceDemoFailed": "Couldn't load the demo collection right now. Your current collection didn't change.",
+    "mapGeneratedEmpty": "Map generated. Your shelf is ready for your first record.",
+    "undone": "Undone: “{title}” is off your shelf, and everything is back where it was.",
+    "removed": "“{title}” is off your shelf. Nothing else moved, and nothing changed on Discogs.",
+    "removeFailed": "Couldn't remove the record. Try again."
   },
   "demo": {
     "living": "Living room",
@@ -293,7 +298,10 @@
       "lp": "Add an LP shelf",
       "single": "Add a singles shelf",
       "cd": "Add a CD shelf"
-    }
+    },
+    "already": "You already have this record, in {place}. Add it again only if it's a second copy.",
+    "alreadyOff": "You already have this record. Add it again only if it's a second copy.",
+    "grow": "Make the shelf bigger"
   },
   "levelNames": {
     "genre": "Genre",
@@ -387,7 +395,9 @@
     "sectionHint": "Records of a section go only on shelves with that section, sorted inside it.",
     "customName": "Custom shelf {size}",
     "cubeShelf": "Cube shelf",
-    "newShelfReady": "Your new shelf is ready below. Adjust it if you need to, then generate the map and add your record again."
+    "newShelfReady": "Your new shelf is ready below. Adjust it if you need to, then generate the map: your record opens again so you can add it.",
+    "capacityHint": "Records per compartment is an estimate. If a compartment on your real shelf holds more or fewer, change it here (or tap the compartment to give it its own capacity), so the map matches your shelf.",
+    "grownShelfReady": "We made your shelf bigger so the new record fits (see it below). Adjust it if you need to, then generate the map: your record opens again so you can add it."
   },
   "record": {
     "offMap": "Not on the map",
@@ -411,7 +421,10 @@
     "side": "Side {side}",
     "disc": "Disc {n}",
     "emptyTitle": "Find a record",
-    "emptyText": "Search for an artist or a title to see where a record is, the records on each side, and its tracklist. Click a compartment to see what's inside."
+    "emptyText": "Search for an artist or a title to see where a record is, the records on each side, and its tracklist. Click a compartment to see what's inside.",
+    "remove": "Remove from my collection",
+    "removeConfirm": "Remove “{title}” from your collection? Its place on the shelf is left free. Nothing changes on Discogs.",
+    "removeYes": "Remove it"
   },
   "rail": {
     "label": "Your {media} from {first} to {last}",
@@ -431,7 +444,7 @@
       "one": "{count} of {capacity} records",
       "other": "{count} of {capacity} records"
     },
-    "over": "You marked this compartment as fuller than its capacity. That's fine: the map follows your real shelf.",
+    "over": "This compartment has more records than its capacity. Raise its capacity in Shelves & order, or generate the map again.",
     "drawingHint": "Point at a record to see it; click it for the details and the cover.",
     "list": "Records in this compartment, left to right",
     "empty": "This compartment is empty.",
@@ -601,7 +614,10 @@
     "signUp": "Sign up to share your shelf with a link.",
     "failed": "Couldn't change the link. Try again.",
     "label": "Guest link",
-    "freshness": "Guests see the shelf while its Discogs data is less than six hours old; opening the app refreshes it."
+    "until": "Guests can see your shelf until {time}: its Discogs data must be less than six hours old. Updating it gives six more hours.",
+    "expired": "Guests can't see your shelf right now: its Discogs data is more than six hours old. Update it to show it again.",
+    "update": "Update now",
+    "updating": "Updating…"
   },
   "zero": {
     "button": "Start from scratch"

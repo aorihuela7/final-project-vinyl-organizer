@@ -103,7 +103,8 @@
     "toolsTitle": "Mais para a sua coleção",
     "toolsText": "Isto se salva sozinho; não precisa de “Gerar o mapa”.",
     "buildTextEmpty": "Por enquanto sua coleção está vazia. Escolha seus móveis e sua ordem, e depois adicione seus discos um por um: o app diz onde vai cada um.",
-    "emptyShelf": "Sua estante está vazia. Adicione seu primeiro disco e o app diz onde ele vai."
+    "emptyShelf": "Sua estante está vazia. Adicione seu primeiro disco e o app diz onde ele vai.",
+    "undo": "Desfazer"
   },
   "levels": {
     "genre": "gênero",
@@ -177,7 +178,11 @@
     "replaceZeroFailed": "Não foi possível começar do zero agora. Sua coleção atual não mudou.",
     "discogsDown": "O Discogs não respondeu. Tente de novo mais tarde.",
     "replacedDemo": "A coleção demo substituiu a anterior.",
-    "replaceDemoFailed": "Não foi possível carregar a coleção demo agora. Sua coleção atual não mudou."
+    "replaceDemoFailed": "Não foi possível carregar a coleção demo agora. Sua coleção atual não mudou.",
+    "mapGeneratedEmpty": "Mapa gerado. Sua estante está pronta para o seu primeiro disco.",
+    "undone": "Desfeito: “{title}” saiu da sua estante e tudo voltou ao lugar.",
+    "removed": "“{title}” saiu da sua estante. Nenhum outro disco se moveu e nada mudou no Discogs.",
+    "removeFailed": "Não foi possível tirar o disco. Tente de novo."
   },
   "demo": {
     "living": "Sala",
@@ -293,7 +298,10 @@
       "lp": "Adicionar uma estante de LPs",
       "single": "Adicionar uma estante de compactos",
       "cd": "Adicionar uma estante de CDs"
-    }
+    },
+    "already": "Você já tem este disco, em {place}. Adicione de novo só se for uma segunda cópia.",
+    "alreadyOff": "Você já tem este disco. Adicione de novo só se for uma segunda cópia.",
+    "grow": "Aumentar a estante"
   },
   "levelNames": {
     "genre": "Gênero",
@@ -387,7 +395,9 @@
     "sectionHint": "Os discos de uma seção vão só nas estantes com essa seção, ordenados dentro dela.",
     "customName": "Móvel sob medida {size}",
     "cubeShelf": "Estante de nichos",
-    "newShelfReady": "Sua estante nova está pronta abaixo. Ajuste se precisar, gere o mapa e adicione seu disco de novo."
+    "newShelfReady": "Sua estante nova está pronta abaixo. Ajuste se precisar e gere o mapa: seu disco abre de novo para você adicioná-lo.",
+    "capacityHint": "Os discos por nicho são uma estimativa. Se em um nicho da sua estante real cabem mais ou menos, mude aqui (ou toque no nicho para dar a ele a própria capacidade), assim o mapa bate com a sua estante.",
+    "grownShelfReady": "Aumentamos sua estante para caber o disco novo (veja abaixo). Ajuste se precisar e gere o mapa: seu disco abre de novo para você adicioná-lo."
   },
   "record": {
     "offMap": "Fora do mapa",
@@ -411,7 +421,10 @@
     "side": "Lado {side}",
     "disc": "Disco {n}",
     "emptyTitle": "Encontre um disco",
-    "emptyText": "Busque um artista ou um título para ver onde está um disco, os discos de cada lado e a lista de faixas. Clique em um nicho para ver o que tem dentro."
+    "emptyText": "Busque um artista ou um título para ver onde está um disco, os discos de cada lado e a lista de faixas. Clique em um nicho para ver o que tem dentro.",
+    "remove": "Tirar da minha coleção",
+    "removeConfirm": "Tirar “{title}” da sua coleção? O lugar dele na estante fica livre. Nada muda no Discogs.",
+    "removeYes": "Tirar"
   },
   "rail": {
     "label": "Seus {media} de {first} a {last}",
@@ -431,7 +444,7 @@
       "one": "{count} de {capacity} discos",
       "other": "{count} de {capacity} discos"
     },
-    "over": "Você marcou este nicho como mais cheio do que a capacidade. Tudo bem: o mapa segue a sua estante real.",
+    "over": "Este nicho tem mais discos do que a capacidade dele. Aumente a capacidade em Estantes e ordem, ou gere o mapa de novo.",
     "drawingHint": "Aponte para um disco para vê-lo; clique para ver os detalhes e a capa.",
     "list": "Discos deste nicho, da esquerda para a direita",
     "empty": "Este nicho está vazio.",
@@ -601,7 +614,10 @@
     "signUp": "Crie uma conta para compartilhar sua estante com um link.",
     "failed": "Não foi possível mudar o link. Tente de novo.",
     "label": "Link para convidados",
-    "freshness": "Os convidados veem a estante enquanto os dados do Discogs tiverem menos de seis horas; abrir o app os atualiza."
+    "until": "Os convidados podem ver sua estante até {time}: os dados do Discogs precisam ter menos de seis horas. Atualizar dá mais seis horas.",
+    "expired": "Os convidados não podem ver sua estante agora: os dados do Discogs têm mais de seis horas. Atualize para que ela volte a aparecer.",
+    "update": "Atualizar agora",
+    "updating": "Atualizando…"
   },
   "zero": {
     "button": "Começar do zero"

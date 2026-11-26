@@ -103,7 +103,8 @@
     "toolsTitle": "Más para tu colección",
     "toolsText": "Esto se guarda solo; no necesita “Generar el mapa”.",
     "buildTextEmpty": "Por ahora tu colección está vacía. Elige tus muebles y tu orden, y después agrega tus discos uno por uno: la app te dice dónde va cada uno.",
-    "emptyShelf": "Tu repisa está vacía. Agrega tu primer disco y la app te dice dónde va."
+    "emptyShelf": "Tu repisa está vacía. Agrega tu primer disco y la app te dice dónde va.",
+    "undo": "Deshacer"
   },
   "levels": {
     "genre": "género",
@@ -177,7 +178,11 @@
     "replaceZeroFailed": "No se pudo empezar de cero en este momento. Tu colección actual no cambió.",
     "discogsDown": "Discogs no respondió. Vuelve a intentarlo más tarde.",
     "replacedDemo": "La colección demo reemplazó a la anterior.",
-    "replaceDemoFailed": "No se pudo cargar la colección demo en este momento. Tu colección actual no cambió."
+    "replaceDemoFailed": "No se pudo cargar la colección demo en este momento. Tu colección actual no cambió.",
+    "mapGeneratedEmpty": "Mapa generado. Tu repisa está lista para tu primer disco.",
+    "undone": "Deshecho: “{title}” salió de tu repisa y todo volvió a su lugar.",
+    "removed": "“{title}” salió de tu repisa. Ningún otro disco se movió y nada cambió en Discogs.",
+    "removeFailed": "No se pudo quitar el disco. Vuelve a intentarlo."
   },
   "demo": {
     "living": "Sala",
@@ -293,7 +298,10 @@
       "lp": "Agregar una repisa de LP",
       "single": "Agregar una repisa de singles",
       "cd": "Agregar una repisa de CD"
-    }
+    },
+    "already": "Ya tienes este disco, en {place}. Agrégalo de nuevo solo si es una segunda copia.",
+    "alreadyOff": "Ya tienes este disco. Agrégalo de nuevo solo si es una segunda copia.",
+    "grow": "Agrandar la repisa"
   },
   "levelNames": {
     "genre": "Género",
@@ -387,7 +395,9 @@
     "sectionHint": "Los discos de una sección van solo en las repisas con esa sección, ordenados dentro de ella.",
     "customName": "Mueble a medida {size}",
     "cubeShelf": "Estante de cubos",
-    "newShelfReady": "Tu repisa nueva está lista abajo. Ajústala si hace falta, genera el mapa y vuelve a agregar tu disco."
+    "newShelfReady": "Tu repisa nueva está lista abajo. Ajústala si hace falta y genera el mapa: tu disco se vuelve a abrir para que lo agregues.",
+    "capacityHint": "Los discos por compartimiento son una estimación. Si en un compartimiento de tu repisa real caben más o menos, cámbialo aquí (o toca el compartimiento para darle su propia capacidad), así el mapa coincide con tu repisa.",
+    "grownShelfReady": "Agrandamos tu repisa para que quepa el disco nuevo (mírala abajo). Ajústala si hace falta y genera el mapa: tu disco se vuelve a abrir para que lo agregues."
   },
   "record": {
     "offMap": "Fuera del mapa",
@@ -411,7 +421,10 @@
     "side": "Lado {side}",
     "disc": "Disco {n}",
     "emptyTitle": "Encuentra un disco",
-    "emptyText": "Busca un artista o un título para ver dónde está un disco, los discos de cada lado y su lista de canciones. Haz clic en un compartimiento para ver qué hay adentro."
+    "emptyText": "Busca un artista o un título para ver dónde está un disco, los discos de cada lado y su lista de canciones. Haz clic en un compartimiento para ver qué hay adentro.",
+    "remove": "Quitar de mi colección",
+    "removeConfirm": "¿Quitar “{title}” de tu colección? Su lugar en la repisa queda libre. Nada cambia en Discogs.",
+    "removeYes": "Quitarlo"
   },
   "rail": {
     "label": "Tus {media} de {first} a {last}",
@@ -431,7 +444,7 @@
       "one": "{count} de {capacity} discos",
       "other": "{count} de {capacity} discos"
     },
-    "over": "Marcaste este compartimiento como más lleno que su capacidad. Está bien: el mapa sigue a tu repisa real.",
+    "over": "Este compartimiento tiene más discos que su capacidad. Sube su capacidad en Repisas y orden, o vuelve a generar el mapa.",
     "drawingHint": "Pasa el puntero por un disco para verlo; haz clic para ver los detalles y la portada.",
     "list": "Discos de este compartimiento, de izquierda a derecha",
     "empty": "Este compartimiento está vacío.",
@@ -601,7 +614,10 @@
     "signUp": "Crea una cuenta para compartir tu repisa con un enlace.",
     "failed": "No se pudo cambiar el enlace. Intenta de nuevo.",
     "label": "Enlace para invitados",
-    "freshness": "Los invitados ven la repisa mientras sus datos de Discogs tengan menos de seis horas; abrir la app los actualiza."
+    "until": "Los invitados pueden ver tu repisa hasta las {time}: sus datos de Discogs deben tener menos de seis horas. Actualizarla da seis horas más.",
+    "expired": "Los invitados no pueden ver tu repisa ahora: sus datos de Discogs tienen más de seis horas. Actualízala para que se vuelva a ver.",
+    "update": "Actualizar ahora",
+    "updating": "Actualizando…"
   },
   "zero": {
     "button": "Empezar de cero"

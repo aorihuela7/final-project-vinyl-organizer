@@ -21,7 +21,7 @@ import {
   type SortSettings,
 } from "@/lib/layout";
 import { DEFAULT_SLACK_PCT } from "@/lib/config";
-import { defaultCapacity, maxRows, rowsPerCube, template, type TemplateId } from "./templates";
+import { MAX_COLS, defaultCapacity, maxRows, rowsPerCube, template, type TemplateId } from "./templates";
 import type { RecordSize } from "@/lib/visual/lean";
 
 /** Records saved before v2 may lack the format group columns: they're classified on read. */
@@ -200,6 +200,58 @@ export function renameForSize(name: string, oldSize: string, newSize: string): s
 export function resizeAndRename(f: FurnitureConfig, rows: number, cols: number): FurnitureConfig {
   const next = resizeFurniture(f, rows, cols);
   return { ...next, name: renameForSize(f.name, sizeLabel(f), sizeLabel(next)) };
+}
+
+/**
+ * A name no other shelf has: "CD shelf 1×1" becomes "CD shelf 1×1 (2)" when
+ * one already exists, so a record's location ("CD shelf 1×1, row 2") is never ambiguous.
+ */
+export function uniqueShelfName(name: string, others: readonly string[]): string {
+  const taken = new Set(others.map((n) => n.trim().toLocaleLowerCase()));
+  if (!taken.has(name.trim().toLocaleLowerCase())) return name;
+  const base = name.replace(/ \(\d+\)$/, "");
+  for (let i = 2; ; i++) {
+    const candidate = `${base} (${i})`;
+    if (!taken.has(candidate.toLocaleLowerCase())) return candidate;
+  }
+}
+
+/**
+ * Room for `n` records of a format group whose shelves are full: the group's
+ * last shelf gets wider (columns added, up to 20) until the group holds n plus
+ * about 20%; past 20 columns, a new shelf is added for the rest. Names follow
+ * the size and stay unique. Returns the shelves and the key of the one to show.
+ */
+export function growForRecords(
+  furniture: readonly FurnitureConfig[],
+  media: ShelfMedia,
+  n: number,
+  names: SuggestedNames = SUGGESTED_NAMES,
+): { furniture: FurnitureConfig[]; key: string } | null {
+  const group = furniture.filter((f) => f.media === media).sort((a, b) => a.sortIndex - b.sortIndex);
+  const last = group[group.length - 1];
+  if (!last) return null;
+  const capacityOf = (f: FurnitureConfig) => f.compartments.filter((c) => c.status === "available").reduce((sum, c) => sum + (c.capacity ?? f.defaultCapacity), 0);
+  const missing = Math.ceil(n * SUGGESTED_ROOM) - group.reduce((sum, f) => sum + capacityOf(f), 0);
+  const perColumn = Math.max(1, last.rows * last.defaultCapacity);
+  const cols = last.cols + Math.max(1, Math.ceil(missing / perColumn));
+  const others = (key: string) => furniture.filter((f) => f.key !== key).map((f) => f.name);
+  if (cols <= MAX_COLS) {
+    const grown = resizeAndRename(last, last.rows, cols);
+    grown.name = uniqueShelfName(grown.name, others(last.key));
+    return { furniture: furniture.map((f) => (f.key === last.key ? grown : f)), key: last.key };
+  }
+  // Wider than 20 columns: a new shelf for what doesn't fit, sized like a suggestion.
+  const grown = resizeAndRename(last, last.rows, MAX_COLS);
+  grown.name = uniqueShelfName(grown.name, others(last.key));
+  const left = Math.max(1, Math.ceil((missing - (MAX_COLS - last.cols) * perColumn) / SUGGESTED_ROOM));
+  const added = suggestedShelves(media, left, furniture.length, names);
+  const result = furniture.map((f) => (f.key === last.key ? grown : f));
+  for (const f of added) {
+    f.name = uniqueShelfName(f.name, result.map((x) => x.name));
+    result.push(f);
+  }
+  return { furniture: result, key: added[0]!.key };
 }
 
 /** "Kallax" is a brand: shelves still named after it (saved before) get the common name. */

@@ -7,7 +7,7 @@ import { START_TOUR_EVENT, TourOffer, TourOverlay, TourWaiting, useTourState, ty
 import { useSearchParams } from "next/navigation";
 import { SignUpButton } from "@clerk/nextjs";
 import { isZeroStart } from "@/lib/config";
-import { displayArtist, type ShelfMedia, type Slot } from "@/lib/layout";
+import { displayArtist, type Slot } from "@/lib/layout";
 import { groupOf, suggestedConfig, type StoredRecord } from "@/lib/shelf/model";
 import { slotTitle } from "@/lib/shelf/describe";
 import { CompartmentSheet } from "./compartment-sheet";
@@ -22,7 +22,8 @@ import { Onboarding } from "./onboarding";
 import { RecordCard, RecordCardEmpty, findLocation } from "./record-details";
 import { useMediaQuery } from "./use-media-query";
 import { SearchRow } from "./search-panel";
-import { SetupView } from "./setup-view";
+import { SetupView, type ShelfPrep } from "./setup-view";
+import type { RecordInput } from "@/lib/discogs/map";
 import { Sheet } from "./sheet";
 import { AddRecord } from "./add-record";
 import { CollectionPanel } from "./collection-panel";
@@ -69,31 +70,41 @@ export function ShelfApp() {
 
   const [adding, setAdding] = useState(false);
   // "Add a new record" found no shelf for the record's format: Shelves & order opens with one added.
-  const [newShelf, setNewShelf] = useState<ShelfMedia | null>(null);
+  const [prepare, setPrepare] = useState<ShelfPrep | null>(null);
+  // …and the record waiting for it, which opens again in "Add a new record" once the map is generated.
+  const [pendingAdd, setPendingAdd] = useState<RecordInput | null>(null);
 
   const byId = useMemo(() => new Map((app.data?.records ?? []).map((r) => [r.id, r])), [app.data?.records]);
+  /** Removes a record added by hand, closing its card and clearing the map's mark first. */
+  const removeOpen = async (id: string) => {
+    const ok = await app.removeRecord(id);
+    if (!ok) return;
+    setOpenRecord(null);
+    if (found === id) showFound(null);
+  };
 
   // ------------------------------------------------------------ guided tour
   const { userId } = useAuth();
   const supabase = useSupabase();
-  const hasMap = !!app.data?.config && app.views.some((v) => v.index.sorted.length > 0);
+  // The tour runs on any map, even an empty one (started from scratch): it waits for the map, not for records.
+  const mapShown = !!app.data?.config;
   const tour = useTourState({
     mode: app.mode,
     userId,
     supabase,
     // The first demo visit, or right after signing up (even before there are records).
     ready: app.status.kind === "ready" || (app.mode === "remote" && app.status.kind === "onboarding"),
-    hasMap,
+    hasMap: mapShown,
   });
   const { start: startTour, accept: acceptTour } = tour;
   const startTourOnMap = useCallback(() => {
     // Before the first map (onboarding, an import): start as soon as the shelf is ready.
-    if (!hasMap) return acceptTour();
+    if (!mapShown) return acceptTour();
     setTab("map");
     setOpenSlot(null);
     setAdding(false);
     startTour();
-  }, [hasMap, startTour, acceptTour]);
+  }, [mapShown, startTour, acceptTour]);
   // "Help" in the header, or /app?tour=1 from another page.
   useEffect(() => {
     const onStart = () => startTourOnMap();
@@ -113,7 +124,7 @@ export function ShelfApp() {
     return () => clearTimeout(timer);
   }, [wantsTour, tourReady, startTourOnMap]);
   const sample = app.views.find((v) => v.index.sorted.length > 0)?.index.sorted[0]?.id ?? null;
-  const tourSteps: TourStep[] = [
+  const allTourSteps: TourStep[] = [
     { id: "search", target: '[data-tour="search"]' },
     { id: "rail", target: '[data-map] nav[data-tour="rail"]' },
     { id: "compartment", target: "[data-map] [data-slot]" },
@@ -132,6 +143,8 @@ export function ShelfApp() {
     { id: "setup", target: '[data-tour="setup"]' },
     { id: "done" },
   ];
+  // An empty map has no rail and no record to show: those steps are skipped.
+  const tourSteps = sample ? allTourSteps : allTourSteps.filter((s) => s.id !== "rail" && s.id !== "record");
   const tourOffer = tour.offer ? <TourOffer onAccept={tour.accept} onDecline={tour.decline} /> : null;
   const tourWaiting = tour.waiting ? <TourWaiting /> : null;
 
@@ -227,7 +240,7 @@ export function ShelfApp() {
     <div className="flex flex-col gap-4">
       {tourOffer}
       {tourWaiting}
-      {tour.active && hasMap && <TourOverlay steps={tourSteps} onEnd={tour.end} />}
+      {tour.active && mapShown && <TourOverlay steps={tourSteps} onEnd={tour.end} />}
       {app.mode === "local" && (
         <Banner className="flex flex-wrap items-center justify-between gap-2">
           <span>{t("app.demoBanner")}</span>
@@ -245,7 +258,19 @@ export function ShelfApp() {
           {app.syncJob.items_total ? t("app.updatingCount", { done: app.syncJob.items_done, total: app.syncJob.items_total }) : t("app.updating")}
         </Banner>
       )}
-      {app.notice && <NoticeBar notice={app.notice} byId={byId} slotName={slotName} onDismiss={app.dismissNotice} />}
+      {app.notice && (
+        <NoticeBar
+          notice={app.notice}
+          byId={byId}
+          slotName={slotName}
+          onDismiss={app.dismissNotice}
+          onUndo={(undo) => {
+            if (openRecord === undo.recordId) setOpenRecord(null);
+            if (found === undo.recordId) showFound(null);
+            void app.removeRecord(undo.recordId, undo.moves);
+          }}
+        />
+      )}
 
       {!config ? (
         <div className="flex flex-col gap-3">
@@ -282,11 +307,21 @@ export function ShelfApp() {
 
           {tab === "setup" ? (
             <>
-              <SetupView app={app} initial={config} records={data.records} onDone={() => setTab("map")} addShelf={newShelf} onShelfAdded={() => setNewShelf(null)} />
+              <SetupView
+                app={app}
+                initial={config}
+                records={data.records}
+                onDone={() => {
+                  setTab("map");
+                  if (pendingAdd) setAdding(true);
+                }}
+                prepare={prepare}
+                onPrepared={() => setPrepare(null)}
+              />
               <h2 className="mt-4 border-t border-input-line/60 pt-6 font-display text-2xl text-ink">{t("app.toolsTitle")}</h2>
               <p className="-mt-2 text-sm text-muted">{t("app.toolsText")}</p>
               <SimulatorCard records={data.records} config={config} />
-              <ShareCard signedIn={app.mode === "remote"} />
+              <ShareCard signedIn={app.mode === "remote"} syncedAt={data.collection?.last_synced_at ?? null} onUpdate={app.syncNow} updating={!!app.syncJob} />
               <CollectionPanel app={app} />
             </>
           ) : (
@@ -383,6 +418,7 @@ export function ShelfApp() {
                         busy={app.busy}
                         onTakeOut={(name) => void app.takeOut(recordInSheet.id, name)}
                         onPutBack={() => void app.putBack(recordInSheet.id).then((ok) => ok && showFound(recordInSheet.id))}
+                        onRemove={() => void removeOpen(recordInSheet.id)}
                       />
                     ) : (
                       <RecordCardEmpty />
@@ -435,6 +471,7 @@ export function ShelfApp() {
             locations={data.locations ?? []}
             busy={app.busy}
             onTakeOut={(name) => void app.takeOut(recordInSheet.id, name)}
+            onRemove={() => void removeOpen(recordInSheet.id)}
             onPutBack={() =>
               void app.putBack(recordInSheet.id).then((ok) => {
                 if (!ok) return;
@@ -452,14 +489,26 @@ export function ShelfApp() {
           app={app}
           config={config}
           byId={byId}
-          onClose={() => setAdding(false)}
-          onAddShelf={(media) => {
+          initial={pendingAdd}
+          onClose={() => {
             setAdding(false);
-            setNewShelf(media);
+            setPendingAdd(null);
+          }}
+          onAddShelf={(media, record) => {
+            setAdding(false);
+            setPendingAdd(record);
+            setPrepare({ kind: "add", media });
+            setTab("setup");
+          }}
+          onGrowShelf={(media, record) => {
+            setAdding(false);
+            setPendingAdd(record);
+            setPrepare({ kind: "grow", media });
             setTab("setup");
           }}
           onShowRecord={(id, slotId) => {
             setAdding(false);
+            setPendingAdd(null);
             void slotId;
             showFound(id);
             setOpenRecord(id);
@@ -475,11 +524,13 @@ function NoticeBar({
   byId,
   slotName,
   onDismiss,
+  onUndo,
 }: {
   notice: Notice;
   byId: Map<string, StoredRecord>;
   slotName: (id: string | null) => string;
   onDismiss: () => void;
+  onUndo: (undo: NonNullable<Notice["undo"]>) => void;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -488,6 +539,11 @@ function NoticeBar({
       <div className="flex items-start justify-between gap-2">
         <p>{renderMsg(t, notice.msg)}</p>
         <div className="flex shrink-0 gap-1">
+          {notice.undo && (
+            <button type="button" onClick={() => onUndo(notice.undo!)} className={btnText}>
+              {t("app.undo")}
+            </button>
+          )}
           {notice.moves && notice.moves.length > 0 && (
             <button type="button" onClick={() => setOpen((o) => !o)} className={btnText}>
               {open ? t("app.hideMoves") : t("app.seeMoves")}

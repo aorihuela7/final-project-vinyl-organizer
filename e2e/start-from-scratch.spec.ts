@@ -70,6 +70,45 @@ test("start from scratch: an empty collection, and records added by hand stay in
   await expect(a.getByRole("listbox", { name: "Search results" }).getByText(/% in from the left/).first()).toBeVisible();
   await expect(a.getByText("Your shelf is empty.", { exact: false })).toHaveCount(0);
 
+  // The same record again: the app says where it already is.
+  await a.getByRole("button", { name: "+ Add a new record" }).first().click();
+  const again = a.getByRole("dialog");
+  await again.getByRole("searchbox").fill("Kind of Blue Miles Davis");
+  await again.getByRole("button", { name: /Miles Davis/ }).first().click({ timeout: 30_000 });
+  await expect(again.getByText(/You already have this record/)).toBeVisible({ timeout: 30_000 });
+  await again.getByRole("button", { name: "Close" }).click();
+
+  // Undo right after adding puts everything back.
+  await a.getByRole("button", { name: "+ Add a new record" }).first().click();
+  const another = a.getByRole("dialog");
+  await another.getByRole("searchbox").fill("Blue Train John Coltrane");
+  await another.getByRole("button", { name: /Coltrane/ }).first().click({ timeout: 30_000 });
+  await expect(another.getByRole("button", { name: "Add record" })).toBeEnabled({ timeout: 30_000 });
+  await another.getByRole("button", { name: "Add record" }).click();
+  await expect(a.getByText("2 records, sorted by artist", { exact: false })).toBeVisible({ timeout: 30_000 });
+  await a.getByRole("button", { name: "Undo" }).click();
+  await expect(a.getByText(/^Undone:/)).toBeVisible({ timeout: 30_000 });
+  await expect(a.getByText("1 record, sorted by artist", { exact: false })).toBeVisible();
+
+  // A record added by hand can be removed from its card.
+  await a.getByLabel("Search for an artist or a title in your collection").fill("Kind of Blue");
+  await a.getByRole("listbox", { name: "Search results" }).getByRole("option").first().click();
+  await a.locator("[data-record-card]").getByRole("button", { name: "Remove from my collection" }).click();
+  await a.getByRole("button", { name: "Remove it" }).click();
+  await expect(a.getByText(/is off your shelf/)).toBeVisible({ timeout: 30_000 });
+  await expect(a.getByText("0 records, sorted by artist", { exact: false })).toBeVisible();
+  await a.reload();
+  await expect(a.getByText("Your shelf is empty.", { exact: false })).toBeVisible({ timeout: 60_000 });
+
+  // Add it back, so the next step has something to replace.
+  await a.getByRole("button", { name: "+ Add a new record" }).first().click();
+  const back = a.getByRole("dialog");
+  await back.getByRole("searchbox").fill("Kind of Blue Miles Davis");
+  await back.getByRole("button", { name: /Miles Davis/ }).first().click({ timeout: 30_000 });
+  await expect(back.getByRole("button", { name: "Add record" })).toBeEnabled({ timeout: 30_000 });
+  await back.getByRole("button", { name: "Add record" }).click();
+  await expect(a.getByText("1 record, sorted by artist", { exact: false })).toBeVisible({ timeout: 30_000 });
+
   // Choosing the demo from the landing page asks before replacing what they built.
   await a.goto("/app?start=demo");
   await expect(a.getByRole("heading", { name: "Replace your collection with the demo collection?" })).toBeVisible({ timeout: 60_000 });
@@ -90,4 +129,47 @@ test("start from scratch: an empty collection, and records added by hand stay in
 
   await first.close();
   await second.close();
+});
+
+test("a full shelf grows from \"Add a new record\", and the record opens again once the map is generated", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  test.setTimeout(240_000);
+  const email = `e2e-grow-${Date.now().toString(36)}+clerk_test@example.com`;
+  // A shelf of one compartment for one record, so it fills with two.
+  await ensureTestUser(email);
+  await page.goto("/");
+  await clerk.signIn({ page, emailAddress: email });
+  await page.goto("/app");
+  await page.getByRole("button", { name: "Start from scratch" }).click();
+  await expect(page.getByRole("heading", { name: "Build your shelf" })).toBeVisible({ timeout: 60_000 });
+  await page.getByLabel("Records per compartment").fill("1");
+  await page.getByRole("button", { name: "Generate map" }).click();
+  const confirm = page.getByRole("dialog").getByRole("button", { name: "Generate" });
+  if (await confirm.isVisible().catch(() => false)) await confirm.click();
+  await expect(page.locator("[data-map]")).toBeVisible({ timeout: 60_000 });
+  const add = async (q: string, re: RegExp) => {
+    await page.getByRole("button", { name: "+ Add a new record" }).first().click();
+    const d = page.getByRole("dialog");
+    await d.getByRole("searchbox").fill(q);
+    await d.getByRole("button", { name: re }).first().click({ timeout: 30_000 });
+    return d;
+  };
+  let d = await add("Kind of Blue Miles Davis", /Miles Davis/);
+  await expect(d.getByRole("button", { name: "Add record" })).toBeEnabled({ timeout: 30_000 });
+  await d.getByRole("button", { name: "Add record" }).click();
+  await expect(page.getByText("1 record, sorted", { exact: false })).toBeVisible({ timeout: 30_000 });
+  d = await add("Blue Train John Coltrane", /Coltrane/);
+  await expect(d.getByRole("button", { name: "Make the shelf bigger" })).toBeVisible({ timeout: 30_000 });
+  await d.getByRole("button", { name: "Make the shelf bigger" }).click();
+  await expect(page.getByText(/We made your shelf bigger/)).toBeVisible();
+  // One cube of 1 record, 2 records plus 20%: three cubes, and the name follows.
+  await expect(page.getByLabel("Name")).toHaveValue("Cube shelf 3×1");
+  await page.getByRole("button", { name: "Generate map" }).click();
+  const confirm2 = page.getByRole("dialog").getByRole("button", { name: /Generate|Recompute|Update/ });
+  if (await confirm2.first().isVisible().catch(() => false)) await confirm2.first().click();
+  const reopened = page.getByRole("dialog", { name: "Add a new record" });
+  await expect(reopened.getByText("Blue Train").first()).toBeVisible({ timeout: 60_000 });
+  await expect(reopened.getByRole("button", { name: "Add record" })).toBeEnabled({ timeout: 30_000 });
+  await reopened.getByRole("button", { name: "Add record" }).click();
+  await expect(page.getByText("2 records, sorted", { exact: false })).toBeVisible({ timeout: 30_000 });
 });

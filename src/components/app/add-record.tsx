@@ -21,7 +21,11 @@ type Props = {
   onClose: () => void;
   onShowRecord: (id: string, slotId: string | null) => void;
   /** No shelf for this record's format yet: go build one. */
-  onAddShelf?: (media: ShelfMedia) => void;
+  onAddShelf?: (media: ShelfMedia, record: RecordInput) => void;
+  /** Every shelf for this record's format is full: go make one bigger. */
+  onGrowShelf?: (media: ShelfMedia, record: RecordInput) => void;
+  /** Opens with this record already chosen (back from building its shelf). */
+  initial?: RecordInput | null;
 };
 
 function Step({ n, title, children, muted = false }: { n: number; title: string; children?: React.ReactNode; muted?: boolean }) {
@@ -42,13 +46,13 @@ function Step({ n, title, children, muted = false }: { n: number; title: string;
  * "Add a new record": find it on Discogs, see where it goes (the compartment,
  * the records on each side, and what has to move), then add it.
  */
-export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf }: Props) {
+export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf, onGrowShelf, initial = null }: Props) {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<RecordInput[]>([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [chosen, setChosen] = useState<RecordInput | null>(null);
+  const [chosen, setChosen] = useState<RecordInput | null>(initial);
   const [loadingRelease, setLoadingRelease] = useState(false);
 
   // Debounced search through our server route (the Discogs token never reaches the browser).
@@ -117,6 +121,13 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf
     m.set(preview.record.id, preview.record);
     return m;
   }, [byId, preview]);
+
+  // The same release is already in the collection (a second copy is fine, but usually it's a mistake).
+  const already = useMemo(() => {
+    if (!chosen || !app.data) return null;
+    const existing = app.data.records.find((r) => r.discogs_release_id === chosen.discogs_release_id);
+    return existing ? { id: existing.id, slot: app.data.placement.get(existing.id) ?? null } : null;
+  }, [chosen, app.data]);
 
   const slotName = (id: string | null) => {
     if (id === null) return t("app.offTheShelf");
@@ -218,6 +229,12 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf
               </div>
             </div>
           )}
+          {already && (
+            // Same release already in the collection: say where, and still allow a second copy.
+            <Banner tone="warning">
+              {already.slot ? t("add.already", { place: slotName(already.slot) }) : t("add.alreadyOff")}
+            </Banner>
+          )}
         </Step>
 
         <Step n={2} title={goesIn ?? t("add.step2")} muted={!chosen}>
@@ -226,13 +243,20 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf
               <Banner tone="warning" className="flex flex-wrap items-center justify-between gap-2">
                 <span>{t("add.noShelf", { group: groupLabel })}</span>
                 {onAddShelf && chosen.format_group !== "other" && (
-                  <button type="button" onClick={() => onAddShelf(chosen.format_group as ShelfMedia)} className={btnPrimarySm}>
+                  <button type="button" onClick={() => onAddShelf(chosen.format_group as ShelfMedia, chosen)} className={btnPrimarySm}>
                     {t(`add.addShelf.${chosen.format_group as ShelfMedia}`)}
                   </button>
                 )}
               </Banner>
             ) : !preview.target ? (
-              <Banner tone="warning">{t("add.full")}</Banner>
+              <Banner tone="warning" className="flex flex-wrap items-center justify-between gap-2">
+                <span>{t("add.full")}</span>
+                {onGrowShelf && (
+                  <button type="button" onClick={() => onGrowShelf(preview.media!, chosen)} className={btnPrimarySm}>
+                    {t("add.grow")}
+                  </button>
+                )}
+              </Banner>
             ) : (
               <>
                 {placed && (
@@ -259,8 +283,18 @@ export function AddRecord({ app, config, byId, onClose, onShowRecord, onAddShelf
                         );
                       })}
                     </ol>
-                    {preview.overflow.length > 0 && <p className="mt-1">{t("add.overflow")}</p>}
                   </div>
+                )}
+                {preview.overflow.length > 0 && (
+                  // Adding would push a record off the shelves: offer to make room first.
+                  <Banner tone="warning" className="flex flex-wrap items-center justify-between gap-2">
+                    <span>{t("add.overflow")}</span>
+                    {onGrowShelf && (
+                      <button type="button" onClick={() => onGrowShelf(preview.media!, chosen)} className={btnPrimarySm}>
+                        {t("add.grow")}
+                      </button>
+                    )}
+                  </Banner>
                 )}
               </>
             ))}

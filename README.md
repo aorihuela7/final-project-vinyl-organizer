@@ -39,8 +39,8 @@ Most of these changes come from watching four collectors use v1 ([what we saw](d
 4. **Pick the sort order:** up to three levels from genre, artist, year, label, and title, with "ignore articles", free space, and thickness by format.
 5. **See the map:** walnut furniture where every compartment shows its letters on a brass plate, how full it is, and a drawing of its records; a brass rail per format shows the whole collection, and dragging its marker picks the record where you let go. Open a compartment to see the same drawing up close and its records in order.
 6. **Search a record:** shelf, row, column, how far into the compartment ("about 40% in from the left"), the two records on each side, and its tracklist.
-7. **Add a new record.** Search Discogs for a new purchase, see where it goes and what has to move (with minimum moves), and add it.
-8. **Take a record out** to a temporary place and **put it back** in its spot; **share** a read-only link with guests.
+7. **Add a new record.** Search Discogs for a new purchase, see where it goes and what has to move (with minimum moves), and add it. The app warns if you already have it, offers to build the shelf it needs or make a full one bigger, and "Undo" puts everything back. Records added by hand can be removed from their card.
+8. **Take a record out** to a temporary place and **put it back** in its spot; **share** a read-only link with guests (the share card says until when they can see it, and "Update now" gives six more hours).
 
 Signing up is only needed to save your shelf or to import your own collection.
 

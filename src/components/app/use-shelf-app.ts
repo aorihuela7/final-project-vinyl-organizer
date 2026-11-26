@@ -37,6 +37,7 @@ import {
   type LayoutEvent,
 } from "@/lib/store/remote";
 import { replacesCollection } from "@/lib/import/replace";
+import { localizeShelfNames } from "@/lib/shelf/localize";
 import {
   buildViews,
   computeInitial,
@@ -77,7 +78,8 @@ export type Status =
   | { kind: "ready" }
   | { kind: "error"; message: Msg };
 
-export type Notice = { tone: "info" | "success" | "warning"; msg: Msg; moves?: Move[] };
+/** undo: a record just added, and the moves its insertion made, so "Undo" can put everything back. */
+export type Notice = { tone: "info" | "success" | "warning"; msg: Msg; moves?: Move[]; undo?: { recordId: string; moves: Move[] } };
 
 export type MapPreview = { config: ShelfConfig; changed: number; placed: number; leftover: number; notPlaced: number; hasMap: boolean; slackReduced: boolean };
 
@@ -206,7 +208,7 @@ async function removeMisplaced(client: SupabaseClient, data: AppData): Promise<A
 
 export function useShelfApp(startParam: string | null) {
   const { isLoaded, isSignedIn, userId } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const tRef = useRef(t);
   useEffect(() => {
     tRef.current = t;
@@ -216,12 +218,17 @@ export function useShelfApp(startParam: string | null) {
   const clerk = useClerk();
   const supabase = useSupabase();
   const [data, setData] = useState<AppData | null>(null);
+  useEffect(() => {
+    latestData.current = data;
+  }, [data]);
   const [status, setStatus] = useState<Status>({ kind: "loading", message: msg("app.loadingShelf") });
   const [syncJob, setSyncJob] = useState<JobRow | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
   const started = useRef<string | null>(null);
   const alive = useRef(true);
+  // The latest data, for actions started from an older render (Undo on a notice).
+  const latestData = useRef<AppData | null>(null);
   // A replacement waiting for the user's answer, with the shelf to go back to if they keep it.
   const pendingReplace = useRef<{ target: ReplaceTarget; next: AppData; local: boolean } | null>(null);
   const mode: "local" | "remote" | null = !isLoaded ? null : isSignedIn ? "remote" : "local";
@@ -657,6 +664,17 @@ export function useShelfApp(startParam: string | null) {
     setStatus({ kind: "ready" });
   }, [supabase, startRemoteImport]);
 
+  /** Syncs with Discogs now (it also gives a shared link six more hours). */
+  const syncNow = useCallback(() => {
+    const collection = data?.collection;
+    if (mode !== "remote" || !supabase || !collection || syncJob) return;
+    const input =
+      collection.source === "demo" || !collection.discogs_username
+        ? ({ source: "demo" } as const)
+        : ({ source: "discogs", username: collection.discogs_username } as const);
+    void startRemoteImport(supabase, input, true);
+  }, [mode, supabase, data?.collection, syncJob, startRemoteImport]);
+
   const startDemo = useCallback(() => {
     if (mode === "remote" && supabase) void startRemoteImport(supabase, { source: "demo" }, false);
     else void startLocalDemo();
@@ -675,7 +693,9 @@ export function useShelfApp(startParam: string | null) {
     [mode, supabase, startRemoteImport, data, clerk],
   );
 
-  const views: MediaView[] = useMemo(() => (data?.config ? buildViews(data.records, data.config, data.placement) : []), [data]);
+  // What the screens get: automatic shelf names in the current language (saved shelves keep what they were saved with).
+  const shownData = useMemo(() => (data?.config ? { ...data, config: localizeShelfNames(data.config, locale) } : data), [data, locale]);
+  const views: MediaView[] = useMemo(() => (shownData?.config ? buildViews(shownData.records, shownData.config, shownData.placement) : []), [shownData]);
 
   /** What "Generate map" would do, before saving. */
   const previewMap = useCallback(
@@ -734,7 +754,9 @@ export function useShelfApp(startParam: string | null) {
               ? msg("notices.mapLeftover", { count: preview.leftover })
               : preview.hasMap
                 ? msg("notices.mapUpdated", { count: preview.changed })
-                : msg("notices.mapGenerated", { count: preview.placed }),
+                : preview.placed === 0 && data.records.length === 0
+                  ? msg("notices.mapGeneratedEmpty")
+                  : msg("notices.mapGenerated", { count: preview.placed }),
         });
       } catch (err) {
         setNotice({ tone: "warning", msg: errorMsg(err, msg("notices.mapSaveFailed")) });
@@ -804,6 +826,7 @@ export function useShelfApp(startParam: string | null) {
           tone: "success",
           msg: result.movedCount <= 1 ? msg("notices.addedOneMove") : msg("notices.addedMoves", { count: result.movedCount }),
           moves: result.moves,
+          undo: { recordId: stored.id, moves: result.moves },
         });
         return { stored, preview: result };
       } catch (err) {
@@ -814,6 +837,51 @@ export function useShelfApp(startParam: string | null) {
       }
     },
     [data, mode, supabase, userId, views, applyChange],
+  );
+
+  /**
+   * Removes a record added by hand (imported ones come back with the next sync:
+   * they're removed on Discogs). Its place is left free; no other record moves.
+   * With `moves` (Undo right after adding it), the records its insertion
+   * pushed go back to where they were.
+   */
+  const removeRecord = useCallback(
+    async (recordId: string, moves: Move[] = []) => {
+      const current = latestData.current;
+      if (!current) return false;
+      const record = current.records.find((r) => r.id === recordId);
+      if (!record || record.origin !== "added") return false;
+      setBusy(true);
+      try {
+        const placement = new Map(current.placement);
+        placement.delete(recordId);
+        // Undo: move back the records the insertion pushed, if they're still where it left them.
+        const back: Move[] = moves
+          .filter((m) => m.recordId !== recordId && m.from !== null && m.to !== null && placement.get(m.recordId) === m.to)
+          .map((m) => ({ recordId: m.recordId, from: m.to, to: m.from }));
+        for (const m of back) placement.set(m.recordId, m.to!);
+        if (mode === "remote" && supabase) {
+          const { error } = await supabase.from("records").delete().eq("id", recordId);
+          if (error) throw new Error("delete");
+          if (back.length > 0) await applyPlacementsRemote(supabase, placement, back, { kind: "insert", moves: back, movedCount: back.length });
+        }
+        const next: AppData = { ...current, records: current.records.filter((r) => r.id !== recordId), placement };
+        if (mode !== "remote") persistLocal(next);
+        setData(next);
+        setNotice({
+          tone: "info",
+          msg: moves.length > 0 ? msg("notices.undone", { title: record.title }) : msg("notices.removed", { title: record.title }),
+          moves: back.length > 0 ? back : undefined,
+        });
+        return true;
+      } catch {
+        setNotice({ tone: "warning", msg: msg("notices.removeFailed") });
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [mode, supabase, persistLocal],
   );
 
   /** Takes a record out to a temporary location (created if it's new). It keeps its spot on the shelf. */
@@ -880,7 +948,7 @@ export function useShelfApp(startParam: string | null) {
   return {
     mode,
     status,
-    data,
+    data: shownData,
     views,
     syncJob,
     notice,
@@ -898,6 +966,8 @@ export function useShelfApp(startParam: string | null) {
     addRecord,
     takeOut,
     putBack,
+    removeRecord,
+    syncNow,
     resetLocal,
   };
 }

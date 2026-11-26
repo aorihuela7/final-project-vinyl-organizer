@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Slot } from "@/lib/layout";
 import { buildViews, toSortSettings } from "@/lib/shelf/model";
+import { localizeShelfNames } from "@/lib/shelf/localize";
 import { loadSharedShelf, type SharedShelf } from "@/lib/store/shared";
 import { FRESHNESS_MS } from "@/lib/config";
 import { useI18n } from "@/i18n/client";
@@ -23,7 +24,7 @@ type State = { status: "loading" } | { status: "missing" } | { status: "stale" }
  * Nothing can be changed from here.
  */
 export function GuestShelf({ token }: { token: string }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [state, setState] = useState<State>({ status: "loading" });
   const [found, setFound] = useState<string | null>(null);
   const [openRecord, setOpenRecord] = useState<string | null>(null);
@@ -49,7 +50,9 @@ export function GuestShelf({ token }: { token: string }) {
   }, [token]);
 
   const shelf = state.status === "ready" ? state.shelf : null;
-  const views = useMemo(() => (shelf?.config ? buildViews(shelf.records, shelf.config, shelf.placement) : []), [shelf]);
+  // Automatic shelf names in the guest's language.
+  const shownConfig = useMemo(() => (shelf?.config ? localizeShelfNames(shelf.config, locale) : null), [shelf, locale]);
+  const views = useMemo(() => (shelf && shownConfig ? buildViews(shelf.records, shownConfig, shelf.placement) : []), [shelf, shownConfig]);
   const byId = useMemo(() => new Map((shelf?.records ?? []).map((r) => [r.id, r])), [shelf]);
 
   const showFound = useCallback((id: string) => {
@@ -72,7 +75,7 @@ export function GuestShelf({ token }: { token: string }) {
     );
   }
 
-  const config = shelf.config;
+  const config = shownConfig ?? shelf.config;
   const record = openRecord ? byId.get(openRecord) : undefined;
   const location = openRecord ? findLocation(views, openRecord) : null;
   const card_ = record ? (
